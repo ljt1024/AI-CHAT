@@ -1,0 +1,151 @@
+/* Dialog.css */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.dialog-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-overlay.open .dialog {
+  transform: translateY(0);
+}
+
+.dialog.small {
+  width: 400px;
+}
+
+.dialog.medium {
+  width: 500px;
+}
+
+.dialog.large {
+  width: 600px;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;  
+  color: #333;
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.dialog-close:hover {
+   transform: rotate(360deg);
+   transition: all 2s;
+}
+
+.dialog-close:hover {
+  background-color: #f5f5f5;
+  color: #666;
+  outline: none;
+  border: 0;
+}
+
+.dialog-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dialog-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dialog-button.confirm {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dialog-button.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialog-button.confirm:hover {
+  background-color: rgb(153 143 227);
+}
+
+.dialog-button.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.dialog-button.cancel:hover {
+  background-color: #eaeaea;
+}
+
+@media (max-width: 600px) {
+  .dialog {
+    width: 90% !important;
+    margin: 20px;
+  }
+  
+  .dialog-header,
+  .dialog-content,
+  .dialog-footer {
+    padding: 12px 16px;
+  }
+}

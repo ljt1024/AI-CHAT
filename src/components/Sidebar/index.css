@@ -1,0 +1,188 @@
+.sidebar {
+    width: 280px;
+    height: calc(100vh);
+    background-color: var(--bg-color);
+    border-right: 1px solid var(--border-color);
+    position: relative;
+    padding: 24px 12px 12px 12px;
+}
+
+.hiddenSideBar {
+    max-width: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+.hiddenSideBar .fold-icon {
+    transform: rotate(0deg);
+    right: -18px; 
+}
+
+.sideContent {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    /* overflow-x: hidden; */
+}
+
+.fold-icon {
+    position: absolute;
+    right: -13px;
+    top: 50%;
+    z-index: 999;
+    margin-top: -10px;
+    transform: rotate(180deg);
+    border-radius: 50%;
+    background-color: var(--border-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 24px;
+    width: 24px;
+}
+
+.fold-icon > span {
+    display: flex;
+}
+
+.covTit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.covTitLeft {
+    display: flex;
+    align-items: center;
+}
+
+.titText {
+    margin-left: 8px;
+}
+
+.covList {
+   flex: 1;
+   overflow-y: auto;
+   overflow-x: hidden;
+   position: relative;
+   padding-right: 200px;
+   box-sizing: content-box;
+   margin-right: -200px;
+}
+/* 去除默认滚动条 */
+.covList::-webkit-scrollbar {
+    width: 0 !important;
+}
+
+.newCov {
+    text-align: center;
+}
+
+.newCov,.covItem  {
+    border: 1px dashed var(--border-color);
+    padding: 12px;
+    font-size: 14px;
+    margin-top: 16px;
+    cursor: pointer;
+}
+
+.covItem  {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* position: relative; */
+}
+
+.curCov {
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+
+.covName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 190px;
+}
+
+.newCov:hover {
+     border-color: var(--secondary-color);
+     color: var(--secondary-color);
+}
+
+.covItem:hover {
+     border-color: var(--secondary-color);
+     color: var(--secondary-color);
+}
+
+.covItem:hover .covOperation{
+   /* visibility: visible; */
+   display: block;
+}
+
+.covItem:hover .fixIcon{
+    display: none;
+}
+
+.covOperation {
+    transform: rotate(90deg);
+    font-size: 14px;
+    font-weight: bold;
+    /* visibility: hidden; */
+    display: none;
+}
+
+.operationBox {
+    white-space: noWrap;
+}
+
+.operationBox .operationItem {
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+}
+
+.operationBox .operationItem:hover {
+    background-color: #f5f0f0;
+}
+
+.operationTit {
+    margin-left: 10px;
+}
+
+.editContent {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.forceWrap {
+    border: 1px solid var(--primary-color) !important;
+}
+
+.editInput {
+    border: none;
+    flex: 1;
+}
+
+.editInput:focus {
+    border: 0;
+    outline: none;
+}
+
+.inputControl {
+    color: #666666;
+    font-size: 14px;
+    margin-left: 12px;
+}
+
+.deleteTip {
+    color: #000000;
+    font-size: 14px;
+}

@@ -1,0 +1,10 @@
+.previewHandle button {
+    border: 0;
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.previewHandle button:first-child {
+    background: var(--primary-color);
+    color: #fff;
+}

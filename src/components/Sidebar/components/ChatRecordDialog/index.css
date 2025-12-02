@@ -1,0 +1,42 @@
+.reacordDialog {
+    width: 70% !important;
+    min-height: 400px;
+}
+
+.globalHandle {
+    color: #333;
+    font-size: 14px;
+}
+
+.globalHandle button {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-radius: 6px;
+    outline: none;
+    border: 0;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.globalHandle button:nth-child(2) {
+    margin: 0 8px;
+}
+
+.idWrap {
+    position: relative;
+    padding-left: 10px;
+}
+
+.topTag {
+    text-align: center;
+    transform: rotate(-50deg);
+    position: absolute;
+    top: -7px;
+    left: -28px;
+    width: 52px;
+    font-size: 10px;
+    color: #fff;
+    padding: 2px 0;
+    background-color: #ff9800;
+    clip-path: polygon(40% 0%, 72% 0%, 100% 100%, 0% 100%);
+}

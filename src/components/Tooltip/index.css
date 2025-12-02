@@ -1,0 +1,93 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-down {
+  animation: fadeIn 0.3s ease, moveDown 0.3s ease;
+}
+
+.animate-fade-in-up {
+  animation: fadeIn 0.3s ease, moveUp 0.3s ease;
+}
+
+.animate-fade-in-left {
+  animation: fadeIn 0.3s ease, moveLeft 0.3s ease;
+}
+
+.animate-fade-in-right {
+  animation: fadeIn 0.3s ease, moveRight 0.3s ease;
+}
+
+@keyframes moveDown {
+  from { transform: translateY(-10px); }
+  to { transform: translateY(0); }
+}
+
+@keyframes moveUp {
+  from { transform: translateY(10px); }
+  to { transform: translateY(0); }
+}
+
+@keyframes moveLeft {
+  from { transform: translateX(10px); }
+  to { transform: translateX(0); }
+}
+
+@keyframes moveRight {
+  from { transform: translateX(-10px); }
+  to { transform: translateX(0); }
+}
+
+.tooltip {
+     background-color: var(--text-color);
+     color: var(--bg-color);
+     padding: 8px 12px;
+     border-radius: 8px;
+     font-size: 14px;
+} 
+
+.absolute {
+    position: absolute;
+    z-index: 99999;
+}
+
+
+/* 添加箭头样式 */
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+ .tooltip-arrow-top {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0 5px;
+  border-color: var(--text-color) transparent transparent transparent;
+}
+
+ .tooltip-arrow-bottom {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 5px 5px 5px;
+  border-color: transparent transparent var(--text-color) transparent;
+}
+
+.tooltip-arrow-left {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  border-width: 5px 0 5px 5px;
+  border-color: transparent transparent transparent var(--text-color);
+}
+
+.tooltip-arrow-right {
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+  border-width: 5px 5px 5px 0;
+  border-color: transparent var(--text-color) transparent transparent;
+}

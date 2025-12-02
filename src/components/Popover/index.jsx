@@ -1,0 +1,208 @@
+import React, { useState, useRef, useEffect } from 'react';
+import './index.css';
+
+const Popover = ({
+  title,
+  content,
+  children,
+  placement = 'top',
+  trigger = 'click',
+  className = '',
+  style = {},
+  onVisibleChange,
+  ...props
+}) => {
+  const [visible, setVisible] = useState(false);
+  const [position, setPosition] = useState({})
+  const popoverRef = useRef(null);
+  const triggerRef = useRef(null);
+  const timeoutRef = useRef(null);
+  let positionStyle = {};
+  // 处理显示/隐藏状态变化
+  useEffect(() => {
+    if (onVisibleChange) {
+      onVisibleChange(visible);
+    }
+    if (visible) {
+        calculatePosition()
+    }
+
+  }, [visible, onVisibleChange]);
+
+  // 点击外部区域关闭popover
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target)
+      ) {
+        setVisible(false);
+      }
+    };
+
+    if (visible && trigger === 'click') {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [visible, trigger]);
+
+  // 处理触发事件
+  const handleTrigger = (e) => {
+    if (trigger === 'click') {
+      setVisible(!visible);
+      e.stopPropagation()
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (trigger === 'hover') {
+      clearTimeout(timeoutRef.current);
+      setVisible(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (trigger === 'hover') {
+      timeoutRef.current = setTimeout(() => {
+        setVisible(false);
+      }, 200);
+    }
+  };
+
+  // 计算位置
+  const calculatePosition = () => {
+    if (!triggerRef.current || !popoverRef.current) return {};
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const popoverRect = popoverRef.current.getBoundingClientRect();
+    //TODO 解决容器滚动高度
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+
+    triggerRef.current.addEventListener('scoll', (res)=>{
+        console.log(res)
+    })  
+    let top = 0;
+    let left = 0;
+
+    switch (placement) {
+      case 'top':
+        top = triggerRect.top + scrollY - popoverRect.height - 10;
+        left = triggerRect.left + scrollX + (triggerRect.width - popoverRect.width) / 2;
+        break;
+      case 'top-start':
+        top = triggerRect.top + scrollY - popoverRect.height - 10;
+        left = triggerRect.left + scrollX;
+        break;
+      case 'top-end':
+        top = triggerRect.top + scrollY - popoverRect.height - 10;
+        left = triggerRect.left + scrollX + triggerRect.width - popoverRect.width;
+        break;
+      case 'bottom':
+        top = triggerRect.bottom + scrollY + 10;
+        left = triggerRect.left + scrollX + (triggerRect.width - popoverRect.width) / 2;
+        break;
+      case 'bottom-start':
+        top = triggerRect.bottom + scrollY + 10;
+        left = triggerRect.left + scrollX;
+        break;
+      case 'bottom-end':
+        top = triggerRect.bottom + scrollY + 10;
+        left = triggerRect.left + scrollX + triggerRect.width - popoverRect.width;
+        break;
+      case 'left':
+        top = triggerRect.top + scrollY + (triggerRect.height - popoverRect.height) / 2;
+        left = triggerRect.left + scrollX - popoverRect.width - 10;
+        break;
+      case 'left-start':
+        top = triggerRect.top + scrollY;
+        left = triggerRect.left + scrollX - popoverRect.width - 10;
+        break;
+      case 'left-end':
+        top = triggerRect.top + scrollY + triggerRect.height - popoverRect.height;
+        left = triggerRect.left + scrollX - popoverRect.width - 10;
+        break;
+      case 'right':
+        console.log(triggerRect)
+        // top = triggerRect.top + triggerRect.y + (triggerRect.height - popoverRect.height) / 2;
+        left = triggerRect.right + scrollX + 10;
+        break;
+      case 'right-start':
+        top = triggerRect.top + scrollY;
+        left = triggerRect.right + scrollX + 10;
+        break;
+      case 'right-end':
+        top = triggerRect.top + scrollY + triggerRect.height - popoverRect.height;
+        left = triggerRect.right + scrollX + 10;
+        break;
+      default:
+        top = triggerRect.top + scrollY - popoverRect.height - 10;
+        left = triggerRect.left + scrollX + (triggerRect.width - popoverRect.width) / 2;
+    }
+
+    // 确保不超出视口边界
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (left < 10) left = 10;
+    if (left + popoverRect.width > viewportWidth - 10) {
+      left = viewportWidth - popoverRect.width - 10;
+    }
+
+    if (top < 10) top = 10;
+    if (top + popoverRect.height > viewportHeight + scrollY - 10) {
+      top = viewportHeight + scrollY - popoverRect.height - 10;
+    }
+
+    setPosition({left})
+  };
+
+  // 设置事件处理器
+  const eventHandlers = {};
+  if (trigger === 'click') {
+    eventHandlers.onClick = handleTrigger;
+  } else if (trigger === 'hover') {
+    eventHandlers.onMouseEnter = handleMouseEnter;
+    eventHandlers.onMouseLeave = handleMouseLeave;
+  } else if (trigger === 'focus') {
+    eventHandlers.onFocus = handleMouseEnter;
+    eventHandlers.onBlur = handleMouseLeave;
+  }
+
+  return (
+    <div className='popover-wrapper'>
+      <div
+        ref={triggerRef}
+        className="popover-trigger"
+        {...eventHandlers}
+        aria-describedby={visible ? "popover-content" : undefined}
+      >
+        {children}
+      </div>
+
+      {visible && (
+        <div
+          ref={popoverRef}
+          id="popover-content"
+          className={`popover-container popover-${placement} ${className}`}
+          style={{ ...position, ...style }}
+          onClick={(e)=> {setVisible(false);e.stopPropagation()}}
+          onMouseEnter={trigger === 'hover' ? handleMouseEnter : undefined}
+          onMouseLeave={trigger === 'hover' ? handleMouseLeave : undefined}
+          role="tooltip"
+        >
+          {/* <div className="popover-arrow"></div> */}
+          <div className="popover-inner">
+            {title && <div className="popover-title">{title}</div>}
+            <div className="popover-content">{content}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Popover;

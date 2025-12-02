@@ -1,0 +1,66 @@
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body p {
+   margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+ol, li {
+  margin: revert;
+  padding: revert;
+  list-style: revert;
+}
+
+
+
+/* ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d8e0;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a5b1c2;
+    width: 0;
+} */
+
+/* 深色/浅色模式变量 */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --avatar-bg: #2d2d2d;
+  --user-bubble-bg: rgba(82, 61, 228.8);
+  --bot-bubble-bg: #f0f2f5;
+  --border-color: #e0e0e0;
+  --input-bg: #f5f5f5;
+  --primary-color: rgba(82, 61, 228.8);
+  --secondary-color: #92adc9;
+  --mask-color: linear-gradient(rgba(255, 255, 255, 0) 9%, rgb(255, 255, 255) 100%);
+  --danger-color: #ff3000;
+  --table-header-bg: #edf1ff;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1a1a1a;
+  --text-color: #ffffff;
+  --avatar-bg: #f0f2f5;
+  --user-bubble-bg: rgba(82, 61, 228.8);
+  --bot-bubble-bg: #2d2d2d;
+  --border-color: #3d3d3d;
+  --input-bg: #2d2d2d;
+  --primary-color: rgba(82, 61, 228.8);
+  --secondary-color: #92adc9;
+  --mask-color: linear-gradient(rgba(255, 255, 255, 0) 9%, #1a1a1a 100%);
+  --danger-color: #ff3000;
+  --table-header-bg: #edf1ff;
+}

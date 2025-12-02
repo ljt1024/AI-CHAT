@@ -1,0 +1,14 @@
+.codeWrap {
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 16px; 
+    background: var(--bg-color); 
+    overflow: auto;
+    text-wrap: auto;
+    word-break: break-word;
+}
+
+.codeWrap span {
+   text-wrap: auto;
+   word-break: break-word;
+}

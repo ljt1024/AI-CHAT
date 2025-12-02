@@ -1,0 +1,118 @@
+/* src/components/Message/Message.css */
+.global-message-container {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.messagePop-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.messagePop-container.topLeft {
+  top: 20px;
+  left: 20px;
+  align-items: flex-start;
+}
+
+.messagePop-container.topCenter {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.messagePop-container.topRight {
+  top: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.messagePop-container.bottomLeft {
+  bottom: 20px;
+  left: 20px;
+  align-items: flex-start;
+}
+
+.messagePop-container.bottomCenter {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.messagePop-container.bottomRight {
+  bottom: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.messagePop-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  max-width: 400px;
+}
+
+.messagePop-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.messagePop-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.messagePop-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 消息类型样式 */
+.messagePop-item.success .message-icon {
+  color: #52c41a;
+}
+
+.messagePop-item.error .message-icon {
+  color: #ff4d4f;
+}
+
+.messagePop-item.info .message-icon {
+  color: #1890ff;
+}
+
+.messagePop-item.warning .message-icon {
+  color: #faad14;
+}
+
+.messagePop-item.loading .message-icon {
+  color: #1890ff;
+}
+
+/* 加载动画 */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: rotate 1.2s linear infinite;
+}
