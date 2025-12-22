@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ChatHeaderOperate from '@/components/ChatHeaderOperate';
 import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
@@ -6,32 +6,45 @@ import Share from '@/components/Share';
 import ArrowDownIcon from '@/assets/arrowDown.svg';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages } from '@/utils/localMessages'
+import { newChat, storageMessages, Message } from '@/utils/localMessages'
 import { baseUrl } from '@/config/api';
 
 import './chat.css';
 
-let controller = null
-let signal = null
+interface SSEData {
+  choices: Array<{
+    delta: {
+      content: string | null;
+      reasoning_content?: string;
+    };
+  }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+  };
+}
+
+let controller: AbortController | null = null
+let signal: AbortSignal | null = null
 function initAbortController() {
   controller = new AbortController();
   signal = controller.signal;
 }
 initAbortController()
 
-const ChatAI = () => {
+const ChatAI: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
   const [isShowShare, setIsShowShare] = useState(false)
-  const [curMsg, setCurMsg] = useState(null)
-  const messagesEndRef = useRef(null);
-  const messagesRef = useRef(null);
-  const [imgRef, setImgRef] = useState(null)
+  const [curMsg, setCurMsg] = useState<Message | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const [imgRef, setImgRef] = useState<React.RefObject<HTMLDivElement> | null>(null)
   const { messages } = useChat()
   const dispatch = useChatDispatch()
 
-  const handleInputChange = (value) => {
+  const handleInputChange = (value: string) => {
     setInputText(value);
   }
 
@@ -44,13 +57,15 @@ const ChatAI = () => {
     dispatch({type: 'getLastMessages'})
     const showSrollBtnHeight = 200
     const messagesRefCurrent = messagesRef.current
-    messagesRefCurrent.addEventListener('scroll', () => {
-      const bottomHeight = messagesRefCurrent.scrollHeight - messagesRefCurrent.scrollTop - messagesRefCurrent.clientHeight
-      setIsShowScrollBtn(bottomHeight >= showSrollBtnHeight)
-    })
+    if (messagesRefCurrent) {
+      messagesRefCurrent.addEventListener('scroll', () => {
+        const bottomHeight = messagesRefCurrent.scrollHeight - messagesRefCurrent.scrollTop - messagesRefCurrent.clientHeight
+        setIsShowScrollBtn(bottomHeight >= showSrollBtnHeight)
+      })
 
-    return () => {
-      messagesRefCurrent.removeEventListener('scroll', () => {})
+      return () => {
+        messagesRefCurrent.removeEventListener('scroll', () => {})
+      }
     }
   }, [])
 
@@ -64,22 +79,24 @@ const ChatAI = () => {
   }, [messages]);
 
 
-  let news = {
+  let news: Message = {
     content: '思考中...',
     reasoning_content: '',
     isBot: true,
-    timestamp: '',
-    isLoading: true
+    timestamp: new Date().toISOString(),
+    isLoading: true,
+    role: 'assistant'
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputText.trim() || isLoading) return;
     // TODO 增加message id取代key
-    const newMessage = {
+    const newMessage: Message = {
       content: inputText,
       role: 'user',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isBot: false
     };
 
     if (messages.length === 0) {
@@ -90,7 +107,7 @@ const ChatAI = () => {
     dispatch({
       type: 'addMessages',
       messages: [newMessage, news]
-    })
+    } as any)
     setInputText('');
     setIsLoading(true);
 
@@ -120,35 +137,38 @@ const ChatAI = () => {
         }),
       });
 
-      const reader = response.body.getReader();
+      const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       news = {
         content: '',
         reasoning_content: '',
         isBot: true,
         timestamp: new Date().toISOString(),
-        usage: null,
-        isLoading: true
+        usage: undefined,
+        isLoading: true,
+        role: 'assistant'
       }
 
       // 持续读取流数据
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          reader.releaseLock();
-          break;
-        } // 流结束
-        // console.log("字节流", value);
-        const chunk = decoder.decode(value);
-        // SSE 事件以双换行分隔
-        const events = chunk.split("\n\n");
-        for (const event of events) {
-          if (event.trim() === "") continue;
-          parseSSEEvent(event);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            reader.releaseLock();
+            break;
+          } // 流结束
+          // console.log("字节流", value);
+          const chunk = decoder.decode(value);
+          // SSE 事件以双换行分隔
+          const events = chunk.split("\n\n");
+          for (const event of events) {
+            if (event.trim() === "") continue;
+            parseSSEEvent(event);
+          }
         }
       }
       storageMessages(news)
-    } catch (error) {
+    } catch (error: any) {
       console.log(error)
       if (error.name === "AbortError") {
         console.log('请求被中断')
@@ -160,7 +180,7 @@ const ChatAI = () => {
             isBot: true,
             isError: true
           }
-        })
+        } as any)
       }
     } finally {
       scrollToBottom()
@@ -168,13 +188,13 @@ const ChatAI = () => {
       // 更新会话列表
       dispatch({
           type: 'getCovList'
-      })
-      localStorage.setItem('isNewCov', false)
+      } as any)
+      localStorage.setItem('isNewCov', 'false')
     }
   };
 
   let flag = false
-  const parseSSEEvent = (event) => {
+  const parseSSEEvent = (event: string) => {
     const lines = event;
     try {
       let str = lines.split(": ")[1]
@@ -187,7 +207,7 @@ const ChatAI = () => {
         })
         return
       }
-      let data = JSON.parse(str);
+      let data: SSEData = JSON.parse(str);
       if (data.usage) {
         news.usage = data.usage
       }
@@ -197,20 +217,20 @@ const ChatAI = () => {
         if (flag) {
           news.content += '\n\n'
         }
-        news.content += data.choices[0].delta.content
+        news.content += data.choices[0].delta.content || ''
         dispatch({
           type: 'addMessages',
           messages: news
-        })
+        } as any)
         flag = false
         // 思考内容
       } else {
         flag = true
-        news.reasoning_content += data.choices[0].delta.reasoning_content
+        news.reasoning_content += data.choices[0].delta.reasoning_content || ''
         dispatch({
           type: 'addMessages',
           messages: news
-        })
+        } as any)
       }
     } catch (error) {
       console.log(error)
@@ -219,7 +239,7 @@ const ChatAI = () => {
 
   const onStopSSE = () => {
     console.log('停止请求')
-    controller.abort();
+    controller?.abort();
     initAbortController()
   }
 
@@ -236,11 +256,10 @@ const ChatAI = () => {
           <ChatHeaderOperate isShowShare={isShowShare} onCancelShare={setIsShowShare} />
           <div className='messages-scollWrap' ref={messagesRef}>
             <div className="messages-wrap">
-              {messages.map((msg, index) => (
+              {messages.map((msg: Message, index: number) => (
                 <MessageItem
                   msg={msg}
                   key={index}
-                  isLoading={isLoading}
                   imgRef={imgRef}
                   index={index}
                   setCurMsg={setCurMsg}
@@ -259,7 +278,7 @@ const ChatAI = () => {
           </div>
 
           {
-            isShowShare && <Share getImgRef={ref => setImgRef(ref)} setIsShowShare={setIsShowShare} curMsg={curMsg}/>
+            isShowShare && <Share getImgRef={(ref: React.RefObject<HTMLElement | null>) => setImgRef(ref as React.RefObject<HTMLDivElement>)} setIsShowShare={setIsShowShare} curMsg={curMsg}/>
           }
 
           <form className="input-area" onSubmit={handleSubmit}>

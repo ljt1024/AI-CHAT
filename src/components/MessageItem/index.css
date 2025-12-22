@@ -29,6 +29,11 @@
     width: 28px;
     height: 28px;
   }
+  
+  .message {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
 }
 
 .bubble-wrap {
@@ -45,6 +50,18 @@
 @media (max-width: 768px) {
   .bubble-wrap {
     max-width: 100%;
+  }
+  
+  .bubble {
+    padding: 10px 14px;
+  }
+  
+  .message.bot .bubble-wrap {
+    margin-right: 0;
+  }
+  
+  .message.user .bubble {
+    margin-left: 0;
   }
 }
 

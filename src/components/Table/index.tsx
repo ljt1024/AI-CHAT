@@ -1,7 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import './index.css';
 
-const Table = ({
+interface TableProps {
+  columns: any[];
+  data: any[];
+  defaultPageSize?: number;
+  defaultSortBy?: string | null;
+  showPagination?: boolean;
+  striped?: boolean;
+  hover?: boolean;
+  bordered?: boolean;
+  responsive?: boolean;
+  className?: string;
+  onRowClick?: ((row: any) => void) | null;
+}
+
+const Table: React.FC<TableProps> = ({
   columns,
   data,
   defaultPageSize = 10,
@@ -16,12 +30,12 @@ const Table = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
-  const [sortBy, setSortBy] = useState(defaultSortBy);
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [filters, setFilters] = useState({});
+  const [sortBy, setSortBy] = useState<string | null>(defaultSortBy);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [filters, setFilters] = useState<Record<string, any>>({});
 
   // 处理排序
-  const handleSort = (columnKey) => {
+  const handleSort = (columnKey: string) => {
     if (sortBy === columnKey) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -31,7 +45,7 @@ const Table = ({
   };
 
   // 处理筛选
-  const handleFilter = (columnKey, value) => {
+  const handleFilter = (columnKey: string, value: any) => {
     setFilters(prev => ({
       ...prev,
       [columnKey]: value
@@ -40,18 +54,18 @@ const Table = ({
   };
 
   // 处理分页变化
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   // 处理每页显示数量变化
-  const handlePageSizeChange = (size) => {
+  const handlePageSizeChange = (size: number) => {
     setPageSize(size);
     setCurrentPage(1);
   };
 
   // 处理行点击
-  const handleRowClick = (row) => {
+  const handleRowClick = (row: any) => {
     if (onRowClick) {
       onRowClick(row);
     }

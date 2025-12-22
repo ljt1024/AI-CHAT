@@ -1,7 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './index.css';
 
-const Popover = ({
+interface PopoverProps {
+  title?: string;
+  content: React.ReactNode;
+  children: React.ReactNode;
+  placement?: 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'left-start' | 'left-end' | 'right' | 'right-start' | 'right-end';
+  trigger?: 'click' | 'hover' | 'focus';
+  className?: string;
+  style?: React.CSSProperties;
+  onVisibleChange?: (visible: boolean) => void;
+  [key: string]: any;
+}
+
+const Popover: React.FC<PopoverProps> = ({
   title,
   content,
   children,
@@ -9,15 +21,13 @@ const Popover = ({
   trigger = 'click',
   className = '',
   style = {},
-  onVisibleChange,
-  ...props
+  onVisibleChange
 }) => {
-  const [visible, setVisible] = useState(false);
-  const [position, setPosition] = useState({})
-  const popoverRef = useRef(null);
-  const triggerRef = useRef(null);
-  const timeoutRef = useRef(null);
-  let positionStyle = {};
+  const [visible, setVisible] = useState<boolean>(false);
+  const [position, setPosition] = useState<{left?: number; top?: number}>({})
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<any>(null);
   // 处理显示/隐藏状态变化
   useEffect(() => {
     if (onVisibleChange) {
@@ -31,12 +41,12 @@ const Popover = ({
 
   // 点击外部区域关闭popover
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         popoverRef.current &&
-        !popoverRef.current.contains(event.target) &&
+        !popoverRef.current.contains(event.target as Node) &&
         triggerRef.current &&
-        !triggerRef.current.contains(event.target)
+        !triggerRef.current.contains(event.target as Node)
       ) {
         setVisible(false);
       }
@@ -51,7 +61,7 @@ const Popover = ({
   }, [visible, trigger]);
 
   // 处理触发事件
-  const handleTrigger = (e) => {
+  const handleTrigger = (e: React.MouseEvent) => {
     if (trigger === 'click') {
       setVisible(!visible);
       e.stopPropagation()
@@ -67,7 +77,11 @@ const Popover = ({
 
   const handleMouseLeave = () => {
     if (trigger === 'hover') {
-      timeoutRef.current = setTimeout(() => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      timeoutRef.current = window.setTimeout(() => {
         setVisible(false);
       }, 200);
     }
@@ -161,7 +175,7 @@ const Popover = ({
   };
 
   // 设置事件处理器
-  const eventHandlers = {};
+  const eventHandlers: React.HTMLAttributes<HTMLDivElement> = {};
   if (trigger === 'click') {
     eventHandlers.onClick = handleTrigger;
   } else if (trigger === 'hover') {
@@ -189,7 +203,7 @@ const Popover = ({
           id="popover-content"
           className={`popover-container popover-${placement} ${className}`}
           style={{ ...position, ...style }}
-          onClick={(e)=> {setVisible(false);e.stopPropagation()}}
+          onClick={(e: React.MouseEvent) => { setVisible(false); e.stopPropagation(); }}
           onMouseEnter={trigger === 'hover' ? handleMouseEnter : undefined}
           onMouseLeave={trigger === 'hover' ? handleMouseLeave : undefined}
           role="tooltip"

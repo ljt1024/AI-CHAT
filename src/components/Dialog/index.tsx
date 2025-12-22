@@ -1,7 +1,25 @@
 import React, { useEffect, useRef } from 'react';
 import './index.css';
 
-const Dialog = ({
+interface DialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  type?: 'alert' | 'confirm';
+  confirmText?: string;
+  cancelText?: string;
+  confirmButtonStyle?: React.CSSProperties;
+  isDisabledConfirm?: boolean;
+  onConfirm?: () => void;
+  showCloseButton?: boolean;
+  closeOnOverlayClick?: boolean;
+  customFooter?: React.ReactNode;
+  size?: 'small' | 'medium' | 'large';
+  className?: string;
+}
+
+const Dialog: React.FC<DialogProps> = ({
   isOpen,
   onClose,
   title = "提示",
@@ -9,8 +27,8 @@ const Dialog = ({
   type = "alert",
   confirmText = "确定",
   cancelText = "取消",
-  confirmButtonStyle={},
-  isDisabledConfirm=false,
+  confirmButtonStyle = {},
+  isDisabledConfirm = false,
   onConfirm,
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -18,11 +36,11 @@ const Dialog = ({
   size = "medium",
   className = "",
 }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   
   // 处理ESC键关闭
   useEffect(() => {
-    const handleEscKey = (event) => {
+    const handleEscKey = (event: KeyboardEvent) => {
       if (event.keyCode === 27 && isOpen) {
         onClose();
       }
@@ -35,7 +53,7 @@ const Dialog = ({
   }, [isOpen, onClose]);
   
   // 点击遮罩层关闭
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }

@@ -1,15 +1,29 @@
 // 全局图标注册表
-const iconRegistry = {};
+const iconRegistry: Record<string, React.ComponentType<any>> = {};
 
 /**
  * 注册全局图标 (通过名称引用)
  * @param icons 图标名称到组件的映射
  */
-export function registerIcons(icons) {
+export function registerIcons(icons: Record<string, React.ComponentType<any>>) {
   Object.assign(iconRegistry, icons);
 }
 
-const Icon = ({
+interface IconProps {
+  sourceType: 'svg' | 'font' | 'img';
+  source: string | React.ComponentType<any>;
+  size?: string | number;
+  color?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  rotate?: number;
+  spin?: boolean;
+  title?: string;
+  onClick?: () => void;
+  isPoint?: boolean;
+}
+
+const Icon: React.FC<IconProps> = ({
   sourceType,
   source,
   size = '1em',
@@ -58,7 +72,7 @@ const Icon = ({
       case 'img':
         return (
           <img 
-            src={source} 
+            src={source as string} 
             alt={title || 'icon'} 
             className={finalClassName} 
             style={combinedStyle}

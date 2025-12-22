@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, RefObject, Dispatch, SetStateAction } from 'react';
 import MarkdownContent from '../MarkDownContent';
 import Tooltip from '../Tooltip';
 import Icon from '../Icon';
@@ -9,13 +9,23 @@ import FoldArrowIcon from '../../assets/foldArrow.png';
 import { debounce } from '../../utils';
 import { useCopy } from '../../hooks/useCopy';
 import { useMessagePop } from '../MessagePop';
+import { Message as MessageType } from '../../utils/localMessages';
 
 import './index.css'
 
-const MessageItem = ({ msg, index, imgRef = null, setIsShowShare, currentShareMessage, setCurMsg }) => {
+interface MessageItemProps {
+  msg: MessageType;
+  index: number;
+  imgRef?: RefObject<HTMLDivElement> | null;
+  setIsShowShare: (show: boolean) => void;
+  currentShareMessage?: any;
+  setCurMsg: Dispatch<SetStateAction<MessageType | null>>;
+}
+
+const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, setIsShowShare, currentShareMessage: _currentShareMessage, setCurMsg }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentShare, setCurrentShare] = useState(-1)
-  const contentRef = useRef(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const { handleCopy } = useCopy()
   const messagePop = useMessagePop()
 
@@ -42,7 +52,7 @@ const MessageItem = ({ msg, index, imgRef = null, setIsShowShare, currentShareMe
   }
 
   const onCopy = () => {
-    handleCopy(msg.content, ()=> {
+    handleCopy(msg.content || '', ()=> {
         messagePop.success('复制成功')
     })
   }
@@ -74,11 +84,11 @@ const MessageItem = ({ msg, index, imgRef = null, setIsShowShare, currentShareMe
             {
               msg.isBot ? <>
                 <blockquote>
-                  <MarkdownContent msg={msg.reasoning_content} />
+                  <MarkdownContent msg={msg.reasoning_content || ''} />
                 </blockquote>
-                <MarkdownContent msg={msg.content} />
+                <MarkdownContent msg={msg.content || ''} />
               </>
-                : msg.content
+                : msg.content || ''
             }
           </div>
 
@@ -107,12 +117,8 @@ const MessageItem = ({ msg, index, imgRef = null, setIsShowShare, currentShareMe
             </div>
             {msg.isBot && !msg.isLoading &&
               <svg
-                t="1750060163084"
                 className='share'
                 viewBox="0 0 1024 1024"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                p-id="11681"
                 width="24"
                 height="24"
                 onClick={onShare}

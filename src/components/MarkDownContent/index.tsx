@@ -26,8 +26,16 @@ hljs.registerLanguage('mermaid', ()=> {
     }
 })
 
+interface CodeBlockProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any;
+}
+
 // 自定义代码块渲染
-const codeBlockRenderer = React.memo(({ node, inline, className, children, ...props }) => {
+const codeBlockRenderer = React.memo(({ node, inline, className, children, ...props }: CodeBlockProps) => {
     const [isCopy, setIsCopy] = useState(false);
     const match = /language-(\w+)/.exec(className || '');
     // console.log(children)
@@ -54,15 +62,15 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
     }
     let codeHTML = ''
     try {
-        codeHTML = hljs.highlight(children, { language }).value;
-    } catch (error) {
+        codeHTML = hljs.highlight(String(children), { language }).value;
+    } catch (error: any) {
         // 插件中找不到对应的语言。默认使用plaintext
         // codeHTML = hljs.highlight(children, { language: 'plaintext' }).value;
         // console.log(hljs.listLanguages())
         const regex = /Error: Unknown language\b/;
         const match = error.toString().match(regex);
         if (match) {
-            codeHTML = hljs.highlight(children, { language: 'plaintext' }).value;
+            codeHTML = hljs.highlight(String(children), { language: 'plaintext' }).value;
         }
         console.log(error, 'error')
     }
@@ -72,7 +80,7 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
         // https 和 本地支持
         if (navigator.clipboard) {
             navigator.clipboard
-                .writeText(children)
+                .writeText(String(children))
                 .then(() => {
                     console.log('已复制到剪贴板！');
                     setIsCopy(true)
@@ -85,7 +93,7 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
                 });
         } else {
             const textArea = document.createElement("textarea");
-            textArea.value = children;
+            textArea.value = String(children);
             document.body.appendChild(textArea);
             textArea.select();
 
@@ -121,7 +129,11 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
     );
 });
 
-const MarkdownContent = React.memo(({ msg }) => {
+interface MarkdownContentProps {
+  msg: string;
+}
+
+const MarkdownContent = React.memo(({ msg }: MarkdownContentProps) => {
    
     return (
         <ReactMarkdown

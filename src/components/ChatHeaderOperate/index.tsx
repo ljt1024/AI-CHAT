@@ -1,7 +1,13 @@
+import React from 'react'
 import ThemeSwitcher from "../ThemeSwitcher"
 import './index.css'
 
-const ChatHeaderOperate = (props) => {
+interface ChatHeaderOperateProps {
+  isShowShare: boolean;
+  onCancelShare: (showShare: boolean) => void;
+}
+
+const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
     const { isShowShare, onCancelShare } = props
     return (
         <div className="chatHeaderOperate">

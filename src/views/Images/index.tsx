@@ -1,9 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// 接口定义
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  width?: string;
+  height?: string;
+  placeholder?: string;
+  threshold?: number;
+  className?: string;
+  [key: string]: any;
+}
+
 // 自定义Hook：检测元素是否进入视口
 const useIntersectionObserver = (options = {}) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const element = ref.current;
@@ -23,11 +35,11 @@ const useIntersectionObserver = (options = {}) => {
     };
   }, [options]);
   
-  return [ref, isIntersecting];
+  return [ref as React.RefObject<HTMLDivElement>, isIntersecting] as const;
 };
 
 // 懒加载图片组件
-const LazyImage = ({
+const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
   width = '100%',

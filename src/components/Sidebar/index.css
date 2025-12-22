@@ -18,6 +18,27 @@
     right: -18px; 
 }
 
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 260px;
+        height: 100dvh;
+        position: absolute;
+        z-index: 100;
+        transform: translateX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .hiddenSideBar {
+        transform: translateX(-100%);
+    }
+    
+    .hiddenSideBar .fold-icon {
+        transform: rotate(0deg);
+        right: -18px;
+    }
+}
+
 .sideContent {
     height: 100%;
     display: flex;
@@ -66,9 +87,9 @@
    overflow-y: auto;
    overflow-x: hidden;
    position: relative;
-   padding-right: 200px;
+   /* padding-right: 200px; */
    box-sizing: content-box;
-   margin-right: -200px;
+   /* margin-right: -200px; */
 }
 /* 去除默认滚动条 */
 .covList::-webkit-scrollbar {
@@ -185,4 +206,25 @@
 .deleteTip {
     color: #000000;
     font-size: 14px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 260px;
+        height: 100dvh;
+        position: absolute;
+        z-index: 100;
+        transform: translateX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .hiddenSideBar {
+        transform: translateX(-100%);
+    }
+    
+    .hiddenSideBar .fold-icon {
+        transform: rotate(0deg);
+        right: -18px;
+    }
 }

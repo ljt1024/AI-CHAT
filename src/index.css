@@ -18,6 +18,17 @@ ol, li {
   list-style: revert;
 }
 
+/* 移动端适配基础样式 */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  * {
+    -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
+  }
+}
+
 
 
 /* ::-webkit-scrollbar-track {

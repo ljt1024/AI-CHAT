@@ -137,10 +137,38 @@
   background-color: #eaeaea;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .dialog.small {
+    width: 90%;
+    max-width: 360px;
+  }
+  
+  .dialog.medium {
+    width: 90%;
+    max-width: 450px;
+  }
+  
+  .dialog.large {
+    width: 90%;
+    max-width: 550px;
+  }
+  
+  .dialog-header,
+  .dialog-content,
+  .dialog-footer {
+    padding: 16px;
+  }
+  
+  .dialog-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
   .dialog {
-    width: 90% !important;
-    margin: 20px;
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 10px;
   }
   
   .dialog-header,

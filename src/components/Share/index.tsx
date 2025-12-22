@@ -2,26 +2,34 @@ import { useScreenshot } from '../../hooks/useScreenshot';
 import { useEffect } from 'react';
 import PictuerIcon from '../../assets/pictuer.png'
 import TextCopyIcon from '@/assets/TextCopy.png'
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
+import { Message } from '../../utils/localMessages';
 
 import './index.css'
 
-const Share = ({ getImgRef, setIsShowShare, curMsg }) => {
+interface ShareProps {
+    getImgRef: (ref: React.RefObject<HTMLElement | null>) => void;
+    setIsShowShare: (show: boolean) => void;
+    curMsg: Message | null;
+}
+
+const Share: React.FC<ShareProps> = ({ getImgRef, setIsShowShare, curMsg }) => {
     const {
         imgRef,
         image,
         isImgLoading,
-        error,
+        error: _error,
         takeScreenshot,
         download,
         reset
     } = useScreenshot({
         scale: 3, // 3倍高清
         type: 'image/jpeg',
-        quality: 0.9
+        quality: 0.9,
+        backgroundColor: null
     });
 
-    const navigate = useNavigate()
+    // const navigate = useNavigate()
 
     useEffect(() => {
         getImgRef(imgRef)
@@ -34,7 +42,7 @@ const Share = ({ getImgRef, setIsShowShare, curMsg }) => {
 
     const onTakeScreenshot = () => {
         if (isImgLoading) return
-        takeScreenshot()
+        takeScreenshot(null)
     }
 
     const onGenerateLink = ()=> {

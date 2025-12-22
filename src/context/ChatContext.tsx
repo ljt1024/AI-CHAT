@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, ReactNode } from "react";
 import { 
     getLastMessages, 
     getCovIdList, 
@@ -8,14 +8,31 @@ import {
     storageImportMessages,
     getSelectId,
     getMessageByCovId,
-    delAllMessages 
+    delAllMessages,
+    Message,
+    Conversation,
+    CovIdListItem
 } from "@/utils/localMessages"
 
-const ChatContext = createContext(null)
+// 类型定义
+interface ChatData {
+    covList: CovIdListItem[];
+    messages: Message[];
+}
 
-const ChatDispatchContext = createContext(null)
+interface ChatAction {
+    type: string;
+    messages?: Message | Message[];
+    item?: { title: string; id: string };
+    id?: string;
+    data?: any;
+}
 
-export const ChatProvider = ({ children }) => {
+const ChatContext = createContext<ChatData | null>(null)
+
+const ChatDispatchContext = createContext<React.Dispatch<ChatAction> | null>(null)
+
+export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [chatData, dispatch] = useReducer(chatReducer, initialChatData)
 
     return (
@@ -48,7 +65,7 @@ const initialChatData = {
     messages: []
 }
 
-const chatReducer = (chatData, action) => {
+const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
     switch (action.type) {
         // 获取历史消息
         case 'getLastMessages': {
@@ -69,12 +86,15 @@ const chatReducer = (chatData, action) => {
                     messages: [...preMessages, ...messages]
                 }
             }
-            // 只修改最后一条message
-            preMessages[preMessages.length - 1] = messages
-            return {
-                ...chatData,
-                messages: preMessages
+            if (messages) {
+                // 只修改最后一条message
+                preMessages[preMessages.length - 1] = messages
+                return {
+                    ...chatData,
+                    messages: preMessages
+                }
             }
+            return chatData;
         }
         // 获取会话列表
         case 'getCovList': {
@@ -93,7 +113,8 @@ const chatReducer = (chatData, action) => {
         }
         // 修改会话title
         case 'editCovTitle': {
-            const { title, id } = action.item
+            const { title, id } = action.item || {}
+            if (!title || !id) return chatData;
             const preCovList = [...chatData.covList]
             return {
                 ...chatData,
@@ -113,9 +134,10 @@ const chatReducer = (chatData, action) => {
         // 置顶会话
         case 'top': {
             const id = action.id
+            if (!id) return chatData;
             const preCovList = [...chatData.covList]
-            let newCovList = []
-            let curCov = null
+            let newCovList: CovIdListItem[] = []
+            let curCov: CovIdListItem | null = null
             storageMessagesTop(id)
             preCovList.map(item => {
                 if (item.id === id) {
@@ -130,7 +152,9 @@ const chatReducer = (chatData, action) => {
                     })
                 }
             })
-            newCovList.push(curCov)
+            if (curCov) {
+                newCovList.push(curCov)
+            }
             return {
                 ...chatData,
                 covList: newCovList
@@ -139,8 +163,9 @@ const chatReducer = (chatData, action) => {
         // 删除某个会话
         case 'delete': {
             const { id } = action
+            if (!id) return chatData;
             const preCovList = [...chatData.covList]
-            let newCovList = []
+            let newCovList: CovIdListItem[] = []
             preCovList.map(item => {
                 if (item.id !== id) {
                     newCovList.push(item)
@@ -167,15 +192,20 @@ const chatReducer = (chatData, action) => {
             const { data } = action
             const result = storageImportMessages(data)
             const selectId = getSelectId()
+            const covList = result.map((item: Conversation) => {
+                return {
+                    id: item.covId,
+                    title: item.covTitle || item.data[0]?.content || '',
+                    isTop: item.isTop || false,
+                    messageLen: item.data.length,
+                    createTime: item.data[0]?.timestamp,
+                    latestTime: item.data[item.data.length - 1]?.timestamp
+                }
+            })
+            const curMessage = selectId ? getMessageByCovId(selectId).curMessage : null
             return {
-                covList: result.map(item=>{
-                    return {
-                        covId: item.covId,
-                        isTop: item.isTop,
-                        title: item.title
-                    }
-                }),
-                messages: selectId ? getMessageByCovId(selectId).curMessage : []
+                covList,
+                messages: curMessage?.data || []
             }
         }
         default: {

@@ -1,11 +1,11 @@
 export const debounce = (
-  func,
-  delay,
+  func: (...args: any[]) => void,
+  delay: number,
   immediate = true
 ) => {
-  let timeoutId = null;
+  let timeoutId: NodeJS.Timeout | null = null;
 
-  return (...args) => {
+  return (...args: any[]) => {
     const later = () => {
       timeoutId = null;
       if (!immediate) func(...args);
@@ -27,8 +27,8 @@ export const debounce = (
 
 
 // 导出json
-export function exportJson(data, filename) {
-  return new Promise((resolve, reject) => {
+export function exportJson(data: any, filename: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     try {
       // 将数据转换为JSON字符串
       const jsonString = JSON.stringify(data, null, 2); // 使用2个空格进行缩进，使输出更易读
@@ -56,7 +56,7 @@ export function exportJson(data, filename) {
 }
 
 // 合并两个数组, 数组中有相同的id, b数组覆盖a数组中相同id的项
-export function mergeArrays(a, b) {
+export function mergeArrays(a: any[], b: any[]): any[] {
   if (!Array.isArray(b)) {
     throw new Error('非法的导入格式')
   }

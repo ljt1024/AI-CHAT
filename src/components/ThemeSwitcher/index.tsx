@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import lightIcon from '../../assets/light.png'
 import darkIcon from '../../assets/dark.png'
 import './index.css'
 
 const ThemeSwitcher = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [currentTheme, setCurrentTheme] = useState('light');
-    const dropdownRef = useRef(null);
+    const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const themes = [
         {
@@ -38,9 +37,9 @@ const ThemeSwitcher = () => {
 
     // 点击外部关闭下拉菜单
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                // setIsOpen(false);
             }
         };
 
@@ -51,7 +50,7 @@ const ThemeSwitcher = () => {
     }, []);
 
     // 应用主题
-    const applyTheme = (theme) => {
+    const applyTheme = (theme: 'light' | 'dark') => {
         const root = document.documentElement;
         // const colors = themes.find(t => t.id === theme)?.colors;
         // 移除现有主题类
@@ -71,7 +70,7 @@ const ThemeSwitcher = () => {
         // }
 
         setCurrentTheme(theme);
-        setIsOpen(false);
+        // setIsOpen(false);
 
         // 保存主题到本地存储
         localStorage.setItem('theme', theme);
@@ -79,7 +78,7 @@ const ThemeSwitcher = () => {
 
     // 初始化主题
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
         applyTheme(savedTheme);
     }, []);
 

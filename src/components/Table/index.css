@@ -144,4 +144,36 @@
   .custom-table td {
     padding: 8px;
   }
+  
+  .table-container {
+    margin: 12px 0;
+  }
+  
+  .custom-table th {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+  
+  .custom-table td {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-container {
+    padding: 8px 4px;
+  }
+  
+  .custom-table th,
+  .custom-table td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }

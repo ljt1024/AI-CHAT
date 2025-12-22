@@ -10,3 +10,14 @@
     font-size: 14px;
     font-weight: bold;
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .chatHeaderOperate {
+        padding: 8px 12px;
+    }
+    
+    .modelName {
+        font-size: 13px;
+    }
+}

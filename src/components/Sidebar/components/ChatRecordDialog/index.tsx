@@ -7,20 +7,24 @@ import RenameIcon from "@/assets/icons/rename.svg?react"
 import Icon from "@/components/Icon"
 import JsonUploader from '@/components/JsonUploader'
 import { exportJson } from "@/utils"
-import { getLoclMessages, getCovIdList } from "@/utils/localMessages"
+import { getLoclMessages, getCovIdList, CovIdListItem, Conversation } from "@/utils/localMessages"
 import EditTitDialog from "../EditTitDialog"
 import DeleteDialog from '../DeleteDialog'
 
 import './index.css'
 
-const ChatRecordDialog = (props) => {
-    const { isShowRecordDialog, setIsShowRecordDialog } = props
+interface ChatRecordDialogProps {
+    isShowRecordDialog: boolean;
+    setIsShowRecordDialog: (show: boolean) => void;
+}
+
+const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog, setIsShowRecordDialog }) => {
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowUploader, setIsShowUploader] = useState(false)
-    const [covItem, setCovItem] = useState(null)
-    const [importData, setImportData] = useState([])
-    const [importChat, setImportChat] = useState([])
+    const [covItem, setCovItem] = useState<CovIdListItem | null>(null)
+    const [importData, setImportData] = useState<CovIdListItem[]>([])
+    const [importChat, setImportChat] = useState<Conversation[]>([])
     const [delType, setDelType] = useState(0) // 0 删除单个, 1全部删除
     const { covList } = useChat()
     const dispatch = useChatDispatch()
@@ -40,12 +44,12 @@ const ChatRecordDialog = (props) => {
        onCloseUploader()
     }
 
-    const handleEdit = (item) => {
+    const handleEdit = (item: CovIdListItem) => {
         setIsConfirmDialogOpen(true)
         setCovItem(item)
     }
 
-    const handleDelete = (item) => {
+    const handleDelete = (item: CovIdListItem) => {
         setIsShowDeleteDialog(true)
         setCovItem(item)
         setDelType(0)
@@ -64,7 +68,7 @@ const ChatRecordDialog = (props) => {
         })
     }
 
-    const handleJsonUpload = (jsonData, filename) => {
+    const handleJsonUpload = (jsonData: Conversation[], filename: string) => {
         console.log('上传的JSON数据:', jsonData);
         console.log('文件名:', filename);
         const initCovList = getCovIdList(jsonData)
@@ -89,7 +93,7 @@ const ChatRecordDialog = (props) => {
             key: 'id',
             title: 'ID',
             width: '240px',
-            render: (value, row) => (
+            render: (_: any, row: CovIdListItem) => (
                 <div className='idWrap'>
                     <div>{row.id}</div>
                     {
@@ -106,14 +110,14 @@ const ChatRecordDialog = (props) => {
         {
             key: 'createTime',
             title: '创建时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
         {
             key: 'latestTime',
             title: '最新对话时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
@@ -124,7 +128,7 @@ const ChatRecordDialog = (props) => {
         {
             key: 'operate',
             title: '操作',
-            render: (_, column) => (
+            render: (_: any, column: CovIdListItem) => (
                 <div>
                     <Icon
                         sourceType="svg"
@@ -159,14 +163,14 @@ const ChatRecordDialog = (props) => {
         {
             key: 'createTime',
             title: '创建时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
         {
             key: 'latestTime',
             title: '最新对话时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
@@ -259,7 +263,7 @@ const ChatRecordDialog = (props) => {
                 }
             </Dialog>
             {
-                isConfirmDialogOpen && <EditTitDialog
+                isConfirmDialogOpen && covItem && <EditTitDialog
                     isConfirmDialogOpen={isConfirmDialogOpen}
                     setIsConfirmDialogOpen={setIsConfirmDialogOpen}
                     covItem={covItem}

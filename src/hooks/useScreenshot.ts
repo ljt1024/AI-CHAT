@@ -1,5 +1,5 @@
 // hooks/useScreenshot.ts
-import { useState, useRef } from 'react';
+import { useState, useRef, RefObject } from 'react';
 import html2canvas from 'html2canvas';
 import dompurify from 'dompurify';
 
@@ -13,12 +13,12 @@ const defaultOptions = {
 export const useScreenshot = (
     options = defaultOptions
 ) => {
-    const [image, setImage] = useState(null);
+    const [image, setImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const ref = useRef(null);
+    const [error, setError] = useState<string | null>(null);
+    const ref = useRef<HTMLElement | null>(null);
 
-    const takeScreenshot = async (element) => {
+    const takeScreenshot = async (element: RefObject<HTMLElement> | null) => {
 
         const target = element?.current || ref.current;
         console.log(target, ref)

@@ -7,6 +7,36 @@
   overflow: hidden;
 }
 
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .chat-container {
+    height: 100dvh; /* 使用动态视口单位 */
+    overflow: hidden;
+  }
+  
+  /* 移动端菜单按钮 */
+  .mobile-menu-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 101;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .mobile-menu-btn {
+    display: flex;
+  }
+}
+
 .messages-content {
   flex: 1;
   display: flex;
@@ -28,6 +58,14 @@
   scroll-behavior: smooth; */
   max-width: 1508px;
   margin: 0 auto;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .messages-wrap {
+    padding: 12px 16px;
+    max-width: 100%;
+  }
 }
 
 /* 加载动画 */
@@ -102,6 +140,25 @@
   background: var(--primary-color);
   cursor: pointer;
   transition: transform 0.2s;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .input-area {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .input-area input {
+    font-size: 16px; /* 防止iOS缩放 */
+    padding: 10px 14px;
+  }
+  
+  .input-area button {
+    width: 56px;
+    height: 44px;
+    font-size: 14px;
+  }
 }
 
 button:hover {
@@ -344,6 +401,22 @@ ul li a {
   .previewContent .previewHandle button {
     font-size: 14px;
     width: 80px;
+  }
+  
+  /* 侧边栏遮罩层 */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    display: none;
+  }
+  
+  .sidebar-overlay.show {
+    display: block;
   }
 }
 

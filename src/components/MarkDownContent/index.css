@@ -12,3 +12,11 @@
    text-wrap: auto;
    word-break: break-word;
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .codeWrap {
+        font-size: 14px;
+        padding: 8px;
+    }
+}

@@ -3,7 +3,7 @@ import { useState } from "react";
 export const useCopy = () => {
     const [isCopy, setIsCopy] = useState(false)
 
-    const handleCopy = (children, callback) => {
+    const handleCopy = (children: string, callback: () => void) => {
         if (!children) {
             throw new Error('没有复制内容')
         }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 
 import Tooltip from "../Tooltip"
 import Popover from "../Popover"
@@ -15,15 +15,20 @@ import DeleteDialog from "./components/DeleteDialog"
 
 import Icon from "../Icon"
 import { useChat, useChatDispatch } from "@/context/ChatContext"
-import { getSelectId, storageSelectId } from "@/utils/localMessages"
+import { getSelectId, storageSelectId, CovIdListItem } from "@/utils/localMessages"
 
 import './index.css'
 
-const Conversation = ({ isShowSidebar, isLoading }) => {
+interface ConversationProps {
+  isShowSidebar: boolean;
+  isLoading: boolean;
+}
+
+const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading }) => {
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowRecordDialog, setIsShowRecordDialog] = useState(false)
-    const [curCov, setCurCov] = useState(null)
+    const [curCov, setCurCov] = useState<CovIdListItem | null>(null)
     const { covList } = useChat()
     const dispatch = useChatDispatch()
 
@@ -36,16 +41,16 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
     // 新开会话
     const onNewCov = () => {
         if (isLoading) return
-        localStorage.setItem('isNewCov', true)
+        localStorage.setItem('isNewCov', 'true')
         dispatch({
             type: 'clearMessages'
         })
     }
 
     // 切换会话
-    const onSelectCov = (id) => {
+    const onSelectCov = (id: string) => {
         if (isLoading) return
-        localStorage.setItem('isNewCov', false)
+        localStorage.setItem('isNewCov', 'false')
         storageSelectId(id)
         dispatch({
             type: 'getLastMessages'
@@ -58,13 +63,13 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
     }
 
     // 重命名
-    const onRename = (item) => {
+    const onRename = (item: CovIdListItem) => {
         setCurCov(item)
         setIsConfirmDialogOpen(true)
     }
 
     // 置顶取消置顶
-    const onSetTop = (item) => {
+    const onSetTop = (item: CovIdListItem) => {
         const { id } = item
         dispatch({
             type: 'top',
@@ -72,7 +77,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
         })
     }
 
-    const onDeleteHandle = (item) => {
+    const onDeleteHandle = (item: CovIdListItem) => {
         setCurCov(item)
         setIsShowDeleteDialog(true)
     }
@@ -101,7 +106,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                             onClick={() => setIsShowRecordDialog(true)}
                         />
                     </div>
-                    <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading && 'no-drop' }}>
+                    <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}>
                         新开对话
                     </div>
                 </div>
@@ -115,7 +120,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                 className={item.id === getSelectId() && !getIsNewCov() ? 'curCov covItem' : 'covItem'}
                                 key={item.id}
                                 onClick={() => { onSelectCov(item.id) }}
-                                style={{ cursor: isLoading && 'no-drop' }}
+                                style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}
                             >
                                 <span className="covName">{item.title}</span>
                                 <Popover
@@ -173,7 +178,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                 isConfirmDialogOpen && <EditTitDialog
                     isConfirmDialogOpen={isConfirmDialogOpen}
                     setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-                    covItem={curCov}
+                    covItem={curCov as CovIdListItem}
                 />
             }
             {
@@ -192,8 +197,12 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
 }
 
 
-const Sidebar = ({ isLoading }) => {
-    const [isShowSidebar, setIsShowSidebar] = useState(true)
+interface SidebarProps {
+  isLoading: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
+    const [isShowSidebar, setIsShowSidebar] = useState<boolean>(true)
     const onShowSidebar = () => {
         setIsShowSidebar((value) => !value)
     }
