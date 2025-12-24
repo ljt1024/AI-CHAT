@@ -169,7 +169,7 @@ interface MessagePopProviderProps {
 // 消息提供者组件
 const MessagePopProvider: React.FC<MessagePopProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const position = 'top-center';
+  const position = 'topCenter';
   const maxCount = 5;
   
   // 添加消息

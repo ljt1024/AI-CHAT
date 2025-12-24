@@ -171,9 +171,9 @@ const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
                     newCovList.push(item)
                 }
             })
-            storageMessagesDelete(id)
-            // 如果删除的是当前选中的需要清空当前的message
             const selectId = getSelectId()
+            // 如果删除的是当前选中的需要清空当前的message
+            storageMessagesDelete(id)
             return {
                 covList: newCovList,
                 messages: selectId === id ? [] : chatData.messages

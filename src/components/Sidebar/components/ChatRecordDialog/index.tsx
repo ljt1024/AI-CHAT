@@ -110,6 +110,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
         {
             key: 'createTime',
             title: '创建时间',
+            width: '180px',
             render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
@@ -117,6 +118,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
         {
             key: 'latestTime',
             title: '最新对话时间',
+            width: '180px',
             render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
@@ -124,10 +126,12 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
         {
             key: 'messageLen',
             title: '对话条数',
+            width: '80px',
         },
         {
             key: 'operate',
             title: '操作',
+            width: '80px',
             render: (_: any, column: CovIdListItem) => (
                 <div>
                     <Icon
@@ -202,29 +206,31 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
     ]
 
     return (
-        <Dialog
-            isOpen={isShowRecordDialog}
-            onClose={() => setIsShowRecordDialog(false)}
-            title="对话记录"
-            type="confirm"
-            size="large"
-            className='reacordDialog'
-            onConfirm={handleRecordConfirm}
-        >
-            <div className='globalHandle'>
-                <button onClick={() => { exportChat() }}>导出</button>
-                <button onClick={() => { setIsShowUploader(true) }}>导入</button>
-                <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>删除全部会话</button>
-            </div>
-            <Table
-                columns={columns}
-                data={[...covList].reverse()}
-                defaultPageSize={1000}
-                striped={true}
-                hover={true}
-                bordered={false}
-                showPagination={false}
-            />
+        <>
+            <Dialog
+                isOpen={isShowRecordDialog}
+                onClose={() => setIsShowRecordDialog(false)}
+                title="对话记录"
+                type="confirm"
+                size="large"
+                className='reacordDialog'
+                onConfirm={handleRecordConfirm}
+            >
+                <div className='globalHandle'>
+                    <button onClick={() => { exportChat() }}>导出</button>
+                    <button onClick={() => { setIsShowUploader(true) }}>导入</button>
+                    <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>删除全部会话</button>
+                </div>
+                <Table
+                    columns={columns}
+                    data={[...covList].reverse()}
+                    defaultPageSize={1000}
+                    striped={true}
+                    hover={true}
+                    bordered={false}
+                    showPagination={false}
+                />
+            </Dialog>
 
             <Dialog
                 isOpen={isShowUploader}
@@ -277,7 +283,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
                     type={delType}
                 />
             }
-        </Dialog>
+        </>
     )
 }
 

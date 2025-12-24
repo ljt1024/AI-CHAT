@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './index.css';
 
 interface PopoverProps {
@@ -140,8 +141,7 @@ const Popover: React.FC<PopoverProps> = ({
         left = triggerRect.left + scrollX - popoverRect.width - 10;
         break;
       case 'right':
-        console.log(triggerRect)
-        // top = triggerRect.top + triggerRect.y + (triggerRect.height - popoverRect.height) / 2;
+        top = triggerRect.top + scrollY + (triggerRect.height - popoverRect.height) / 2;
         left = triggerRect.right + scrollX + 10;
         break;
       case 'right-start':
@@ -171,7 +171,7 @@ const Popover: React.FC<PopoverProps> = ({
       top = viewportHeight + scrollY - popoverRect.height - 10;
     }
 
-    setPosition({left})
+    setPosition({top, left})
   };
 
   // 设置事件处理器
@@ -197,7 +197,7 @@ const Popover: React.FC<PopoverProps> = ({
         {children}
       </div>
 
-      {visible && (
+      {visible && createPortal(
         <div
           ref={popoverRef}
           id="popover-content"
@@ -213,7 +213,8 @@ const Popover: React.FC<PopoverProps> = ({
             {title && <div className="popover-title">{title}</div>}
             <div className="popover-content">{content}</div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

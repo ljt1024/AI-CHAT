@@ -5,6 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -165,10 +166,18 @@
 }
 
 @media (max-width: 480px) {
+  .dialog-overlay {
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
   .dialog {
-    width: 95% !important;
-    max-width: 95% !important;
-    margin: 10px;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    height: 80%;
+    /* max-height: calc(100vh - 20px); */
+    align-self: center;
   }
   
   .dialog-header,

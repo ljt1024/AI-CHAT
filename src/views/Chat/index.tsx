@@ -3,11 +3,11 @@ import ChatHeaderOperate from '@/components/ChatHeaderOperate';
 import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
 import Share from '@/components/Share';
+import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
 import { newChat, storageMessages, Message } from '@/utils/localMessages'
-import { baseUrl } from '@/config/api';
 
 import './chat.css';
 
@@ -112,7 +112,7 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(baseUrl, {
+      const response = await fetch((import.meta as any).env.VITE_CHAT_BASE_URL, {
         signal,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
@@ -281,25 +281,13 @@ const ChatAI: React.FC = () => {
             isShowShare && <Share getImgRef={(ref: React.RefObject<HTMLElement | null>) => setImgRef(ref as React.RefObject<HTMLDivElement>)} setIsShowShare={setIsShowShare} curMsg={curMsg}/>
           }
 
-          <form className="input-area" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="输入你的问题..."
-              disabled={isLoading}
-            />
-            {
-              !isLoading ?
-                <button type="submit" disabled={isLoading}>
-                  发送
-                </button>
-                :
-                <button className='stop-btn' onClick={onStopSSE}>
-                  停止
-                </button>
-            }
-          </form>
+          <ChatInputControl
+            inputText={inputText}
+            isLoading={isLoading}
+            onInputChange={handleInputChange}
+            onSubmit={handleSubmit}
+            onStopSSE={onStopSSE}
+          />
 
           {isShowScrollBtn &&
             <div className="chatScrollBottom" onClick={() => {

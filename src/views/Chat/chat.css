@@ -104,62 +104,6 @@
   }
 }
 
-/* 输入区域 */
-.input-area {
-  display: flex;
-  gap: 12px;
-  padding: 20px;
-  border-top: 1px solid var(--border-color);
-}
-
-.input-area input {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 24px;
-  background: var(--input-bg);
-  color: var(--text-color);
-  font-size: 16px;
-}
-
-.input-area input:focus {
-  border: 1px solid var(--primary-color);
-}
-
-.input-area input:focus-visible {
-  outline: 0;
-}
-
-.input-area button {
-  font-size: 14px;
-  width: 64px;
-  height: 48px;
-  border: none;
-  color: #fff;
-  border-radius: 8px;
-  background: var(--primary-color);
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .input-area {
-    padding: 12px;
-    gap: 8px;
-  }
-  
-  .input-area input {
-    font-size: 16px; /* 防止iOS缩放 */
-    padding: 10px 14px;
-  }
-  
-  .input-area button {
-    width: 56px;
-    height: 44px;
-    font-size: 14px;
-  }
-}
 
 button:hover {
   transform: scale(1.05);
@@ -266,7 +210,7 @@ blockquote {
   position: absolute;
   right: 0;
   left: 0;
-  bottom: 120px;
+  bottom: 160px;
   height: 30px;
   width: 30px;
   text-align: center;

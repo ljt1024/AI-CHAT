@@ -1,0 +1,174 @@
+/* 输入区域 */
+.input-area {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  display: flex;
+  justify-content: center;
+}
+
+.input-container {
+  max-width: 1020px;  
+  width: 100%;
+  position: relative;
+  background-color: var(--bg-color);
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  /* gap: 12px; */
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.send-button-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.send-button-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.input-send {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 24px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+  margin-right: 0;
+}
+
+.input-left {
+  display: flex;
+  align-items: center;
+}
+
+.input-settings {
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.input-settings:hover {
+  opacity: 1;
+}
+
+.input-center {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+
+.input-center input,
+.input-center textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 16px;
+  padding: 0;
+  outline: none;
+  font-family: inherit;
+  resize: none;
+  min-height: 60px;
+}
+
+.input-center input::placeholder,
+.input-center textarea::placeholder {
+  color: var(--text-color);
+  opacity: 0.5;
+  font-size: 16px;
+}
+
+.input-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.input-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 14px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.input-dropdown:hover {
+  opacity: 1;
+}
+
+.input-attach,
+.input-cube {
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.input-attach:hover,
+.input-cube:hover {
+  opacity: 1;
+}
+
+.input-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.input-send:hover {
+  background: #5A5A5A;
+  transform: scale(1.05);
+}
+
+.stop-btn {
+  background: var(--danger-color) !important;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .input-area {
+    padding: 12px;
+  }
+  
+  .input-wrapper {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  
+  .input-center input,
+  .input-center textarea {
+    font-size: 16px; /* 防止iOS缩放 */
+  }
+  
+  .input-right {
+    gap: 12px;
+  }
+  
+  .input-send {
+    width: 36px;
+    height: 36px;
+  }
+}
