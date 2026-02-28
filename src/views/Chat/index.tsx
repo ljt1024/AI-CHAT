@@ -3,6 +3,7 @@ import ChatHeaderOperate from '@/components/ChatHeaderOperate';
 import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
 import Share from '@/components/Share';
+//@ts-ignore
 import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg';
 import { MessagePopProvider } from '@/components/MessagePop'

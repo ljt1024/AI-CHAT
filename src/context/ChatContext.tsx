@@ -135,29 +135,12 @@ const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
         case 'top': {
             const id = action.id
             if (!id) return chatData;
-            const preCovList = [...chatData.covList]
-            let newCovList: CovIdListItem[] = []
-            let curCov: CovIdListItem | null = null
             storageMessagesTop(id)
-            preCovList.map(item => {
-                if (item.id === id) {
-                    curCov = {
-                        ...item,
-                        isTop: !item.isTop
-                    }
-                } else {
-                    newCovList.push({
-                        ...item,
-                        isTop: false
-                    })
-                }
-            })
-            if (curCov) {
-                newCovList.push(curCov)
-            }
+            // 重新获取会话列表，确保顺序正确
+            const covList = getCovIdList()
             return {
                 ...chatData,
-                covList: newCovList
+                covList: [...covList]
             }
         }
         // 删除某个会话

@@ -114,7 +114,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
             {
                 isShowSidebar &&
                 <div className="covList">
-                    {[...covList].reverse().map(item => {
+                    {covList.map(item => {
                         return (
                             <div
                                 className={item.id === getSelectId() && !getIsNewCov() ? 'curCov covItem' : 'covItem'}

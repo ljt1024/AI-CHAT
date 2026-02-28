@@ -119,8 +119,6 @@ export const getMessageByCovId = (covId: string) => {
 // 如果有置顶会话，则新开对话需要在置顶会话之后
 export const newChat = () => {
     let localMessages = getLoclMessages()
-    const newList = [...localMessages]
-    const lastCov = newList[newList.length - 1]
     const newCovId = uuidv4()
     const newItem = {
         covId: newCovId,
@@ -128,9 +126,16 @@ export const newChat = () => {
         title: '',
         isTop: false
     }
-    if (lastCov && lastCov.isTop) {
-        localMessages.splice(-1, 0 , newItem)
+    
+    // 检查是否有置顶会话
+    const hasPinned = localMessages.some(item => item.isTop)
+    
+    if (hasPinned) {
+        // 找到置顶会话的位置，在其后面添加新会话
+        const pinnedIndex = localMessages.findIndex(item => item.isTop)
+        localMessages.splice(pinnedIndex + 1, 0, newItem)
     } else {
+        // 没有置顶会话，添加到末尾
         localMessages.push(newItem)
     }
 
@@ -159,21 +164,32 @@ export const storageMessagesTit = (index: number, newTitle: string): void => {
 export const storageMessagesTop = (id: string): void => {
     let localMessages = getLoclMessages()
     let newList: Conversation[] = []
+    let targetConversation: Conversation | null = null
+    
+    // 找到目标会话并设置所有会话为非置顶
     for (let i = 0; i < localMessages.length; i++) {
         if (localMessages[i].covId === id) {
-            newList.push(localMessages[i])
-            localMessages[i].isTop = true
-        } else {
-            if (localMessages[i].isTop) {
-                newList.push(localMessages[i])
+            targetConversation = {
+                ...localMessages[i],
+                isTop: true
             }
+        } else {
+            localMessages[i].isTop = false
         }
     }
+    
+    // 将置顶会话放在最前面
+    if (targetConversation) {
+        newList.push(targetConversation)
+    }
+    
+    // 添加其他非置顶会话
     for (let i = 0; i < localMessages.length; i++) {
-        if (localMessages[i].covId !== id && !localMessages[i].isTop) {
+        if (localMessages[i].covId !== id) {
             newList.push(localMessages[i])
         }
     }
+    
     localStorage.setItem('messages', JSON.stringify(newList));
 }
 
