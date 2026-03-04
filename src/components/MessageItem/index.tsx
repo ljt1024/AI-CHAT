@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, RefObject, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import MarkdownContent from '../MarkDownContent';
 import Tooltip from '../Tooltip';
 import Icon from '../Icon';
@@ -15,17 +15,15 @@ import './index.css'
 
 interface MessageItemProps {
   msg: MessageType;
-  index: number;
-  imgRef?: RefObject<HTMLDivElement> | null;
   setIsShowShare: (show: boolean) => void;
+  setShareTarget: (target: HTMLElement | null) => void;
   currentShareMessage?: any;
-  setCurMsg: Dispatch<SetStateAction<MessageType | null>>;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, setIsShowShare, currentShareMessage: _currentShareMessage, setCurMsg }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ msg, setIsShowShare, setShareTarget, currentShareMessage: _currentShareMessage }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [currentShare, setCurrentShare] = useState(-1)
   const contentRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
   const { handleCopy } = useCopy()
   const messagePop = useMessagePop()
 
@@ -46,8 +44,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, se
   }, [msg]);
 
   const onShare = () => {
-    setCurrentShare(index)
-    setCurMsg(msg)
+    setShareTarget(shareRef.current)
     setIsShowShare(true)
   }
 
@@ -60,7 +57,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, se
   return (
     <div
       className={`message ${msg.isBot ? 'bot' : 'user'}`}
-      style={{ animation: 'fadeIn 0.3s ease-out' }}
+      style={{ animation: 'messageIn 0.45s ease-out' }}
 
     >
       <div className="avatar">
@@ -79,13 +76,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, se
             {msg.timestamp && new Date(msg.timestamp).toLocaleString()}
           </div>
         }
-        <div className={`${msg.isBot && isExpanded ? 'bubble bubbleFold' : 'bubble'}`} ref={index === currentShare ? imgRef : null}>
+        <div className={`${msg.isBot && isExpanded ? 'bubble bubbleFold' : 'bubble'}`} ref={shareRef}>
           <div className={msg.isBot ? 'content' : 'content userContent'}>
             {
               msg.isBot ? <>
-                <blockquote>
+                {
+                  msg.reasoning_content && <blockquote>
                   <MarkdownContent msg={msg.reasoning_content || ''} />
                 </blockquote>
+                }
                 <MarkdownContent msg={msg.content || ''} />
               </>
                 : msg.content || ''
@@ -102,7 +101,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ msg, index, imgRef = null, se
                     sourceType="svg"
                     source={CopyIcon}
                     size={16}
-                    color="var(--text-color)"
+                    color="var(--icon-color)"
                     onClick={onCopy}
                   />
                 </Tooltip>

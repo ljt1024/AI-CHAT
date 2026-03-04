@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import './index.css';
 
 interface DialogProps {
@@ -68,9 +69,9 @@ const Dialog: React.FC<DialogProps> = ({
     }
   };
   
-  if (!isOpen) return null;
-  
-  return (
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  const dialogNode = (
     <div 
       className={`dialog-overlay ${isOpen ? 'open' : ''}`}
       onClick={handleOverlayClick}
@@ -130,6 +131,8 @@ const Dialog: React.FC<DialogProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(dialogNode, document.body);
 };
 
 export default Dialog;

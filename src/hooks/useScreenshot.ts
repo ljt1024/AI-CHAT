@@ -1,7 +1,8 @@
 // hooks/useScreenshot.ts
-import { useState, useRef, RefObject } from 'react';
-import html2canvas from 'html2canvas';
+import { useState } from 'react';
+import html2canvas from 'html2canvas-pro';
 import dompurify from 'dompurify';
+import { useMessagePop } from '@/components/MessagePop';
 
 const defaultOptions = {
     quality: 1,
@@ -16,12 +17,9 @@ export const useScreenshot = (
     const [image, setImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const ref = useRef<HTMLElement | null>(null);
+    const messagePop = useMessagePop()
 
-    const takeScreenshot = async (element: RefObject<HTMLElement> | null) => {
-
-        const target = element?.current || ref.current;
-        console.log(target, ref)
+    const takeScreenshot = async (target: HTMLElement | null) => {
         if (!target) {
             setError('No target element found');
             return null;
@@ -48,7 +46,9 @@ export const useScreenshot = (
             setImage(sanitized);
             return sanitized;
         } catch (err) {
+            console.log(err)
             setError(err instanceof Error ? err.message : 'Failed to capture screenshot');
+            messagePop.error('图片生成异常')
             return null;
         } finally {
             setIsLoading(false);
@@ -72,7 +72,6 @@ export const useScreenshot = (
         image,
         isImgLoading: isLoading,
         error,
-        imgRef: ref,
         takeScreenshot,
         download,
         reset

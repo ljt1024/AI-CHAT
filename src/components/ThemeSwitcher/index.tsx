@@ -9,30 +9,15 @@ const ThemeSwitcher = () => {
 
     const themes = [
         {
-            id: 'light', name: '明亮模式', icon: darkIcon, colors: {
-                '--bg-color': '#ffffff',
-                '--text-color': '#1a1a1a',
-                '--avatar-bg': '#f0f2f5',
-                '--user-bubble-bg': '#007bff',
-                '--bot-bubble-bg': '#f0f2f5',
-                '--border-color': '#e0e0e0',
-                '--input-bg': '#f5f5f5',
-                '--primary-color': '#007bff',
-            }
+            id: 'light',
+            name: '明亮模式',
+            icon: darkIcon
         },
         {
-            id: 'dark', name: '暗黑模式', icon: lightIcon, colors: {
-                '--bg-color': '#1a1a1a',
-                '--text-color': '#ffffff',
-                '--avatar-bg': '#2d2d2d',
-                '--user-bubble-bg': '#007bff',
-                '--bot-bubble-bg': '#2d2d2d',
-                '--border-color': '#3d3d3d',
-                '--input-bg': '#2d2d2d',
-            }
+            id: 'dark',
+            name: '暗黑模式',
+            icon: lightIcon
         },
-        // { id: 'blue', name: '蓝色主题', icon: '💙', colors: { primary: '#3498db', secondary: '#e1f5fe', text: '#01579b', card: '#b3e5fc' }},
-        // { id: 'pink', name: '粉色主题', icon: '🌸', colors: { primary: '#e84393', secondary: '#ffeaa7', text: '#6d214f', card: '#fd79a8' }}
     ];
 
     // 点击外部关闭下拉菜单
@@ -52,25 +37,12 @@ const ThemeSwitcher = () => {
     // 应用主题
     const applyTheme = (theme: 'light' | 'dark') => {
         const root = document.documentElement;
-        // const colors = themes.find(t => t.id === theme)?.colors;
-        // 移除现有主题类
         root.removeAttribute('data-theme')
 
         if (theme === 'dark') {
             root.setAttribute('data-theme', 'dark');
         }
-        // if (colors) {
-        //   Object.keys(colors).forEach(key => {
-        //     root.style.setProperty(key, colors[key]);
-        //   });
-        //   // root.style.setProperty('--primary-color', colors.primary);
-        //   // root.style.setProperty('--secondary-color', colors.secondary);
-        //   // root.style.setProperty('--text-color', colors.text);
-        //   // root.style.setProperty('--card-color', colors.card);
-        // }
-
         setCurrentTheme(theme);
-        // setIsOpen(false);
 
         // 保存主题到本地存储
         localStorage.setItem('theme', theme);
@@ -82,7 +54,6 @@ const ThemeSwitcher = () => {
         applyTheme(savedTheme);
     }, []);
 
-    // onClick={() => setIsOpen(!isOpen)}
     return (
         <div className="theme-switcher" ref={dropdownRef}>
             <div
@@ -94,30 +65,8 @@ const ThemeSwitcher = () => {
                     {
                         <img src={themes.find(t => t.id === currentTheme)?.icon} alt="" />
                     }
-                    {/* { themes.find(t => t.id === currentTheme)?.icon|| '🎨'} */}
                 </span>
-                {/* <span className="theme-label">主题</span>
-                <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span> */}
             </div>
-
-            {/* {isOpen && (
-                <div className="dropdown-menu">
-                    {themes.map((theme) => (
-                        <div
-                            key={theme.id}
-                            className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
-                            onClick={() => applyTheme(theme.id)}
-                        >
-                            <span className="option-icon">{theme.icon}</span>
-                            <span className="option-name">{theme.name}</span>
-                            <div
-                                className="color-preview"
-                                style={{ backgroundColor: theme.colors.primary }}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )} */}
         </div>
     );
 };

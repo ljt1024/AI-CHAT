@@ -2,19 +2,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--surface-elevated) 70%, transparent), transparent);
+    backdrop-filter: blur(8px);
 }
 
 .modelName {
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    letter-spacing: 0.4px;
 }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
     .chatHeaderOperate {
-        padding: 8px 12px;
+        padding: 12px 14px;
     }
     
     .modelName {

@@ -1,35 +1,53 @@
 /* 输入区域 */
 .input-area {
-  padding: 12px;
+  padding: 10px 20px 12px;
   border-top: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--surface-color) 100%);
   display: flex;
   justify-content: center;
 }
 
 .input-container {
-  max-width: 1020px;  
+  max-width: 1020px;
   width: 100%;
   position: relative;
-  background-color: var(--bg-color);
-  border-radius: 16px;
-  padding: 12px;
-  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  border-radius: 20px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
-  /* gap: 12px; */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.input-container:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--focus-ring), var(--card-shadow);
+  transform: translateY(-2px);
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  /* background: color-mix(in srgb, var(--input-bg) 90%, transparent); */
+  padding: 6px 10px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.input-container:focus-within .input-wrapper {
+  /* border-color: color-mix(in srgb, var(--primary-color) 62%, var(--border-strong));
+  background: color-mix(in srgb, var(--input-bg) 95%, transparent); */
 }
 
 .send-button-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .send-button-container {
@@ -41,17 +59,22 @@
 .input-send {
   width: 36px;
   height: 36px;
-  border: none;
-  border-radius: 24px;
-  background: var(--primary-color);
-  color: white;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 14px;
+  background: linear-gradient(165deg, var(--primary-color), var(--primary-strong));
+  color: #2f2750;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease;
   padding: 0;
   margin-right: 0;
+  box-shadow: 0 12px 20px -16px rgba(40, 28, 62, 0.45);
+}
+
+.input-send svg {
+  stroke-width: 2.25;
 }
 
 .input-left {
@@ -74,7 +97,7 @@
   flex: 1;
   display: flex;
   align-items: flex-start;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 .input-center input,
@@ -83,19 +106,31 @@
   background: transparent;
   border: none;
   color: var(--text-color);
-  font-size: 16px;
+  font-size: 15px;
   padding: 0;
   outline: none;
   font-family: inherit;
+  line-height: 1.55;
   resize: none;
-  min-height: 60px;
+  min-height: 46px;
+  box-shadow: none;
+  appearance: none;
 }
 
 .input-center input::placeholder,
 .input-center textarea::placeholder {
-  color: var(--text-color);
-  opacity: 0.5;
-  font-size: 16px;
+  color: var(--text-muted-color);
+  opacity: 0.75;
+  font-size: 15px;
+}
+
+.input-center input:focus,
+.input-center textarea:focus,
+.input-center input:focus-visible,
+.input-center textarea:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .input-right {
@@ -139,36 +174,54 @@
 }
 
 .input-send:hover {
-  background: #5A5A5A;
-  transform: scale(1.05);
+  background: linear-gradient(165deg, var(--primary-hover), var(--primary-strong));
+  transform: translateY(-1px);
+  box-shadow: 0 16px 26px -18px rgba(40, 28, 62, 0.5);
+  filter: saturate(1.05);
 }
 
 .stop-btn {
   background: var(--danger-color) !important;
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--danger-color) 68%, transparent);
+}
+
+.input-send:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
   .input-area {
-    padding: 12px;
+    padding: 10px;
   }
-  
+
+  .input-container {
+    border-radius: 16px;
+    padding: 6px;
+  }
+
   .input-wrapper {
-    padding: 10px 14px;
+    padding: 6px 8px;
     gap: 8px;
   }
-  
+
   .input-center input,
   .input-center textarea {
     font-size: 16px; /* 防止iOS缩放 */
+    min-height: 48px;
   }
-  
+
   .input-right {
     gap: 12px;
   }
-  
+
   .input-send {
     width: 36px;
     height: 36px;
+    border-radius: 12px;
   }
 }

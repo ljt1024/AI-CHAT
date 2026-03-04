@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import Share from '@/components/Share';
 //@ts-ignore
 import ChatInputControl from '@/components/ChatInputControl';
-import ArrowDownIcon from '@/assets/arrowDown.svg';
+import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
 import { newChat, storageMessages, Message } from '@/utils/localMessages'
@@ -38,10 +38,9 @@ const ChatAI: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
   const [isShowShare, setIsShowShare] = useState(false)
-  const [curMsg, setCurMsg] = useState<Message | null>(null)
+  const [shareTargetElement, setShareTargetElement] = useState<HTMLElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
-  const [imgRef, setImgRef] = useState<React.RefObject<HTMLDivElement> | null>(null)
   const { messages } = useChat()
   const dispatch = useChatDispatch()
 
@@ -261,10 +260,8 @@ const ChatAI: React.FC = () => {
                 <MessageItem
                   msg={msg}
                   key={index}
-                  imgRef={imgRef}
-                  index={index}
-                  setCurMsg={setCurMsg}
                   setIsShowShare={setIsShowShare}
+                  setShareTarget={setShareTargetElement}
                 />
               ))}
               {isLoading && (
@@ -279,7 +276,7 @@ const ChatAI: React.FC = () => {
           </div>
 
           {
-            isShowShare && <Share getImgRef={(ref: React.RefObject<HTMLElement | null>) => setImgRef(ref as React.RefObject<HTMLDivElement>)} setIsShowShare={setIsShowShare} curMsg={curMsg}/>
+            isShowShare && <Share targetElement={shareTargetElement} setIsShowShare={setIsShowShare}/>
           }
 
           <ChatInputControl
@@ -294,7 +291,7 @@ const ChatAI: React.FC = () => {
             <div className="chatScrollBottom" onClick={() => {
               scrollToBottom()
             }}>
-              <img src={ArrowDownIcon} alt="" />
+              <ArrowDownIcon className="chatScrollBottomIcon" />
             </div>}
         </div>
       </div>
@@ -303,4 +300,3 @@ const ChatAI: React.FC = () => {
 };
 
 export default ChatAI;
-

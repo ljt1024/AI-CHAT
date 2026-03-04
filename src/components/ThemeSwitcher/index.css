@@ -18,11 +18,17 @@
     /* font-weight: 500; */
     padding: 8px;
     cursor: pointer;
+    color: var(--text-color);
     transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--surface-elevated) 65%, transparent);
+    border: 1px solid transparent;
+    border-radius: 12px;
 }
 
 .theme-button:hover {
-    background-color: rgba(125, 112, 112, 0.5);
+    background-color: var(--button-ghost-hover);
+    border-color: var(--border-color);
     transform: translateY(-2px);
 }
 
@@ -44,12 +50,14 @@
     top: calc(100% + 8px);
     right: 0;
     width: 220px;
-    background-color: var(--bg-color);
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
     overflow: hidden;
     z-index: 100;
     animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(12px);
 }
 
 @keyframes fadeIn {
@@ -73,11 +81,12 @@
 }
 
 .theme-option:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--surface-hover);
 }
 
 .theme-option.active {
     background-color: var(--primary-color);
+    color: var(--user-bubble-text);
 }
 
 .option-icon {
@@ -96,4 +105,5 @@
 .option-name {
     flex: 1;
     font-weight: 500;
+    color: inherit;
 }

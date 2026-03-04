@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Dialog from '@/components/Dialog'
 import Table from '@/components/Table'
 import { useChat, useChatDispatch } from "@/context/ChatContext"
@@ -28,6 +28,30 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
     const [delType, setDelType] = useState(0) // 0 删除单个, 1全部删除
     const { covList } = useChat()
     const dispatch = useChatDispatch()
+
+    const sortedCovList = useMemo(() => {
+        const getTimeValue = (time?: string) => {
+            if (!time) return 0
+            const timestamp = new Date(time).getTime()
+            return Number.isNaN(timestamp) ? 0 : timestamp
+        }
+
+        return [...covList].sort((a, b) => {
+            // 第一优先级：置顶会话永远在上面
+            if (a.isTop !== b.isTop) {
+                return a.isTop ? -1 : 1
+            }
+
+            // 第二优先级：最新会话时间倒序（最近在最上）
+            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
+            if (latestDiff !== 0) {
+                return latestDiff
+            }
+
+            // 兜底：创建时间倒序，避免同时间出现不稳定顺序
+            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
+        })
+    }, [covList])
 
     const handleRecordConfirm = () => {
         setIsShowRecordDialog(false)
@@ -138,7 +162,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
                         sourceType="svg"
                         source={RenameIcon}
                         size={16}
-                        color="var(--text-color)"
+                        color="var(--icon-color)"
                         onClick={() => { handleEdit(column) }}
                     />
                     <Icon
@@ -223,7 +247,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
                 </div>
                 <Table
                     columns={columns}
-                    data={[...covList].reverse()}
+                    data={sortedCovList}
                     defaultPageSize={1000}
                     striped={true}
                     hover={true}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 
 import Tooltip from "../Tooltip"
 import Popover from "../Popover"
@@ -31,6 +31,30 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
     const [curCov, setCurCov] = useState<CovIdListItem | null>(null)
     const { covList } = useChat()
     const dispatch = useChatDispatch()
+
+    const sortedCovList = useMemo(() => {
+        const getTimeValue = (time?: string) => {
+            if (!time) return 0
+            const timestamp = new Date(time).getTime()
+            return Number.isNaN(timestamp) ? 0 : timestamp
+        }
+
+        return [...covList].sort((a, b) => {
+            // 第一优先级：置顶会话优先
+            if (a.isTop !== b.isTop) {
+                return a.isTop ? -1 : 1
+            }
+
+            // 第二优先级：最新会话时间倒序（最近在最上）
+            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
+            if (latestDiff !== 0) {
+                return latestDiff
+            }
+
+            // 兜底：创建时间倒序
+            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
+        })
+    }, [covList])
 
     useEffect(() => {
         dispatch({
@@ -92,7 +116,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                 sourceType="svg"
                                 source={MesssageIcon}
                                 size={18}
-                                color="var(--text-color)"
+                                color="var(--icon-color)"
                             >
 
                             </Icon>
@@ -102,7 +126,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                             sourceType="svg"
                             source={SettingIcon}
                             size={18}
-                            color="var(--text-color)"
+                            color="var(--icon-color)"
                             onClick={() => setIsShowRecordDialog(true)}
                         />
                     </div>
@@ -114,7 +138,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
             {
                 isShowSidebar &&
                 <div className="covList">
-                    {covList.map(item => {
+                    {sortedCovList.map(item => {
                         return (
                             <div
                                 className={item.id === getSelectId() && !getIsNewCov() ? 'curCov covItem' : 'covItem'}
@@ -132,6 +156,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     sourceType="svg"
                                                     source={RenameIcon}
                                                     size={18}
+                                                    color="var(--icon-color)"
                                                 />
                                                 <span className="operationTit">重命名</span>
                                             </div>
@@ -140,6 +165,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     sourceType="svg"
                                                     source={TopIcon}
                                                     size={18}
+                                                    color="var(--icon-color)"
                                                 />
                                                 <span className="operationTit">{item.isTop ? '取消置顶' : '置顶'}</span>
                                             </div>
@@ -148,6 +174,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     sourceType="svg"
                                                     source={DeleteIcon}
                                                     size={18}
+                                                    color="var(--danger-color)"
                                                 />
                                                 <span className="operationTit">删除</span>
                                             </div>
@@ -163,7 +190,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                 sourceType="svg"
                                                 source={FixIcon}
                                                 size={14}
-                                                color="var(--text-color)"
+                                                color="var(--icon-muted-color)"
                                             />
                                         </div>}
                                     <div className="covOperation">...</div>
@@ -221,7 +248,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
                         sourceType="svg"
                         source={FoldIcon}
                         size={18}
-                        color="var(--text-color)"
+                        color="var(--icon-color)"
                         onClick={onShowSidebar}
                     />
                 </Tooltip>

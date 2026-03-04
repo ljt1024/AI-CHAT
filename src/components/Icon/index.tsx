@@ -58,7 +58,17 @@ const Icon: React.FC<IconProps> = ({
           console.error(`Icon component not found: ${source}`);
           return <span className="icon-error">❌</span>;
         }
-        return <SvgIcon style={{...combinedStyle, width: '1em', height: '1em'}} />;
+        return (
+          <SvgIcon
+            style={{
+              ...combinedStyle,
+              width: '1em',
+              height: '1em',
+              fill: 'currentColor',
+              flexShrink: 0
+            }}
+          />
+        );
 
       case 'font':
         return (

@@ -5,7 +5,7 @@ import './index.css';
 
 // 图标组件
 const SuccessIcon = () => (
-  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" style={{color: 'green'}}>
+  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm6.8 8.4l-7.3 8.1a1 1 0 01-1.5 0l-3.2-3.6a1 1 0 011.5-1.4l2.5 2.8 6.6-7.3a1 1 0 011.4 1.4z" />
   </svg>
 );

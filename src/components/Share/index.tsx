@@ -1,21 +1,16 @@
 import { useScreenshot } from '../../hooks/useScreenshot';
-import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import PictuerIcon from '../../assets/pictuer.png'
-import TextCopyIcon from '@/assets/TextCopy.png'
-// import { useNavigate } from 'react-router-dom';
-import { Message } from '../../utils/localMessages';
 
 import './index.css'
 
 interface ShareProps {
-    getImgRef: (ref: React.RefObject<HTMLElement | null>) => void;
+    targetElement: HTMLElement | null;
     setIsShowShare: (show: boolean) => void;
-    curMsg: Message | null;
 }
 
-const Share: React.FC<ShareProps> = ({ getImgRef, setIsShowShare, curMsg }) => {
+const Share: React.FC<ShareProps> = ({ targetElement, setIsShowShare }) => {
     const {
-        imgRef,
         image,
         isImgLoading,
         error: _error,
@@ -29,12 +24,6 @@ const Share: React.FC<ShareProps> = ({ getImgRef, setIsShowShare, curMsg }) => {
         backgroundColor: null
     });
 
-    // const navigate = useNavigate()
-
-    useEffect(() => {
-        getImgRef(imgRef)
-    }, [])
-
     const onClosePreview = () => {
         setIsShowShare(false)
         reset()
@@ -42,23 +31,30 @@ const Share: React.FC<ShareProps> = ({ getImgRef, setIsShowShare, curMsg }) => {
 
     const onTakeScreenshot = () => {
         if (isImgLoading) return
-        takeScreenshot(null)
+        takeScreenshot(targetElement)
     }
 
-    const onGenerateLink = ()=> {
-        fetch('http://localhost:3001/api/chat/shareCreate', {
-            method: 'post',
-            body: JSON.stringify({
-               msg: curMsg
-            }),
-            headers: {
-                "Content-Type": "application/json"
-            }
-        }).then(response=> { return response.json()}).then(res=> {
-            console.log(res)
-        })
-        // navigate(`/share?content=${curMsg.content}&reasoning_content=${curMsg.reasoning_content}`)
-    }
+    const previewNode = image && (
+        <div className='previewMask'>
+            <div className='previewContent'>
+                <div className='previewImg'>
+                    <img
+                        src={image}
+                        alt="预览"
+                        style={{ width: '100%' }}
+                    />
+                </div>
+                <div className='previewHandle'>
+                    <button onClick={() => download(`screenshot_${Date.now()}.jpg`)}>
+                        保  存
+                    </button>
+                    <button onClick={onClosePreview}>
+                        关  闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
 
     return (
         <>
@@ -67,33 +63,8 @@ const Share: React.FC<ShareProps> = ({ getImgRef, setIsShowShare, curMsg }) => {
                     <img src={PictuerIcon} alt="" />
                     <span>{isImgLoading ? '图片生成中' : '保存图片'}</span>
                 </div>
-                <div className='shareItem copyText' onClick={onGenerateLink}>
-                    <img src={TextCopyIcon} alt="" />
-                    <span>生成链接</span>
-                </div>
             </div>
-            {
-                image &&
-                <div className='previewMask'>
-                    <div className='previewContent'>
-                        <div className='previewImg'>
-                            <img
-                                src={image}
-                                alt="预览"
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                        <div className='previewHandle'>
-                            <button onClick={() => download(`screenshot_${Date.now()}.jpg`)}>
-                                保  存
-                            </button>
-                            <button onClick={onClosePreview}>
-                                关  闭
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
+            {previewNode && typeof document !== 'undefined' ? createPortal(previewNode, document.body) : null}
         </>
 
     )

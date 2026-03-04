@@ -71,7 +71,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
         height,
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#eee'
+        backgroundColor: 'var(--surface-elevated)'
       }}
     >
       {inView && (
@@ -119,8 +119,8 @@ const LazyImage: React.FC<LazyImageProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#f5f5f5',
-            color: '#999',
+            backgroundColor: 'var(--surface-hover)',
+            color: 'var(--text-muted-color)',
             fontSize: '14px',
           }}
         >

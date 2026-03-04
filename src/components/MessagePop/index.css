@@ -60,13 +60,15 @@
   align-items: center;
   padding: 12px 16px;
   border-radius: 6px;
-  background: white;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.3s ease;
   pointer-events: auto;
   max-width: 400px;
+  color: var(--text-color);
 }
 
 .messagePop-item.visible {
@@ -87,24 +89,24 @@
 }
 
 /* 消息类型样式 */
-.messagePop-item.success .message-icon {
-  color: #52c41a;
+.messagePop-item.success .messagePop-icon {
+  color: var(--success-color);
 }
 
-.messagePop-item.error .message-icon {
-  color: #ff4d4f;
+.messagePop-item.error .messagePop-icon {
+  color: var(--danger-color);
 }
 
-.messagePop-item.info .message-icon {
-  color: #1890ff;
+.messagePop-item.info .messagePop-icon {
+  color: var(--info-color);
 }
 
-.messagePop-item.warning .message-icon {
-  color: #faad14;
+.messagePop-item.warning .messagePop-icon {
+  color: var(--warning-color);
 }
 
-.messagePop-item.loading .message-icon {
-  color: #1890ff;
+.messagePop-item.loading .messagePop-icon {
+  color: var(--info-color);
 }
 
 /* 加载动画 */
