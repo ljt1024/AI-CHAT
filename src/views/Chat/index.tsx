@@ -8,7 +8,7 @@ import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages, Message } from '@/utils/localMessages'
+import { newChat, storageMessages, removeLastAssistantMessage, Message } from '@/utils/localMessages'
 
 import './chat.css';
 
@@ -43,6 +43,7 @@ const ChatAI: React.FC = () => {
   const messagesRef = useRef<HTMLDivElement>(null);
   const { messages } = useChat()
   const dispatch = useChatDispatch()
+  const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -79,36 +80,31 @@ const ChatAI: React.FC = () => {
   }, [messages]);
 
 
-  let news: Message = {
+  const getLoadingMessage = (): Message => ({
     content: '思考中...',
     reasoning_content: '',
     isBot: true,
     timestamp: new Date().toISOString(),
     isLoading: true,
     role: 'assistant'
-  }
+  })
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!inputText.trim() || isLoading) return;
-    // TODO 增加message id取代key
-    const newMessage: Message = {
-      content: inputText,
-      role: 'user',
-      timestamp: new Date().toISOString(),
-      isBot: false
-    };
+  const requestAssistantReply = async (userMessage: Message, appendUserMessage: boolean) => {
+    let assistantMessage = getLoadingMessage()
 
-    if (messages.length === 0) {
-      newChat()
+    if (appendUserMessage) {
+      storageMessages(userMessage)
+      dispatch({
+        type: 'addMessages',
+        messages: [userMessage, assistantMessage]
+      } as any)
+    } else {
+      dispatch({
+        type: 'addMessages',
+        messages: [assistantMessage]
+      } as any)
     }
 
-    storageMessages(newMessage)
-    dispatch({
-      type: 'addMessages',
-      messages: [newMessage, news]
-    } as any)
-    setInputText('');
     setIsLoading(true);
 
     try {
@@ -117,7 +113,7 @@ const ChatAI: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
         body: JSON.stringify({
-          messages: [newMessage],
+          messages: [userMessage],
           "model": "deepseek-reasoner",
           "frequency_penalty": 0,
           "max_tokens": 2048,
@@ -139,7 +135,7 @@ const ChatAI: React.FC = () => {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      news = {
+      assistantMessage = {
         content: '',
         reasoning_content: '',
         isBot: true,
@@ -149,6 +145,50 @@ const ChatAI: React.FC = () => {
         role: 'assistant'
       }
 
+      let flag = false
+      const parseSSEEvent = (event: string) => {
+        const lines = event;
+        try {
+          let str = lines.split(": ")[1]
+          // sse最终以'data: [DONE]'结束
+          if (str === '[DONE]') {
+            assistantMessage.isLoading = false
+            dispatch({
+              type: 'addMessages',
+              messages: assistantMessage
+            } as any)
+            return
+          }
+          let data: SSEData = JSON.parse(str);
+          if (data.usage) {
+            assistantMessage.usage = data.usage
+          }
+
+          // 正式回复内容
+          if (data.choices[0].delta.content !== null) {
+            if (flag) {
+              assistantMessage.content += '\n\n'
+            }
+            assistantMessage.content += data.choices[0].delta.content || ''
+            dispatch({
+              type: 'addMessages',
+              messages: assistantMessage
+            } as any)
+            flag = false
+            // 思考内容
+          } else {
+            flag = true
+            assistantMessage.reasoning_content += data.choices[0].delta.reasoning_content || ''
+            dispatch({
+              type: 'addMessages',
+              messages: assistantMessage
+            } as any)
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
       // 持续读取流数据
       if (reader) {
         while (true) {
@@ -156,8 +196,7 @@ const ChatAI: React.FC = () => {
           if (done) {
             reader.releaseLock();
             break;
-          } // 流结束
-          // console.log("字节流", value);
+          }
           const chunk = decoder.decode(value);
           // SSE 事件以双换行分隔
           const events = chunk.split("\n\n");
@@ -167,13 +206,13 @@ const ChatAI: React.FC = () => {
           }
         }
       }
-      storageMessages(news)
+      storageMessages(assistantMessage)
     } catch (error: any) {
       console.log(error)
       if (error.name === "AbortError") {
         console.log('请求被中断')
       } else {
-         dispatch({
+        dispatch({
           type: 'addMessages',
           messages: {
             content: '⚠️ 服务器繁忙, 请稍后再试！',
@@ -187,54 +226,50 @@ const ChatAI: React.FC = () => {
       setIsLoading(false);
       // 更新会话列表
       dispatch({
-          type: 'getCovList'
+        type: 'getCovList'
       } as any)
       localStorage.setItem('isNewCov', 'false')
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!inputText.trim() || isLoading) return;
+    // TODO 增加message id取代key
+    const newMessage: Message = {
+      content: inputText,
+      role: 'user',
+      timestamp: new Date().toISOString(),
+      isBot: false
+    };
+
+    if (messages.length === 0) {
+      newChat()
+    }
+    localStorage.setItem('isNewCov', 'false')
+    setInputText('');
+
+    await requestAssistantReply(newMessage, true)
   };
 
-  let flag = false
-  const parseSSEEvent = (event: string) => {
-    const lines = event;
-    try {
-      let str = lines.split(": ")[1]
-      // sse最终以'data: [DONE]'结束
-      if (str === '[DONE]') {
-        news.isLoading = false
-        dispatch({
-          type: 'addMessages',
-          messages: news
-        })
-        return
-      }
-      let data: SSEData = JSON.parse(str);
-      if (data.usage) {
-        news.usage = data.usage
-      }
+  const handleRetryLastAnswer = async () => {
+    if (isLoading || messages.length < 2) return
+    const lastMessage = messages[messages.length - 1]
+    const lastUserMessage = messages[messages.length - 2]
 
-      // 正式回复内容
-      if (data.choices[0].delta.content !== null) {
-        if (flag) {
-          news.content += '\n\n'
-        }
-        news.content += data.choices[0].delta.content || ''
-        dispatch({
-          type: 'addMessages',
-          messages: news
-        } as any)
-        flag = false
-        // 思考内容
-      } else {
-        flag = true
-        news.reasoning_content += data.choices[0].delta.reasoning_content || ''
-        dispatch({
-          type: 'addMessages',
-          messages: news
-        } as any)
-      }
-    } catch (error) {
-      console.log(error)
+    if (!lastMessage?.isBot || lastMessage.isLoading || !lastUserMessage || lastUserMessage.isBot) {
+      return
     }
+
+    dispatch({
+      type: 'removeLastMessage'
+    } as any)
+    removeLastAssistantMessage()
+    setIsShowShare(false)
+    setShareTargetElement(null)
+    localStorage.setItem('isNewCov', 'false')
+
+    await requestAssistantReply(lastUserMessage, false)
   }
 
   const onStopSSE = () => {
@@ -255,37 +290,56 @@ const ChatAI: React.FC = () => {
         <div className='messages-content'>
           <ChatHeaderOperate isShowShare={isShowShare} onCancelShare={setIsShowShare} />
           <div className='messages-scollWrap' ref={messagesRef}>
-            <div className="messages-wrap">
-              {messages.map((msg: Message, index: number) => (
-                <MessageItem
-                  msg={msg}
-                  key={index}
-                  setIsShowShare={setIsShowShare}
-                  setShareTarget={setShareTargetElement}
+            {isNewConversation ? (
+              <div className="new-conversation-panel">
+                <h1 className="new-conversation-title">AICHAT</h1>
+                <p className="new-conversation-subtitle">你的AI问答助手</p>
+                <ChatInputControl
+                  variant="welcome"
+                  inputText={inputText}
+                  isLoading={isLoading}
+                  onInputChange={handleInputChange}
+                  onSubmit={handleSubmit}
+                  onStopSSE={onStopSSE}
                 />
-              ))}
-              {isLoading && (
-                <div className="typing-indicator">
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+              </div>
+            ) : (
+              <div className="messages-wrap">
+                {messages.map((msg: Message, index: number) => (
+                  <MessageItem
+                    msg={msg}
+                    key={index}
+                    setIsShowShare={setIsShowShare}
+                    setShareTarget={setShareTargetElement}
+                    canRetry={msg.isBot && !msg.isLoading && index === messages.length - 1 && !isLoading}
+                    onRetry={handleRetryLastAnswer}
+                  />
+                ))}
+                {isLoading && (
+                  <div className="typing-indicator">
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
 
           {
             isShowShare && <Share targetElement={shareTargetElement} setIsShowShare={setIsShowShare}/>
           }
 
-          <ChatInputControl
-            inputText={inputText}
-            isLoading={isLoading}
-            onInputChange={handleInputChange}
-            onSubmit={handleSubmit}
-            onStopSSE={onStopSSE}
-          />
+          {!isNewConversation && (
+            <ChatInputControl
+              inputText={inputText}
+              isLoading={isLoading}
+              onInputChange={handleInputChange}
+              onSubmit={handleSubmit}
+              onStopSSE={onStopSSE}
+            />
+          )}
 
           {isShowScrollBtn &&
             <div className="chatScrollBottom" onClick={() => {

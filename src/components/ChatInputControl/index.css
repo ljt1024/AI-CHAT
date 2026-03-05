@@ -1,10 +1,16 @@
 /* 输入区域 */
 .input-area {
   padding: 10px 20px 12px;
-  border-top: 1px solid var(--border-color);
+  /* border-top: 1px solid var(--border-color); */
   background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--surface-color) 100%);
   display: flex;
   justify-content: center;
+}
+
+.input-area--welcome {
+  padding: 0;
+  background: transparent;
+  width: min(860px, 100%);
 }
 
 .input-container {
@@ -197,6 +203,11 @@
 @media (max-width: 768px) {
   .input-area {
     padding: 10px;
+  }
+
+  .input-area--welcome {
+    width: 100%;
+    padding: 0;
   }
 
   .input-container {

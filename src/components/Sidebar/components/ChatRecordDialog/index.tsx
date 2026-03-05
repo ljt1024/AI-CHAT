@@ -150,7 +150,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
         {
             key: 'messageLen',
             title: '对话条数',
-            width: '80px',
+            width: '100px',
         },
         {
             key: 'operate',

@@ -96,6 +96,16 @@ const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
             }
             return chatData;
         }
+        // 删除最后一条消息（用于重试）
+        case 'removeLastMessage': {
+            if (chatData.messages.length === 0) return chatData
+            const preMessages = [...chatData.messages]
+            preMessages.pop()
+            return {
+                ...chatData,
+                messages: preMessages
+            }
+        }
         // 获取会话列表
         case 'getCovList': {
             const covList = getCovIdList()
@@ -196,5 +206,4 @@ const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
         }
     }
 }
-
 

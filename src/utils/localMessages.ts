@@ -80,6 +80,25 @@ export const storageMessages = (newMessage: Message): void => {
     }
 }
 
+// 删除当前会话最后一条AI消息（用于重试）
+export const removeLastAssistantMessage = (): Message | null => {
+    let localMessages = getLoclMessages()
+    const currentSelectId = getSelectId()
+    if (!currentSelectId) return null
+
+    const result = getMessageByCovId(currentSelectId)
+    const curMessageIndx = result.curMessageIndx
+    const curMessage = localMessages[curMessageIndx]?.data
+
+    if (!curMessage || curMessage.length === 0) return null
+    const lastMessage = curMessage[curMessage.length - 1]
+    if (lastMessage?.role !== 'assistant') return null
+
+    const removed = curMessage.pop() || null
+    localStorage.setItem('messages', JSON.stringify(localMessages))
+    return removed
+}
+
 // 获取会话列表或者导入后的会话格式化返回， 
 export const getCovIdList = (importMessages?: Conversation[]): CovIdListItem[] => {
     let localMessages = importMessages ? importMessages : getLoclMessages()

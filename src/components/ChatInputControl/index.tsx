@@ -7,6 +7,7 @@ interface ChatInputControlProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onStopSSE: () => void;
+  variant?: 'bottom' | 'welcome';
 }
 
 const ChatInputControl: React.FC<ChatInputControlProps> = ({
@@ -14,10 +15,11 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   isLoading,
   onInputChange,
   onSubmit,
-  onStopSSE
+  onStopSSE,
+  variant = 'bottom'
 }) => {
   return (
-    <form className="input-area" onSubmit={onSubmit}>
+    <form className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()} onSubmit={onSubmit}>
       <div className="input-container">
         <div className="input-wrapper">
           <div className="input-left">
