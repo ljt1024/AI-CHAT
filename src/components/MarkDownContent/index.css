@@ -16,10 +16,112 @@
    word-break: break-word;
 }
 
+.codeActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.htmlPreviewOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 130000;
+    background: var(--overlay-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.htmlPreviewDialog {
+    width: min(1200px, 100%);
+    height: min(88vh, 920px);
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--panel-shadow);
+    background: var(--surface-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.htmlPreviewDialog:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+}
+
+.htmlPreviewHeader {
+    height: 52px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-color);
+    background: var(--surface-elevated);
+}
+
+.htmlPreviewActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.htmlPreviewBtn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.htmlPreviewBtn:hover {
+    background: var(--surface-hover);
+}
+
+.htmlPreviewBody {
+    flex: 1;
+    min-height: 0;
+    background: #fff;
+}
+
+.htmlPreviewFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
     .codeWrap {
         font-size: 14px;
         padding: 8px;
+    }
+
+    .htmlPreviewOverlay {
+        padding: 0;
+    }
+
+    .htmlPreviewDialog {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .htmlPreviewHeader {
+        padding: 0 12px;
+    }
+
+    .htmlPreviewBtn {
+        padding: 0 10px;
     }
 }
