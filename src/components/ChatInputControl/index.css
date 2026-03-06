@@ -52,14 +52,16 @@
 
 .send-button-row {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  min-height: 36px;
 }
 
-.send-button-container {
+.send-button-left,
+.send-button-right {
   display: flex;
-  justify-content: flex-end;
-  width: 100%;
+  align-items: center;
 }
 
 .input-send {
@@ -149,12 +151,6 @@
   box-shadow: none !important;
 }
 
-.input-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
 .input-dropdown {
   display: flex;
   align-items: center;
@@ -169,17 +165,86 @@
   opacity: 1;
 }
 
-.input-attach,
-.input-cube {
-  cursor: pointer;
+.input-attach {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
   color: var(--text-color);
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.input-attach:hover,
-.input-cube:hover {
+.input-attach:hover {
   opacity: 1;
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  background: var(--button-ghost-hover);
+}
+
+.input-attach:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.input-attach.is-uploading {
+  border-color: var(--secondary-color);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.uploaded-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 8px 0;
+}
+
+.uploaded-file-item {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+  color: var(--text-color);
+  padding: 4px 10px;
+  gap: 8px;
+}
+
+.uploaded-file-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.uploaded-file-remove {
+  border: none;
+  background: transparent;
+  color: var(--icon-muted-color);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 14px;
+  padding: 0;
+}
+
+.uploaded-file-remove:hover {
+  color: var(--danger-color);
+}
+
+.uploaded-file-uploading {
+  font-size: 12px;
+  color: var(--text-muted-color);
+  padding: 4px 2px;
 }
 
 .input-separator {
@@ -236,8 +301,8 @@
     min-height: 48px;
   }
 
-  .input-right {
-    gap: 12px;
+  .uploaded-file-name {
+    max-width: 160px;
   }
 
   .input-send {

@@ -4,6 +4,7 @@ export interface ModelOption {
   provider: string;
   description?: string;
   supportsStream?: boolean;
+  supportsFileUpload?: boolean;
   enabled?: boolean;
 }
 

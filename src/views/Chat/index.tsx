@@ -4,7 +4,7 @@ import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
 import Share from '@/components/Share';
 //@ts-ignore
-import ChatInputControl from '@/components/ChatInputControl';
+import ChatInputControl, { UploadedFileItem } from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
@@ -26,6 +26,18 @@ interface SSEData {
   };
 }
 
+interface FileUploadResponse {
+  code?: number;
+  data?: {
+    fileId?: string;
+    fileName?: string;
+    mimeType?: string;
+    size?: number;
+    createdAt?: string;
+  };
+  msg?: string;
+}
+
 let controller: AbortController | null = null
 let signal: AbortSignal | null = null
 function initAbortController() {
@@ -44,6 +56,13 @@ const getModelsApiUrl = (chatApiUrl: string): string => {
   return '/api/models'
 }
 
+const getFileUploadApiUrl = (chatApiUrl: string): string => {
+  if (chatApiUrl && /^https?:\/\//.test(chatApiUrl)) {
+    return new URL('/api/files/upload', chatApiUrl).toString()
+  }
+  return '/api/files/upload'
+}
+
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
   const [inputText, setInputText] = useState('');
@@ -53,6 +72,8 @@ const ChatAI: React.FC = () => {
   const [shareTargetElement, setShareTargetElement] = useState<HTMLElement | null>(null)
   const [models, setModels] = useState<ModelOption[]>([])
   const [isModelsLoading, setIsModelsLoading] = useState(false)
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([])
   const [selectedModelId, setSelectedModelId] = useState<string>(
     localStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL_ID
   )
@@ -74,6 +95,7 @@ const ChatAI: React.FC = () => {
     [models, selectedModelId]
   )
   const selectedModelName = selectedModel?.name || selectedConversation?.modelName || selectedModelId || 'AI Assistant'
+  const supportsFileUpload = Boolean(selectedModel?.supportsFileUpload)
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -138,6 +160,7 @@ const ChatAI: React.FC = () => {
             provider: 'deepseek',
             description: '默认推理模型',
             supportsStream: true,
+            supportsFileUpload: false,
             enabled: true
           }
         ])
@@ -156,6 +179,12 @@ const ChatAI: React.FC = () => {
     setSelectedModelId(selectedConversation.modelId)
     localStorage.setItem(MODEL_STORAGE_KEY, selectedConversation.modelId)
   }, [selectedConversation?.modelId, selectedModelId])
+
+  useEffect(() => {
+    if (!supportsFileUpload && uploadedFiles.length > 0) {
+      setUploadedFiles([])
+    }
+  }, [supportsFileUpload, uploadedFiles.length])
 
   // 检测主动滚动事件，需要停止滑动到最底部行为
   window.addEventListener('scroll', ()=> {
@@ -199,29 +228,34 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
+      const requestBody: Record<string, any> = {
+        messages: [userMessage],
+        "model": selectedModelId,
+        "frequency_penalty": 0,
+        "max_tokens": 2048,
+        "presence_penalty": 0,
+        "response_format": {
+          "type": "text"
+        },
+        "stop": null,
+        "stream": true,
+        "stream_options": null,
+        "temperature": 1,
+        "top_p": 1,
+        "tools": null,
+        "tool_choice": "none",
+        "logprobs": false,
+        "top_logprobs": null
+      }
+      if (supportsFileUpload && uploadedFiles.length > 0) {
+        requestBody.fileId = uploadedFiles[0].fileId
+      }
+
       const response = await fetch(chatApiUrl, {
         signal,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
-        body: JSON.stringify({
-          messages: [userMessage],
-          "model": selectedModelId,
-          "frequency_penalty": 0,
-          "max_tokens": 2048,
-          "presence_penalty": 0,
-          "response_format": {
-            "type": "text"
-          },
-          "stop": null,
-          "stream": true,
-          "stream_options": null,
-          "temperature": 1,
-          "top_p": 1,
-          "tools": null,
-          "tool_choice": "none",
-          "logprobs": false,
-          "top_logprobs": null
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const reader = response.body?.getReader();
@@ -384,8 +418,44 @@ const ChatAI: React.FC = () => {
       type: 'clearMessages'
     } as any)
     setInputText('')
+    setUploadedFiles([])
     setIsShowShare(false)
     setShareTargetElement(null)
+  }
+
+  const onUploadFile = async (file: File) => {
+    if (!supportsFileUpload || isUploadingFile || isLoading) return
+    setIsUploadingFile(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('model', selectedModelId)
+
+      const response = await fetch(getFileUploadApiUrl(chatApiUrl), {
+        method: 'POST',
+        body: formData
+      })
+      if (!response.ok) {
+        throw new Error(`file upload failed, status: ${response.status}`)
+      }
+      const result: FileUploadResponse = await response.json()
+      const fileData = result.data || {}
+      const uploadedFile: UploadedFileItem = {
+        fileId: fileData.fileId || `${Date.now()}-${file.name}`,
+        name: fileData.fileName || file.name,
+        mimeType: fileData.mimeType || file.type,
+        size: fileData.size || file.size
+      }
+      setUploadedFiles([uploadedFile])
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsUploadingFile(false)
+    }
+  }
+
+  const onRemoveUploadedFile = (uploadedFileId: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.fileId !== uploadedFileId))
   }
 
 
@@ -415,6 +485,11 @@ const ChatAI: React.FC = () => {
                   variant="welcome"
                   inputText={inputText}
                   isLoading={isLoading}
+                  supportsFileUpload={supportsFileUpload}
+                  uploadedFiles={uploadedFiles}
+                  isUploadingFile={isUploadingFile}
+                  onUploadFile={onUploadFile}
+                  onRemoveUploadedFile={onRemoveUploadedFile}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}
@@ -453,6 +528,11 @@ const ChatAI: React.FC = () => {
             <ChatInputControl
               inputText={inputText}
               isLoading={isLoading}
+              supportsFileUpload={supportsFileUpload}
+              uploadedFiles={uploadedFiles}
+              isUploadingFile={isUploadingFile}
+              onUploadFile={onUploadFile}
+              onRemoveUploadedFile={onRemoveUploadedFile}
               onInputChange={handleInputChange}
               onSubmit={handleSubmit}
               onStopSSE={onStopSSE}
