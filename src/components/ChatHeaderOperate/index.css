@@ -9,11 +9,186 @@
     backdrop-filter: blur(8px);
 }
 
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .modelName {
     font-size: 15px;
     font-weight: 600;
     font-family: var(--font-display);
     letter-spacing: 0.4px;
+}
+
+.modelSelectButton {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 180px;
+    max-width: 280px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-elevated) 65%, transparent);
+    color: var(--text-color);
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.modelSelectButton:hover {
+    border-color: var(--border-strong);
+    background: var(--button-ghost-hover);
+    transform: translateY(-1px);
+}
+
+.modelSelectButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modelSelectText {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.modelSelectArrow {
+    width: 14px;
+    height: 14px;
+    transform: rotate(180deg);
+}
+
+.modelPopoverWrap {
+    width: min(420px, calc(100vw - 24px));
+    max-height: min(72vh, 680px);
+}
+
+.modelPopoverWrap .popover-inner {
+    padding: 14px;
+}
+
+.modelPopoverTitle {
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.modelPopoverList {
+    display: grid;
+    gap: 10px;
+    max-height: min(56vh, 560px);
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.modelPopoverEmpty {
+    font-size: 13px;
+    color: var(--text-muted-color);
+    text-align: center;
+    padding: 24px 12px;
+}
+
+.modelCard {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+    padding: 12px;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.modelCard:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--soft-shadow);
+}
+
+.modelCard.active {
+    border-color: var(--secondary-color);
+    background: color-mix(in srgb, var(--primary-color) 55%, var(--surface-elevated));
+}
+
+.modelCard.disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+.modelCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.modelCardName {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.modelCardCheck {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: transparent;
+    background: transparent;
+}
+
+.modelCardCheck.checked {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: #fff;
+}
+
+.modelCardMeta {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.modelCardProvider {
+    font-size: 12px;
+    color: var(--text-muted-color);
+}
+
+.modelCardTag {
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted-color);
+    background: color-mix(in srgb, var(--surface-color) 65%, transparent);
+}
+
+.modelCardTagDisabled {
+    border-color: color-mix(in srgb, var(--danger-color) 50%, transparent);
+    color: var(--danger-color);
+    background: color-mix(in srgb, var(--danger-soft-bg) 72%, transparent);
+}
+
+.modelCardDesc {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--text-muted-color);
+    line-height: 1.45;
 }
 
 /* 移动端适配 */
@@ -24,5 +199,23 @@
     
     .modelName {
         font-size: 13px;
+    }
+
+    .headerActions {
+        gap: 8px;
+    }
+
+    .modelSelectButton {
+        min-width: 130px;
+        max-width: 170px;
+        padding: 7px 10px;
+    }
+
+    .modelSelectText {
+        font-size: 12px;
+    }
+
+    .modelPopoverWrap {
+        width: calc(100vw - 20px);
     }
 }

@@ -18,6 +18,8 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onStopSSE,
   variant = 'bottom'
 }) => {
+  const hasInput = inputText.trim().length > 0
+
   return (
     <form className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()} onSubmit={onSubmit}>
       <div className="input-container">
@@ -66,14 +68,18 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
         <div className="send-button-row">
           {
             !isLoading ?
-              <button type="submit" disabled={isLoading} className="input-send">
+              <button
+                type="submit"
+                disabled={!hasInput}
+                className={`input-send ${hasInput ? 'input-send--active' : 'input-send--idle'}`.trim()}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
               </button>
               :
-              <button className='stop-btn input-send' onClick={onStopSSE}>
+              <button type="button" className='stop-btn input-send' onClick={onStopSSE}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="6" y="4" width="4" height="16"></rect>
                   <rect x="14" y="4" width="4" height="16"></rect>

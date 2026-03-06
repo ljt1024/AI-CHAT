@@ -67,8 +67,8 @@
   height: 36px;
   border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
   border-radius: 14px;
-  background: linear-gradient(165deg, var(--primary-color), var(--primary-strong));
-  color: #2f2750;
+  background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  color: var(--icon-muted-color);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -76,11 +76,21 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease;
   padding: 0;
   margin-right: 0;
-  box-shadow: 0 12px 20px -16px rgba(40, 28, 62, 0.45);
+  box-shadow: none;
 }
 
 .input-send svg {
   stroke-width: 2.25;
+}
+
+.input-send--active {
+  background: linear-gradient(165deg, var(--primary-color), var(--primary-strong));
+  color: #2f2750;
+  box-shadow: 0 12px 20px -16px rgba(40, 28, 62, 0.45);
+}
+
+.input-send--idle {
+  opacity: 0.74;
 }
 
 .input-left {
@@ -179,7 +189,7 @@
   opacity: 0.5;
 }
 
-.input-send:hover {
+.input-send--active:hover {
   background: linear-gradient(165deg, var(--primary-hover), var(--primary-strong));
   transform: translateY(-1px);
   box-shadow: 0 16px 26px -18px rgba(40, 28, 62, 0.5);

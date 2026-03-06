@@ -21,6 +21,13 @@ export interface Conversation {
     data: Message[];
     covTitle?: string;
     isTop?: boolean;
+    modelId?: string;
+    modelName?: string;
+}
+
+export interface ConversationModel {
+    id: string;
+    name?: string;
 }
 
 export interface CovIdListItem {
@@ -65,15 +72,20 @@ export const getLastMessages = (): Message[] => {
 // ]
 
 // 存储新消息
-export const storageMessages = (newMessage: Message): void => {
+export const storageMessages = (newMessage: Message, model?: ConversationModel): void => {
     let localMessages = getLoclMessages()
     const currentSelectId = localStorage.getItem('selectCovId')
     if (!currentSelectId) return
     
     const result = getMessageByCovId(currentSelectId)
     const curMessageIndx = result.curMessageIndx
-    const curMessage = localMessages[curMessageIndx]?.data
-    if (curMessage) {
+    const currentConversation = localMessages[curMessageIndx]
+    const curMessage = currentConversation?.data
+    if (currentConversation && curMessage) {
+        if (model?.id) {
+            currentConversation.modelId = model.id
+            currentConversation.modelName = model.name || model.id
+        }
         curMessage.push(newMessage)
         console.log('存储新消息：', localMessages)
         localStorage.setItem('messages', JSON.stringify(localMessages));
@@ -136,14 +148,17 @@ export const getMessageByCovId = (covId: string) => {
 
 // 第一次请求chat,初始化会话,并选中新的会话,
 // 如果有置顶会话，则新开对话需要在置顶会话之后
-export const newChat = () => {
+export const newChat = (model?: ConversationModel) => {
     let localMessages = getLoclMessages()
     const newCovId = uuidv4()
-    const newItem = {
+    const newItem: Conversation = {
         covId: newCovId,
         data: [],
-        title: '',
         isTop: false
+    }
+    if (model?.id) {
+        newItem.modelId = model.id
+        newItem.modelName = model.name || model.id
     }
     
     // 检查是否有置顶会话

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ChatHeaderOperate from '@/components/ChatHeaderOperate';
 import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
@@ -8,7 +8,8 @@ import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages, removeLastAssistantMessage, Message, getSelectId } from '@/utils/localMessages'
+import { newChat, storageMessages, removeLastAssistantMessage, Message, getSelectId, getMessageByCovId } from '@/utils/localMessages'
+import { ModelListResponse, ModelOption } from '@/types/model';
 
 import './chat.css';
 
@@ -33,12 +34,28 @@ function initAbortController() {
 }
 initAbortController()
 
+const MODEL_STORAGE_KEY = 'selectedModelId'
+const DEFAULT_MODEL_ID = 'deepseek-reasoner'
+
+const getModelsApiUrl = (chatApiUrl: string): string => {
+  if (chatApiUrl && /^https?:\/\//.test(chatApiUrl)) {
+    return new URL('/api/models', chatApiUrl).toString()
+  }
+  return '/api/models'
+}
+
 const ChatAI: React.FC = () => {
+  const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
   const [isShowShare, setIsShowShare] = useState(false)
   const [shareTargetElement, setShareTargetElement] = useState<HTMLElement | null>(null)
+  const [models, setModels] = useState<ModelOption[]>([])
+  const [isModelsLoading, setIsModelsLoading] = useState(false)
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    localStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL_ID
+  )
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const { messages } = useChat()
@@ -46,6 +63,17 @@ const ChatAI: React.FC = () => {
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
   const hasSelectedConversation = Boolean(getSelectId())
   const isWelcomeConversation = messages.length === 0 && (isNewConversation || !hasSelectedConversation)
+  const selectedConversation = useMemo(() => {
+    if (isNewConversation) return null
+    const selectId = getSelectId()
+    if (!selectId) return null
+    return getMessageByCovId(selectId).curMessage
+  }, [messages, isNewConversation])
+  const selectedModel = useMemo(
+    () => models.find((model) => model.id === selectedModelId) || null,
+    [models, selectedModelId]
+  )
+  const selectedModelName = selectedModel?.name || selectedConversation?.modelName || selectedModelId || 'AI Assistant'
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -72,6 +100,63 @@ const ChatAI: React.FC = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const fetchModels = async () => {
+      setIsModelsLoading(true)
+      try {
+        const response = await fetch(getModelsApiUrl(chatApiUrl), {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json'
+          }
+        })
+        if (!response.ok) {
+          throw new Error(`failed to fetch models, status: ${response.status}`)
+        }
+        const result: ModelListResponse = await response.json()
+        const modelList = Array.isArray(result.data) ? result.data : []
+        setModels(modelList)
+
+        if (modelList.length > 0) {
+          const enabledList = modelList.filter((model) => model.enabled)
+          const availableList = enabledList.length > 0 ? enabledList : modelList
+          const cachedModelId = localStorage.getItem(MODEL_STORAGE_KEY)
+          const matchedModel = availableList.find((model) => model.id === cachedModelId)
+            || availableList.find((model) => model.id === DEFAULT_MODEL_ID)
+            || availableList[0]
+          if (matchedModel) {
+            setSelectedModelId(matchedModel.id)
+            localStorage.setItem(MODEL_STORAGE_KEY, matchedModel.id)
+          }
+        }
+      } catch (error) {
+        console.log(error)
+        setModels([
+          {
+            id: DEFAULT_MODEL_ID,
+            name: 'DeepSeek Reasoner',
+            provider: 'deepseek',
+            description: '默认推理模型',
+            supportsStream: true,
+            enabled: true
+          }
+        ])
+        setSelectedModelId(DEFAULT_MODEL_ID)
+        localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_MODEL_ID)
+      } finally {
+        setIsModelsLoading(false)
+      }
+    }
+
+    fetchModels()
+  }, [chatApiUrl])
+
+  useEffect(() => {
+    if (!selectedConversation?.modelId || selectedConversation.modelId === selectedModelId) return
+    setSelectedModelId(selectedConversation.modelId)
+    localStorage.setItem(MODEL_STORAGE_KEY, selectedConversation.modelId)
+  }, [selectedConversation?.modelId, selectedModelId])
+
   // 检测主动滚动事件，需要停止滑动到最底部行为
   window.addEventListener('scroll', ()=> {
     console.log('滚动了')
@@ -93,9 +178,13 @@ const ChatAI: React.FC = () => {
 
   const requestAssistantReply = async (userMessage: Message, appendUserMessage: boolean) => {
     let assistantMessage = getLoadingMessage()
+    const currentConversationModel = {
+      id: selectedModelId,
+      name: selectedModelName
+    }
 
     if (appendUserMessage) {
-      storageMessages(userMessage)
+      storageMessages(userMessage, currentConversationModel)
       dispatch({
         type: 'addMessages',
         messages: [userMessage, assistantMessage]
@@ -110,13 +199,13 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch((import.meta as any).env.VITE_CHAT_BASE_URL, {
+      const response = await fetch(chatApiUrl, {
         signal,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
         body: JSON.stringify({
           messages: [userMessage],
-          "model": "deepseek-reasoner",
+          "model": selectedModelId,
           "frequency_penalty": 0,
           "max_tokens": 2048,
           "presence_penalty": 0,
@@ -208,7 +297,7 @@ const ChatAI: React.FC = () => {
           }
         }
       }
-      storageMessages(assistantMessage)
+      storageMessages(assistantMessage, currentConversationModel)
     } catch (error: any) {
       console.log(error)
       if (error.name === "AbortError") {
@@ -246,7 +335,10 @@ const ChatAI: React.FC = () => {
     };
 
     if (messages.length === 0) {
-      newChat()
+      newChat({
+        id: selectedModelId,
+        name: selectedModelName
+      })
     }
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
@@ -280,6 +372,22 @@ const ChatAI: React.FC = () => {
     initAbortController()
   }
 
+  const onSelectModel = (modelId: string) => {
+    if (isLoading || isModelsLoading || modelId === selectedModelId) return
+    const targetModel = models.find((model) => model.id === modelId)
+    if (!targetModel || !targetModel.enabled) return
+
+    setSelectedModelId(modelId)
+    localStorage.setItem(MODEL_STORAGE_KEY, modelId)
+    localStorage.setItem('isNewCov', 'true')
+    dispatch({
+      type: 'clearMessages'
+    } as any)
+    setInputText('')
+    setIsShowShare(false)
+    setShareTargetElement(null)
+  }
+
 
   return (
     <MessagePopProvider>
@@ -290,7 +398,14 @@ const ChatAI: React.FC = () => {
         {/* {isShowShare && <div className='shareCancel' onClick={() => setIsShowShare(false)}>取消分享</div>}
         {!isShowShare && <ThemeSwitcher />} */}
         <div className='messages-content'>
-          <ChatHeaderOperate isShowShare={isShowShare} onCancelShare={setIsShowShare} />
+          <ChatHeaderOperate
+            isShowShare={isShowShare}
+            onCancelShare={setIsShowShare}
+            models={models}
+            selectedModelId={selectedModel?.id || selectedModelId}
+            isModelLoading={isModelsLoading || isLoading}
+            onSelectModel={onSelectModel}
+          />
           <div className='messages-scollWrap' ref={messagesRef}>
             {isWelcomeConversation ? (
               <div className="new-conversation-panel">
@@ -311,6 +426,7 @@ const ChatAI: React.FC = () => {
                   <MessageItem
                     msg={msg}
                     key={index}
+                    botName={selectedModelName}
                     setIsShowShare={setIsShowShare}
                     setShareTarget={setShareTargetElement}
                     canRetry={msg.isBot && !msg.isLoading && index === messages.length - 1 && !isLoading}

@@ -18,6 +18,7 @@ interface MessageItemProps {
   setIsShowShare: (show: boolean) => void;
   setShareTarget: (target: HTMLElement | null) => void;
   currentShareMessage?: any;
+  botName?: string;
   canRetry?: boolean;
   onRetry?: () => void;
 }
@@ -27,6 +28,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   setIsShowShare,
   setShareTarget,
   currentShareMessage: _currentShareMessage,
+  botName = 'AI Assistant',
   canRetry = false,
   onRetry
 }) => {
@@ -83,7 +85,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
       </div>
       <div className="bubble-wrap" ref={contentRef}>
         {
-          msg.isBot && <div className='botName'>DeepSeek-R1</div>
+          msg.isBot && <div className='botName'>{botName}</div>
         }
         {
           !msg.isBot && <div className='userTime'>
