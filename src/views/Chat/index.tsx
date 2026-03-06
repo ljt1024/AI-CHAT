@@ -8,7 +8,7 @@ import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages, removeLastAssistantMessage, Message } from '@/utils/localMessages'
+import { newChat, storageMessages, removeLastAssistantMessage, Message, getSelectId } from '@/utils/localMessages'
 
 import './chat.css';
 
@@ -44,6 +44,8 @@ const ChatAI: React.FC = () => {
   const { messages } = useChat()
   const dispatch = useChatDispatch()
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
+  const hasSelectedConversation = Boolean(getSelectId())
+  const isWelcomeConversation = messages.length === 0 && (isNewConversation || !hasSelectedConversation)
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -290,7 +292,7 @@ const ChatAI: React.FC = () => {
         <div className='messages-content'>
           <ChatHeaderOperate isShowShare={isShowShare} onCancelShare={setIsShowShare} />
           <div className='messages-scollWrap' ref={messagesRef}>
-            {isNewConversation ? (
+            {isWelcomeConversation ? (
               <div className="new-conversation-panel">
                 <h1 className="new-conversation-title">AICHAT</h1>
                 <p className="new-conversation-subtitle">你的AI问答助手</p>
@@ -331,7 +333,7 @@ const ChatAI: React.FC = () => {
             isShowShare && <Share targetElement={shareTargetElement} setIsShowShare={setIsShowShare}/>
           }
 
-          {!isNewConversation && (
+          {!isWelcomeConversation && (
             <ChatInputControl
               inputText={inputText}
               isLoading={isLoading}
