@@ -24,16 +24,18 @@
     top: 16px;
     left: 16px;
     z-index: 101;
-    background: var(--primary-color);
-    color: var(--user-bubble-text);
-    border-radius: 50%;
+    background: var(--mobile-menu-bg);
+    color: var(--text-color);
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
     width: 36px;
     height: 36px;
     display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--soft-shadow);
+    backdrop-filter: blur(14px);
   }
   
   .mobile-menu-btn {
@@ -46,11 +48,11 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background: var(--panel-bg);
+  background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
   border: 1px solid var(--border-color);
-  border-radius: 22px;
+  border-radius: 26px;
   box-shadow: var(--panel-shadow);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(120%);
   min-width: 0;
   overflow: hidden;
 }
@@ -71,14 +73,14 @@
 }
 
 .messages-scollWrap::-webkit-scrollbar-thumb {
-  background: rgba(95, 105, 120, 0.25);
+  background: color-mix(in srgb, var(--secondary-color) 22%, transparent);
   border-radius: 99px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 .messages-scollWrap::-webkit-scrollbar-thumb:hover {
-  background: rgba(95, 105, 120, 0.4);
+  background: color-mix(in srgb, var(--secondary-color) 36%, transparent);
   background-clip: content-box;
 }
 
@@ -86,10 +88,9 @@
   display: flex;
   flex-direction: column;
   padding: 20px 42px 24px;
-  /* overflow-y: auto;
-  scroll-behavior: smooth; */
   max-width: 1508px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .new-conversation-panel {
@@ -106,17 +107,18 @@
 .new-conversation-title {
   margin: 0;
   font-size: clamp(30px, 4vw, 42px);
-  line-height: 1.1;
+  line-height: 1.12;
   font-family: var(--font-display);
   color: var(--text-color);
-  letter-spacing: 1.2px;
+  letter-spacing: -0.03em;
 }
 
 .new-conversation-subtitle {
   margin: 0 0 8px;
   font-size: 15px;
   color: var(--text-muted-color);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.02em;
+  max-width: 520px;
 }
 
 /* 移动端适配 */
@@ -154,7 +156,7 @@
   gap: 8px;
   padding: 8px 12px;
   margin-left: 40px;
-  background: var(--surface-color);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
   border: 1px solid var(--border-color);
   border-radius: 999px;
   width: fit-content;
@@ -165,7 +167,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--primary-color);
+  background: var(--secondary-color);
   animation: bounce 1.4s infinite;
 }
 
@@ -189,10 +191,6 @@
   }
 }
 
-
-button:hover {
-  transform: scale(1.05);
-}
 
 .footerInfo {
   display: flex;
@@ -234,8 +232,8 @@ button:hover {
 
 .retry:hover,
 .share:hover {
-  color: var(--primary-color);
-  fill: var(--primary-color);
+  color: var(--secondary-color);
+  fill: var(--secondary-color);
   transform: translateY(-1px);
 }
 
@@ -269,14 +267,13 @@ button:hover {
 
 
 blockquote {
-  border-left: 3px solid var(--primary-color);
-  background: rgba(244, 240, 255, 0.45);
-  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
-  border-radius: 12px;
+  border-left: 3px solid color-mix(in srgb, var(--secondary-color) 55%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 42%, transparent);
+  border-radius: 14px;
   color: var(--text-muted-color);
   font-size: 14px;
   margin: 0 0.4em 0.4em 0;
-  padding: 8px 12px;
+  padding: 10px 14px;
 }
 
 .messages-content .bubble th,
@@ -354,20 +351,20 @@ blockquote {
 
 .chatScrollBottom:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--card-shadow);
 }
 
 .messages-content a {
-  color: var(--primary-color);
+  color: var(--secondary-color);
   text-decoration: none;
-  border-bottom: 1px dashed var(--primary-color);
-  border-bottom-color: color-mix(in srgb, var(--primary-color) 60%, transparent);
+  border-bottom: 1px dashed var(--secondary-color);
+  border-bottom-color: color-mix(in srgb, var(--secondary-color) 60%, transparent);
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .messages-content a:hover {
-  color: var(--secondary-color);
-  border-bottom-color: color-mix(in srgb, var(--secondary-color) 60%, transparent);
+  color: color-mix(in srgb, var(--secondary-color) 76%, white);
+  border-bottom-color: color-mix(in srgb, var(--secondary-color) 82%, transparent);
 }
 
 .messageFoldWrap {
@@ -385,7 +382,7 @@ blockquote {
 .foldIcon {
   width: 100%;
   height: 30px;
-  background: var(--bg-color);
+  background: color-mix(in srgb, var(--surface-color) 82%, var(--bg-color));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -414,12 +411,13 @@ blockquote {
   width: 48px;
   height: 48px;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 14px;
   margin-bottom: 4px;
+  box-shadow: var(--soft-shadow);
 }
 
 .savePicture img {
-  background-color: var(--share-link-bg);
+  background-color: var(--share-save-bg);
 }
 
 .copyText img {
@@ -510,25 +508,22 @@ blockquote {
 }
 
 .shareCancel {
-  /* position: fixed;
-  right: 24px;
-  z-index: 100;
-  top: 8px; */
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--button-ghost-bg);
-  border: none;
-  border-radius: 30px;
-  padding: 0.6rem 1.2rem;
+  background-color: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.68rem 1.1rem;
   color: var(--text-color);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .shareCancel:hover {
-  background-color: var(--button-ghost-hover);
+  background-color: var(--surface-hover);
+  border-color: var(--border-strong);
   transform: translateY(-2px);
 }

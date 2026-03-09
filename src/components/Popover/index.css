@@ -13,21 +13,19 @@
   z-index: 107000;
   min-width: 30px;
   min-height: 32px;
-  /* padding-bottom: 12px; */
   word-wrap: break-word;
-  background-color: var(--surface-color);
+  background-color: color-mix(in srgb, var(--surface-color) 92%, transparent);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 
-              0 6px 16px 0 rgba(0, 0, 0, 0.08), 
-              0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: var(--popover-shadow);
+  backdrop-filter: blur(18px) saturate(120%);
   animation: popover-fade-in 0.3s ease;
 }
 
 .popover-inner {
   padding: 12px;
-  border-radius: 6px;
-  background: var(--surface-color);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
 }
 
 .popover-title {
@@ -65,7 +63,7 @@
   width: 12px;
   height: 12px;
   margin: auto;
-  background-color: var(--surface-color);
+  background-color: color-mix(in srgb, var(--surface-color) 92%, transparent);
   content: "";
   pointer-events: auto;
   transform: rotate(45deg);
@@ -95,7 +93,7 @@
 .popover-top-start .popover-arrow::before,
 .popover-top-end .popover-arrow::before {
   bottom: -6px;
-  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.07);
+  box-shadow: 6px 6px 10px rgba(0, 0, 0, 0.08);
 }
 
 .popover-bottom .popover-arrow,
@@ -121,7 +119,7 @@
 .popover-bottom-start .popover-arrow::before,
 .popover-bottom-end .popover-arrow::before {
   top: -6px;
-  box-shadow: -3px -3px 7px rgba(0, 0, 0, 0.07);
+  box-shadow: -6px -6px 10px rgba(0, 0, 0, 0.08);
 }
 
 .popover-left .popover-arrow,
@@ -147,7 +145,7 @@
 .popover-left-start .popover-arrow::before,
 .popover-left-end .popover-arrow::before {
   right: -6px;
-  box-shadow: 3px -3px 7px rgba(0, 0, 0, 0.07);
+  box-shadow: 6px -6px 10px rgba(0, 0, 0, 0.08);
 }
 
 .popover-right .popover-arrow,
@@ -173,7 +171,7 @@
 .popover-right-start .popover-arrow::before,
 .popover-right-end .popover-arrow::before {
   left: -6px;
-  box-shadow: -3px 3px 7px rgba(0, 0, 0, 0.07);
+  box-shadow: -6px 6px 10px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes popover-fade-in {

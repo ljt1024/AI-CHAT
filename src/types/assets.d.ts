@@ -25,7 +25,7 @@ declare module '*.gif' {
 
 declare module '*.svg?react' {
   import * as React from 'react';
-  export const ReactComponent: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  const src: string;
-  export default src;
+  const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;
+  export { ReactComponent };
+  export default ReactComponent;
 }

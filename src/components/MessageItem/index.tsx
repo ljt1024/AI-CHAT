@@ -76,13 +76,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
       style={{ animation: 'messageIn 0.45s ease-out' }}
 
     >
-      <div className="avatar">
+      {/* <div className="avatar">
         {msg.isBot ? (
           <img src={BotIcon} alt="AI" className="bot-avatar" />
         ) : (
           <img src={UserIcon} alt="用户" className="bot-avatar" />
         )}
-      </div>
+      </div> */}
       <div className="bubble-wrap" ref={contentRef}>
         {
           msg.isBot && <div className='botName'>{botName}</div>

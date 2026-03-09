@@ -22,10 +22,10 @@
 }
 
 .dialog {
-  background: var(--surface-color);
+  background: color-mix(in srgb, var(--surface-color) 94%, transparent);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  box-shadow: var(--dialog-shadow);
   overflow: hidden;
   transform: translateY(20px);
   transition: transform 0.3s ease;
@@ -82,11 +82,6 @@
 }
 
 .dialog-close:hover {
-   transform: rotate(360deg);
-   transition: all 2s;
-}
-
-.dialog-close:hover {
   background-color: var(--surface-hover);
   color: var(--text-color);
   outline: none;
@@ -109,17 +104,18 @@
 }
 
 .dialog-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .dialog-button.confirm {
-  background-color: var(--primary-color);
-  color: var(--user-bubble-text);
+  background-color: var(--secondary-color);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--secondary-color) 54%, transparent);
 }
 
 .dialog-button.confirm:disabled {
@@ -128,11 +124,12 @@
 }
 
 .dialog-button.confirm:hover {
-  background-color: var(--primary-hover);
+  background-color: color-mix(in srgb, var(--secondary-color) 86%, white);
+  transform: translateY(-1px);
 }
 
 .dialog-button.cancel {
-  background-color: var(--surface-elevated);
+  background-color: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
   color: var(--text-muted-color);
   border: 1px solid var(--border-color);
 }
@@ -140,6 +137,7 @@
 .dialog-button.cancel:hover {
   background-color: var(--surface-hover);
   color: var(--text-color);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {

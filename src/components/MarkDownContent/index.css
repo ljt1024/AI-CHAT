@@ -37,10 +37,10 @@
 .htmlPreviewDialog {
     width: min(1200px, 100%);
     height: min(88vh, 920px);
-    border-radius: 14px;
+    border-radius: 18px;
     border: 1px solid var(--border-color);
     box-shadow: var(--panel-shadow);
-    background: var(--surface-color);
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -63,7 +63,7 @@
     align-items: center;
     justify-content: space-between;
     color: var(--text-color);
-    background: var(--surface-elevated);
+    background: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
 }
 
 .htmlPreviewActions {
@@ -75,9 +75,9 @@
 .htmlPreviewBtn {
     height: 30px;
     padding: 0 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
-    background: var(--surface-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
     color: var(--text-color);
     cursor: pointer;
 }
@@ -89,7 +89,7 @@
 .htmlPreviewBody {
     flex: 1;
     min-height: 0;
-    background: #fff;
+    background: var(--preview-canvas-bg);
 }
 
 .htmlPreviewFrame {

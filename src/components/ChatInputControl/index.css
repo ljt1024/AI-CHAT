@@ -1,8 +1,7 @@
 /* 输入区域 */
 .input-area {
   padding: 10px 20px 12px;
-  /* border-top: 1px solid var(--border-color); */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--surface-color) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, color-mix(in srgb, var(--surface-color) 78%, transparent) 100%);
   display: flex;
   justify-content: center;
 }
@@ -17,37 +16,31 @@
   max-width: 1020px;
   width: 100%;
   position: relative;
-  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
-  border-radius: 20px;
-  padding: 8px;
-  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  border-radius: 24px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px) saturate(120%);
   display: flex;
   flex-direction: column;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 }
 
 .input-container:focus-within {
-  border-color: var(--border-strong);
+  border-color: color-mix(in srgb, var(--secondary-color) 22%, var(--border-strong));
   box-shadow: var(--focus-ring), var(--card-shadow);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-radius: 14px;
+  border-radius: 18px;
   border: 1px solid transparent;
-  /* background: color-mix(in srgb, var(--input-bg) 90%, transparent); */
-  padding: 6px 10px;
+  padding: 8px 12px;
   transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.input-container:focus-within .input-wrapper {
-  /* border-color: color-mix(in srgb, var(--primary-color) 62%, var(--border-strong));
-  background: color-mix(in srgb, var(--input-bg) 95%, transparent); */
 }
 
 .send-button-row {
@@ -68,7 +61,7 @@
   width: 36px;
   height: 36px;
   border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
-  border-radius: 14px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
   color: var(--icon-muted-color);
   cursor: pointer;
@@ -86,9 +79,10 @@
 }
 
 .input-send--active {
-  background: linear-gradient(165deg, var(--primary-color), var(--primary-strong));
-  color: #2f2750;
-  box-shadow: 0 12px 20px -16px rgba(40, 28, 62, 0.45);
+  background: linear-gradient(180deg, var(--secondary-color), color-mix(in srgb, var(--secondary-color) 72%, white));
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--secondary-color) 52%, transparent);
+  box-shadow: 0 18px 24px -18px color-mix(in srgb, var(--secondary-color) 48%, transparent);
 }
 
 .input-send--idle {
@@ -128,7 +122,7 @@
   padding: 0;
   outline: none;
   font-family: inherit;
-  line-height: 1.55;
+  line-height: 1.6;
   resize: none;
   min-height: 46px;
   box-shadow: none;
@@ -168,7 +162,7 @@
 .input-attach {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
   color: var(--text-color);
@@ -182,8 +176,8 @@
 .input-attach:hover {
   opacity: 1;
   transform: translateY(-1px);
-  border-color: var(--border-strong);
-  background: var(--button-ghost-hover);
+  border-color: color-mix(in srgb, var(--secondary-color) 18%, var(--border-strong));
+  background: var(--surface-hover);
 }
 
 .input-attach:disabled {
@@ -213,7 +207,7 @@
   max-width: 100%;
   border: 1px solid var(--border-color);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 52%, var(--surface-elevated));
   color: var(--text-color);
   padding: 4px 10px;
   gap: 8px;
@@ -255,10 +249,10 @@
 }
 
 .input-send--active:hover {
-  background: linear-gradient(165deg, var(--primary-hover), var(--primary-strong));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--secondary-color) 90%, white), color-mix(in srgb, var(--secondary-color) 76%, white));
   transform: translateY(-1px);
-  box-shadow: 0 16px 26px -18px rgba(40, 28, 62, 0.5);
-  filter: saturate(1.05);
+  box-shadow: 0 20px 28px -18px color-mix(in srgb, var(--secondary-color) 52%, transparent);
+  filter: saturate(1.04);
 }
 
 .stop-btn {

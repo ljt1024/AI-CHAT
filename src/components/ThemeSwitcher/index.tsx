@@ -1,72 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 import lightIcon from '../../assets/light.png'
 import darkIcon from '../../assets/dark.png'
 import './index.css'
 
 const ThemeSwitcher = () => {
-    const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const themes = [
-        {
-            id: 'light',
-            name: '明亮模式',
-            icon: darkIcon
-        },
-        {
-            id: 'dark',
-            name: '暗黑模式',
-            icon: lightIcon
-        },
-    ];
-
-    // 点击外部关闭下拉菜单
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                // setIsOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    // 应用主题
-    const applyTheme = (theme: 'light' | 'dark') => {
-        const root = document.documentElement;
-        root.removeAttribute('data-theme')
-
-        if (theme === 'dark') {
-            root.setAttribute('data-theme', 'dark');
-        }
-        setCurrentTheme(theme);
-
-        // 保存主题到本地存储
-        localStorage.setItem('theme', theme);
-    };
-
-    // 初始化主题
-    useEffect(() => {
-        const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
-        applyTheme(savedTheme);
-    }, []);
+    const { theme, toggleTheme } = useTheme();
+    const nextThemeLabel = theme === 'dark' ? '明亮模式' : '暗黑模式';
+    const currentIcon = theme === 'dark' ? lightIcon : darkIcon;
 
     return (
-        <div className="theme-switcher" ref={dropdownRef}>
-            <div
+        <div className="theme-switcher">
+            <button
+                type="button"
                 className="theme-button"
-                onClick={() => applyTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-                aria-label="切换主题"
+                onClick={toggleTheme}
+                aria-label={`切换到${nextThemeLabel}`}
+                title={`切换到${nextThemeLabel}`}
             >
                 <span className="theme-icon">
-                    {
-                        <img src={themes.find(t => t.id === currentTheme)?.icon} alt="" />
-                    }
+                    <img src={currentIcon} alt="" />
                 </span>
-            </div>
+            </button>
         </div>
     );
 };

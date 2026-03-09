@@ -2,9 +2,8 @@
 .message {
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   align-items: flex-start;
-  /* opacity: 0; */
   animation-fill-mode: forwards;
 }
 
@@ -40,15 +39,12 @@
 }
 
 .bubble-wrap {
-  /* max-width: 70%; */
   width: 100%;
-  /* background: var(--user-bubble-bg); */
   position: relative;
   overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* padding-right: 40px; */
 }
 
 @media (max-width: 768px) {
@@ -71,15 +67,15 @@
 
 
 .bubble {
-  /* width: calc(100% - 32px); */
-  padding: 14px 18px;
-  border-radius: 16px;
-  word-break: break-all;
+  padding: 16px 18px;
+  border-radius: 20px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   position: relative;
   border: 1px solid var(--border-color);
   background: var(--bot-bubble-bg);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(12px);
 }
 
 .bubbleFold {
@@ -88,23 +84,24 @@
 }
 
 .message.bot .bubble-wrap {
-  /* border-radius: 16px 16px 16px 4px; */
-  margin-right: 48px;
+  margin-right: clamp(0px, 4vw, 56px);
 }
 
 .botName {
-  margin-bottom: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  font-family: var(--font-display);
-  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  letter-spacing: 0.08em;
+  color: var(--text-muted-color);
+  text-transform: uppercase;
 }
 
 .message.user .bubble {
   background: var(--user-bubble-bg);
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, transparent);
   box-shadow: var(--user-bubble-shadow);
-  margin-left: 48px;
+  margin-left: clamp(0px, 4vw, 56px);
   align-self: flex-end;
 }
 
@@ -133,7 +130,7 @@
 
 .content {
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.72;
 }
 
 @keyframes messageIn {
