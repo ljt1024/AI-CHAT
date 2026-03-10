@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useMessagePop } from '@/components/MessagePop';
 import './index.css';
 
 export interface UploadedFileItem {
@@ -17,6 +18,7 @@ interface ChatInputControlProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onStopSSE: () => void;
   supportsFileUpload?: boolean;
+  imageOnlyUpload?: boolean;
   supportsThinking?: boolean;
   isThinkingEnabled?: boolean;
   uploadedFiles?: UploadedFileItem[];
@@ -34,6 +36,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onSubmit,
   onStopSSE,
   supportsFileUpload = false,
+  imageOnlyUpload = false,
   supportsThinking = false,
   isThinkingEnabled = false,
   uploadedFiles = [],
@@ -46,6 +49,12 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   const hasInput = inputText.trim().length > 0
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagePop = useMessagePop()
+
+  const isImageFile = (file: File) => {
+    if (file.type.startsWith('image/')) return true
+    return /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name)
+  }
 
   const onClickUpload = () => {
     if (!supportsFileUpload || isLoading || isUploadingFile) return
@@ -54,6 +63,11 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    if (file && imageOnlyUpload && !isImageFile(file)) {
+      messagePop.error('当前模型仅支持上传图片文件')
+      e.target.value = ''
+      return
+    }
     if (file && onUploadFile) {
       onUploadFile(file)
     }
@@ -136,6 +150,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   ref={fileInputRef}
                   type="file"
                   className="file-input-hidden"
+                  accept={imageOnlyUpload ? 'image/*' : undefined}
                   onChange={onFileChange}
                 />
               </>

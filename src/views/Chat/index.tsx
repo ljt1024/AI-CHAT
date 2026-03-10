@@ -95,6 +95,11 @@ const isImageAttachment = (attachment?: MessageAttachment): boolean => Boolean(
   attachment?.url && attachment.mimeType?.startsWith('image/')
 )
 
+const isImageFile = (file: File): boolean => {
+  if (file.type.startsWith('image/')) return true
+  return /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name)
+}
+
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
   const [inputText, setInputText] = useState('');
@@ -519,6 +524,7 @@ const ChatAI: React.FC = () => {
 
   const onUploadFile = async (file: File) => {
     if (!supportsFileUpload || isUploadingFile || isLoading) return
+    if (supportsImageUnderstanding && !isImageFile(file)) return
     setIsUploadingFile(true)
     try {
       const formData = new FormData()
@@ -582,6 +588,7 @@ const ChatAI: React.FC = () => {
                   inputText={inputText}
                   isLoading={isLoading}
                   supportsFileUpload={supportsFileUpload}
+                  imageOnlyUpload={supportsImageUnderstanding}
                   supportsThinking={modelSupportsThinking}
                   isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}
@@ -628,6 +635,7 @@ const ChatAI: React.FC = () => {
               inputText={inputText}
               isLoading={isLoading}
               supportsFileUpload={supportsFileUpload}
+              imageOnlyUpload={supportsImageUnderstanding}
               supportsThinking={modelSupportsThinking}
               isThinkingEnabled={isThinkingEnabled}
               uploadedFiles={uploadedFiles}
