@@ -44,6 +44,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   variant = 'bottom'
 }) => {
   const hasInput = inputText.trim().length > 0
+  const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const onClickUpload = () => {
@@ -59,8 +60,19 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
     e.target.value = ''
   }
 
+  const onTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const nativeEvent = e.nativeEvent as KeyboardEvent
+    if (e.key !== 'Enter' || e.shiftKey || nativeEvent.isComposing) return
+    e.preventDefault()
+    formRef.current?.requestSubmit()
+  }
+
   return (
-    <form className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()} onSubmit={onSubmit}>
+    <form
+      ref={formRef}
+      className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()}
+      onSubmit={onSubmit}
+    >
       <div className="input-container">
         <div className="input-wrapper">
           <div className="input-left">
@@ -75,6 +87,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
             <textarea
               value={inputText}
               onChange={(e) => onInputChange(e.target.value)}
+              onKeyDown={onTextareaKeyDown}
               placeholder="请输入你的问题..."
               disabled={isLoading}
               rows={2}

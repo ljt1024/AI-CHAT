@@ -212,15 +212,19 @@
 .input-thinking:hover {
   opacity: 1;
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, #3d9d9a 22%, var(--border-strong));
+  border-color: color-mix(in srgb, var(--secondary-color) 22%, var(--border-strong));
   background: var(--surface-hover);
 }
 
 .input-thinking.is-active {
-  border-color: color-mix(in srgb, #3d9d9a 36%, transparent);
-  background: linear-gradient(135deg, rgba(111, 219, 213, 0.2), rgba(222, 248, 246, 0.85));
-  color: #0f6c68;
-  box-shadow: 0 14px 22px -18px rgba(61, 157, 154, 0.62);
+  border-color: color-mix(in srgb, var(--secondary-color) 38%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-color) 88%, transparent),
+    color-mix(in srgb, var(--surface-hover) 92%, var(--primary-color))
+  );
+  color: color-mix(in srgb, var(--secondary-color) 72%, var(--text-color));
+  box-shadow: 0 14px 22px -18px color-mix(in srgb, var(--secondary-color) 44%, transparent);
 }
 
 .input-thinking.is-inactive {
