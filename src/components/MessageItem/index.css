@@ -87,6 +87,14 @@
   margin-right: clamp(0px, 4vw, 56px);
 }
 
+.message.user .bubble-wrap {
+  width: fit-content;
+  max-width: min(72%, 520px);
+  margin-left: auto;
+  align-items: flex-end;
+  overflow: visible;
+}
+
 .botName {
   margin-bottom: 6px;
   font-size: 12px;
@@ -101,8 +109,9 @@
   background: var(--user-bubble-bg);
   border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, transparent);
   box-shadow: var(--user-bubble-shadow);
-  margin-left: clamp(0px, 4vw, 56px);
+  margin-left: 0;
   align-self: flex-end;
+  max-width: 100%;
 }
 
 .message.user .bubble::after {
@@ -133,6 +142,47 @@
   line-height: 1.72;
 }
 
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.message-attachment-image {
+  display: block;
+  width: clamp(168px, 26vw, 240px);
+  max-width: 100%;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  box-shadow: var(--soft-shadow);
+  object-fit: cover;
+}
+
+.message.user .message-attachments {
+  justify-content: flex-end;
+}
+
+.message-attachment-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.message.user .message-attachment-files {
+  justify-content: flex-end;
+}
+
+.message-attachment-file {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 @keyframes messageIn {
   from {
     opacity: 0;
@@ -143,5 +193,15 @@
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .message.user .bubble-wrap {
+    max-width: calc(100% - 24px);
+  }
+
+  .message-attachment-image {
+    width: min(220px, 100%);
   }
 }

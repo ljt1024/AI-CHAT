@@ -3,6 +3,8 @@ import './index.css';
 
 export interface UploadedFileItem {
   fileId: string;
+  serverFileId?: string;
+  url?: string;
   name: string;
   mimeType?: string;
   size?: number;

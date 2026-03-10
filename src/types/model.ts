@@ -5,6 +5,12 @@ export interface ModelOption {
   description?: string;
   supportsStream?: boolean;
   supportsFileUpload?: boolean;
+  supportsVision?: boolean;
+  supportsImageUnderstanding?: boolean;
+  supportsImageUrl?: boolean;
+  modalities?: string[];
+  inputModalities?: string[];
+  capabilities?: string[];
   enabled?: boolean;
 }
 

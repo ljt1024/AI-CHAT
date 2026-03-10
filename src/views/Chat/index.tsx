@@ -8,7 +8,7 @@ import ChatInputControl, { UploadedFileItem } from '@/components/ChatInputContro
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages, removeLastAssistantMessage, Message, getSelectId, getMessageByCovId } from '@/utils/localMessages'
+import { newChat, storageMessages, removeLastAssistantMessage, Message, MessageAttachment, getSelectId, getMessageByCovId } from '@/utils/localMessages'
 import { ModelListResponse, ModelOption } from '@/types/model';
 
 import './chat.css';
@@ -34,8 +34,31 @@ interface FileUploadResponse {
     mimeType?: string;
     size?: number;
     createdAt?: string;
+    url?: string;
+    ossUrl?: string;
+    fileUrl?: string;
   };
   msg?: string;
+}
+
+type RequestMessageContent =
+  | string
+  | Array<
+    | {
+      type: 'image_url';
+      image_url: {
+        url: string;
+      };
+    }
+    | {
+      type: 'text';
+      text: string;
+    }
+  >
+
+interface RequestMessage {
+  role: 'user' | 'assistant';
+  content: RequestMessageContent;
 }
 
 let controller: AbortController | null = null
@@ -61,6 +84,20 @@ const getFileUploadApiUrl = (chatApiUrl: string): string => {
     return new URL('/api/files/upload', chatApiUrl).toString()
   }
   return '/api/files/upload'
+}
+
+const getUploadedFileUrl = (fileData?: FileUploadResponse['data']): string | undefined => {
+  if (!fileData) return undefined
+  return fileData.ossUrl || fileData.url || fileData.fileUrl
+}
+
+const isImageAttachment = (attachment?: MessageAttachment): boolean => Boolean(
+  attachment?.url && attachment.mimeType?.startsWith('image/')
+)
+
+const getModelCapabilities = (model: ModelOption | null): string[] => {
+  const source = model?.inputModalities || model?.modalities || model?.capabilities || []
+  return Array.isArray(source) ? source.map((item) => String(item).toLowerCase()) : []
 }
 
 const ChatAI: React.FC = () => {
@@ -95,7 +132,17 @@ const ChatAI: React.FC = () => {
     [models, selectedModelId]
   )
   const selectedModelName = selectedModel?.name || selectedConversation?.modelName || selectedModelId || 'AI Assistant'
-  const supportsFileUpload = Boolean(selectedModel?.supportsFileUpload)
+  const supportsImageUnderstanding = useMemo(() => {
+    const capabilities = getModelCapabilities(selectedModel)
+    return Boolean(
+      selectedModel?.supportsVision
+      || selectedModel?.supportsImageUnderstanding
+      || selectedModel?.supportsImageUrl
+      || capabilities.includes('image')
+      || capabilities.includes('vision')
+    )
+  }, [selectedModel])
+  const supportsFileUpload = Boolean(selectedModel?.supportsFileUpload || supportsImageUnderstanding)
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -186,6 +233,12 @@ const ChatAI: React.FC = () => {
     }
   }, [supportsFileUpload, uploadedFiles.length])
 
+  useEffect(() => {
+    if (isWelcomeConversation || messages.length === 0) {
+      setIsShowScrollBtn(false)
+    }
+  }, [isWelcomeConversation, messages.length])
+
   // 检测主动滚动事件，需要停止滑动到最底部行为
   window.addEventListener('scroll', ()=> {
     console.log('滚动了')
@@ -228,8 +281,32 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
+      const firstAttachment = userMessage.attachments?.[0]
+      const requestMode = userMessage.attachmentRequestType
+        || (supportsImageUnderstanding && isImageAttachment(firstAttachment) ? 'image_url' : undefined)
+        || (firstAttachment?.fileId ? 'file_id' : undefined)
+      const requestMessage: RequestMessage = requestMode === 'image_url' && firstAttachment?.url
+        ? {
+          role: userMessage.role,
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: firstAttachment.url
+              }
+            },
+            {
+              type: 'text',
+              text: userMessage.content
+            }
+          ]
+        }
+        : {
+          role: userMessage.role,
+          content: userMessage.content
+        }
       const requestBody: Record<string, any> = {
-        messages: [userMessage],
+        messages: [requestMessage],
         "model": selectedModelId,
         "frequency_penalty": 0,
         "max_tokens": 2048,
@@ -247,8 +324,8 @@ const ChatAI: React.FC = () => {
         "logprobs": false,
         "top_logprobs": null
       }
-      if (supportsFileUpload && uploadedFiles.length > 0) {
-        requestBody.fileId = uploadedFiles[0].fileId
+      if (requestMode === 'file_id' && firstAttachment?.fileId) {
+        requestBody.fileId = firstAttachment.fileId
       }
 
       const response = await fetch(chatApiUrl, {
@@ -349,6 +426,7 @@ const ChatAI: React.FC = () => {
     } finally {
       scrollToBottom()
       setIsLoading(false);
+      setUploadedFiles([])
       // 更新会话列表
       dispatch({
         type: 'getCovList'
@@ -365,7 +443,27 @@ const ChatAI: React.FC = () => {
       content: inputText,
       role: 'user',
       timestamp: new Date().toISOString(),
-      isBot: false
+      isBot: false,
+      attachments: uploadedFiles.length > 0
+        ? uploadedFiles.map((file) => ({
+          fileId: file.serverFileId,
+          url: file.url,
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.size
+        }))
+        : undefined,
+      attachmentRequestType: (() => {
+        const firstUploadedFile = uploadedFiles[0]
+        if (!firstUploadedFile) return undefined
+        if (supportsImageUnderstanding && firstUploadedFile.url && firstUploadedFile.mimeType?.startsWith('image/')) {
+          return 'image_url'
+        }
+        if (firstUploadedFile.serverFileId) {
+          return 'file_id'
+        }
+        return undefined
+      })()
     };
 
     if (messages.length === 0) {
@@ -441,7 +539,9 @@ const ChatAI: React.FC = () => {
       const result: FileUploadResponse = await response.json()
       const fileData = result.data || {}
       const uploadedFile: UploadedFileItem = {
-        fileId: fileData.fileId || `${Date.now()}-${file.name}`,
+        fileId: `${Date.now()}-${file.name}`,
+        serverFileId: fileData.fileId,
+        url: getUploadedFileUrl(fileData),
         name: fileData.fileName || file.name,
         mimeType: fileData.mimeType || file.type,
         size: fileData.size || file.size
@@ -539,9 +639,10 @@ const ChatAI: React.FC = () => {
             />
           )}
 
-          {isShowScrollBtn &&
+          {!isWelcomeConversation && isShowScrollBtn &&
             <div className="chatScrollBottom" onClick={() => {
               scrollToBottom()
+              setIsShowScrollBtn(false)
             }}>
               <ArrowDownIcon className="chatScrollBottomIcon" />
             </div>}

@@ -2,6 +2,14 @@ import { v4 as uuidv4 } from 'uuid'
 import { mergeArrays } from '@/utils'
 
 // 类型定义
+export interface MessageAttachment {
+    fileId?: string;
+    url?: string;
+    name: string;
+    mimeType?: string;
+    size?: number;
+}
+
 export interface Message {
     content: string;
     role: 'user' | 'assistant';
@@ -14,6 +22,8 @@ export interface Message {
         prompt_tokens: number;
         completion_tokens: number;
     };
+    attachments?: MessageAttachment[];
+    attachmentRequestType?: 'image_url' | 'file_id';
 }
 
 export interface Conversation {

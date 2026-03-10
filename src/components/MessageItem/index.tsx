@@ -70,6 +70,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
     onRetry()
   }
 
+  const imageAttachments = (msg.attachments || []).filter((attachment) => (
+    attachment.url && attachment.mimeType?.startsWith('image/')
+  ))
+  const fileAttachments = (msg.attachments || []).filter((attachment) => (
+    !attachment.url || !attachment.mimeType?.startsWith('image/')
+  ))
+
   return (
     <div
       className={`message ${msg.isBot ? 'bot' : 'user'}`}
@@ -103,7 +110,30 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 }
                 <MarkdownContent msg={msg.content || ''} />
               </>
-                : msg.content || ''
+                : <>
+                  {imageAttachments.length > 0 && (
+                    <div className="message-attachments">
+                      {imageAttachments.map((attachment) => (
+                        <img
+                          key={`${attachment.url}-${attachment.name}`}
+                          className="message-attachment-image"
+                          src={attachment.url}
+                          alt={attachment.name}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {fileAttachments.length > 0 && (
+                    <div className="message-attachment-files">
+                      {fileAttachments.map((attachment) => (
+                        <div className="message-attachment-file" key={`${attachment.fileId || attachment.name}-${attachment.name}`}>
+                          {attachment.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {msg.content || ''}
+                </>
             }
           </div>
 
