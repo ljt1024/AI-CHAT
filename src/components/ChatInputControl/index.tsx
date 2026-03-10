@@ -17,10 +17,13 @@ interface ChatInputControlProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onStopSSE: () => void;
   supportsFileUpload?: boolean;
+  supportsThinking?: boolean;
+  isThinkingEnabled?: boolean;
   uploadedFiles?: UploadedFileItem[];
   isUploadingFile?: boolean;
   onUploadFile?: (file: File) => void;
   onRemoveUploadedFile?: (uploadedFileId: string) => void;
+  onToggleThinking?: () => void;
   variant?: 'bottom' | 'welcome';
 }
 
@@ -31,10 +34,13 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onSubmit,
   onStopSSE,
   supportsFileUpload = false,
+  supportsThinking = false,
+  isThinkingEnabled = false,
   uploadedFiles = [],
   isUploadingFile = false,
   onUploadFile,
   onRemoveUploadedFile,
+  onToggleThinking,
   variant = 'bottom'
 }) => {
   const hasInput = inputText.trim().length > 0
@@ -120,6 +126,25 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   onChange={onFileChange}
                 />
               </>
+            )}
+            {supportsThinking && (
+              <button
+                type="button"
+                className={`input-thinking ${isThinkingEnabled ? 'is-active' : 'is-inactive'}`.trim()}
+                onClick={onToggleThinking}
+                disabled={isLoading}
+                title={isThinkingEnabled ? '关闭深度思考' : '开启深度思考'}
+                aria-label={isThinkingEnabled ? '关闭深度思考' : '开启深度思考'}
+                aria-pressed={isThinkingEnabled}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.5 3.5A4.5 4.5 0 0 0 5 8c0 1.55.8 2.9 2 3.7V13a2 2 0 0 0 2 2h1v1H9a2 2 0 0 0-2 2v2.5"></path>
+                  <path d="M14.5 3.5A4.5 4.5 0 0 1 19 8c0 1.55-.8 2.9-2 3.7V13a2 2 0 0 1-2 2h-1v1h1a2 2 0 0 1 2 2v2.5"></path>
+                  <path d="M9 20.5h6"></path>
+                  <path d="M12 6v7"></path>
+                </svg>
+                <span className="input-thinking-label">深度思考</span>
+              </button>
             )}
           </div>
           <div className="send-button-right">

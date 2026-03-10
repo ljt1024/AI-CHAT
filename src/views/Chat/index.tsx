@@ -9,7 +9,7 @@ import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
 import { newChat, storageMessages, removeLastAssistantMessage, Message, MessageAttachment, getSelectId, getMessageByCovId } from '@/utils/localMessages'
-import { ModelListResponse, ModelOption } from '@/types/model';
+import { ModelListResponse, ModelOption, supportsDeepThinking, supportsImageUnderstanding as modelSupportsImageUnderstanding } from '@/types/model';
 
 import './chat.css';
 
@@ -95,11 +95,6 @@ const isImageAttachment = (attachment?: MessageAttachment): boolean => Boolean(
   attachment?.url && attachment.mimeType?.startsWith('image/')
 )
 
-const getModelCapabilities = (model: ModelOption | null): string[] => {
-  const source = model?.inputModalities || model?.modalities || model?.capabilities || []
-  return Array.isArray(source) ? source.map((item) => String(item).toLowerCase()) : []
-}
-
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
   const [inputText, setInputText] = useState('');
@@ -111,6 +106,7 @@ const ChatAI: React.FC = () => {
   const [isModelsLoading, setIsModelsLoading] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([])
+  const [thinkingPreference, setThinkingPreference] = useState(true)
   const [selectedModelId, setSelectedModelId] = useState<string>(
     localStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL_ID
   )
@@ -132,17 +128,10 @@ const ChatAI: React.FC = () => {
     [models, selectedModelId]
   )
   const selectedModelName = selectedModel?.name || selectedConversation?.modelName || selectedModelId || 'AI Assistant'
-  const supportsImageUnderstanding = useMemo(() => {
-    const capabilities = getModelCapabilities(selectedModel)
-    return Boolean(
-      selectedModel?.supportsVision
-      || selectedModel?.supportsImageUnderstanding
-      || selectedModel?.supportsImageUrl
-      || capabilities.includes('image')
-      || capabilities.includes('vision')
-    )
-  }, [selectedModel])
+  const supportsImageUnderstanding = useMemo(() => modelSupportsImageUnderstanding(selectedModel), [selectedModel])
+  const modelSupportsThinking = useMemo(() => supportsDeepThinking(selectedModel), [selectedModel])
   const supportsFileUpload = Boolean(selectedModel?.supportsFileUpload || supportsImageUnderstanding)
+  const isThinkingEnabled = modelSupportsThinking && thinkingPreference
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -207,6 +196,7 @@ const ChatAI: React.FC = () => {
             provider: 'deepseek',
             description: '默认推理模型',
             supportsStream: true,
+            supportsThinking: true,
             supportsFileUpload: false,
             enabled: true
           }
@@ -308,6 +298,7 @@ const ChatAI: React.FC = () => {
       const requestBody: Record<string, any> = {
         messages: [requestMessage],
         "model": selectedModelId,
+        "thinking": isThinkingEnabled,
         "frequency_penalty": 0,
         "max_tokens": 2048,
         "presence_penalty": 0,
@@ -504,6 +495,11 @@ const ChatAI: React.FC = () => {
     initAbortController()
   }
 
+  const onToggleThinking = () => {
+    if (!modelSupportsThinking || isLoading) return
+    setThinkingPreference((prev) => !prev)
+  }
+
   const onSelectModel = (modelId: string) => {
     if (isLoading || isModelsLoading || modelId === selectedModelId) return
     const targetModel = models.find((model) => model.id === modelId)
@@ -586,10 +582,13 @@ const ChatAI: React.FC = () => {
                   inputText={inputText}
                   isLoading={isLoading}
                   supportsFileUpload={supportsFileUpload}
+                  supportsThinking={modelSupportsThinking}
+                  isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}
                   isUploadingFile={isUploadingFile}
                   onUploadFile={onUploadFile}
                   onRemoveUploadedFile={onRemoveUploadedFile}
+                  onToggleThinking={onToggleThinking}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}
@@ -629,10 +628,13 @@ const ChatAI: React.FC = () => {
               inputText={inputText}
               isLoading={isLoading}
               supportsFileUpload={supportsFileUpload}
+              supportsThinking={modelSupportsThinking}
+              isThinkingEnabled={isThinkingEnabled}
               uploadedFiles={uploadedFiles}
               isUploadingFile={isUploadingFile}
               onUploadFile={onUploadFile}
               onRemoveUploadedFile={onRemoveUploadedFile}
+              onToggleThinking={onToggleThinking}
               onInputChange={handleInputChange}
               onSubmit={handleSubmit}
               onStopSSE={onStopSSE}

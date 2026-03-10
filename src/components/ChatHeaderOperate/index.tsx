@@ -2,7 +2,7 @@ import React from 'react'
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import Popover from "../Popover";
 import ThemeSwitcher from "../ThemeSwitcher"
-import { ModelOption } from '@/types/model';
+import { ModelOption, supportsDeepThinking, supportsImageUnderstanding } from '@/types/model';
 import './index.css'
 
 interface ChatHeaderOperateProps {
@@ -29,6 +29,8 @@ const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
                 {models.map((model) => {
                     const isChecked = model.id === selectedModelId
                     const isDisabled = !model.enabled || isModelLoading
+                    const isVisionModel = supportsImageUnderstanding(model)
+                    const isThinkingModel = supportsDeepThinking(model)
                     return (
                         <button
                             type="button"
@@ -44,6 +46,8 @@ const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
                             <div className="modelCardMeta">
                                 <span className="modelCardProvider">{model.provider}</span>
                                 {model.supportsStream ? <span className="modelCardTag">流式</span> : <span className="modelCardTag">非流式</span>}
+                                {isVisionModel && <span className="modelCardTag modelCardTagVision">图片理解</span>}
+                                {isThinkingModel && <span className="modelCardTag modelCardTagThinking">深度思考</span>}
                                 {!model.enabled && <span className="modelCardTag modelCardTagDisabled">未启用</span>}
                             </div>
                             <p className="modelCardDesc">{model.description || '暂无模型描述'}</p>
