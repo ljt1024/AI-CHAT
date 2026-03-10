@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 
 import Tooltip from "../Tooltip"
 import Popover from "../Popover"
@@ -15,17 +15,46 @@ import DeleteDialog from "./components/DeleteDialog"
 
 import Icon from "../Icon"
 import { useChat, useChatDispatch } from "@/context/ChatContext"
-import { getSelectId, storageSelectId } from "@/utils/localMessages"
+import { getSelectId, storageSelectId, CovIdListItem } from "@/utils/localMessages"
 
 import './index.css'
 
-const Conversation = ({ isShowSidebar, isLoading }) => {
+interface ConversationProps {
+  isShowSidebar: boolean;
+  isLoading: boolean;
+}
+
+const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading }) => {
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowRecordDialog, setIsShowRecordDialog] = useState(false)
-    const [curCov, setCurCov] = useState(null)
+    const [curCov, setCurCov] = useState<CovIdListItem | null>(null)
     const { covList } = useChat()
     const dispatch = useChatDispatch()
+
+    const sortedCovList = useMemo(() => {
+        const getTimeValue = (time?: string) => {
+            if (!time) return 0
+            const timestamp = new Date(time).getTime()
+            return Number.isNaN(timestamp) ? 0 : timestamp
+        }
+
+        return [...covList].sort((a, b) => {
+            // 第一优先级：置顶会话优先
+            if (a.isTop !== b.isTop) {
+                return a.isTop ? -1 : 1
+            }
+
+            // 第二优先级：最新会话时间倒序（最近在最上）
+            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
+            if (latestDiff !== 0) {
+                return latestDiff
+            }
+
+            // 兜底：创建时间倒序
+            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
+        })
+    }, [covList])
 
     useEffect(() => {
         dispatch({
@@ -36,16 +65,16 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
     // 新开会话
     const onNewCov = () => {
         if (isLoading) return
-        localStorage.setItem('isNewCov', true)
+        localStorage.setItem('isNewCov', 'true')
         dispatch({
             type: 'clearMessages'
         })
     }
 
     // 切换会话
-    const onSelectCov = (id) => {
+    const onSelectCov = (id: string) => {
         if (isLoading) return
-        localStorage.setItem('isNewCov', false)
+        localStorage.setItem('isNewCov', 'false')
         storageSelectId(id)
         dispatch({
             type: 'getLastMessages'
@@ -58,13 +87,13 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
     }
 
     // 重命名
-    const onRename = (item) => {
+    const onRename = (item: CovIdListItem) => {
         setCurCov(item)
         setIsConfirmDialogOpen(true)
     }
 
     // 置顶取消置顶
-    const onSetTop = (item) => {
+    const onSetTop = (item: CovIdListItem) => {
         const { id } = item
         dispatch({
             type: 'top',
@@ -72,7 +101,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
         })
     }
 
-    const onDeleteHandle = (item) => {
+    const onDeleteHandle = (item: CovIdListItem) => {
         setCurCov(item)
         setIsShowDeleteDialog(true)
     }
@@ -87,7 +116,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                 sourceType="svg"
                                 source={MesssageIcon}
                                 size={18}
-                                color="var(--text-color)"
+                                color="var(--icon-color)"
                             >
 
                             </Icon>
@@ -97,11 +126,11 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                             sourceType="svg"
                             source={SettingIcon}
                             size={18}
-                            color="var(--text-color)"
+                            color="var(--icon-color)"
                             onClick={() => setIsShowRecordDialog(true)}
                         />
                     </div>
-                    <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading && 'no-drop' }}>
+                    <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}>
                         新开对话
                     </div>
                 </div>
@@ -109,13 +138,13 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
             {
                 isShowSidebar &&
                 <div className="covList">
-                    {[...covList].reverse().map(item => {
+                    {sortedCovList.map(item => {
                         return (
                             <div
                                 className={item.id === getSelectId() && !getIsNewCov() ? 'curCov covItem' : 'covItem'}
                                 key={item.id}
                                 onClick={() => { onSelectCov(item.id) }}
-                                style={{ cursor: isLoading && 'no-drop' }}
+                                style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}
                             >
                                 <span className="covName">{item.title}</span>
                                 <Popover
@@ -127,6 +156,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                                     sourceType="svg"
                                                     source={RenameIcon}
                                                     size={18}
+                                                    color="var(--icon-color)"
                                                 />
                                                 <span className="operationTit">重命名</span>
                                             </div>
@@ -135,6 +165,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                                     sourceType="svg"
                                                     source={TopIcon}
                                                     size={18}
+                                                    color="var(--icon-color)"
                                                 />
                                                 <span className="operationTit">{item.isTop ? '取消置顶' : '置顶'}</span>
                                             </div>
@@ -143,6 +174,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                                     sourceType="svg"
                                                     source={DeleteIcon}
                                                     size={18}
+                                                    color="var(--danger-color)"
                                                 />
                                                 <span className="operationTit">删除</span>
                                             </div>
@@ -158,7 +190,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                                                 sourceType="svg"
                                                 source={FixIcon}
                                                 size={14}
-                                                color="var(--text-color)"
+                                                color="var(--icon-muted-color)"
                                             />
                                         </div>}
                                     <div className="covOperation">...</div>
@@ -173,7 +205,7 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
                 isConfirmDialogOpen && <EditTitDialog
                     isConfirmDialogOpen={isConfirmDialogOpen}
                     setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-                    covItem={curCov}
+                    covItem={curCov as CovIdListItem}
                 />
             }
             {
@@ -192,8 +224,12 @@ const Conversation = ({ isShowSidebar, isLoading }) => {
 }
 
 
-const Sidebar = ({ isLoading }) => {
-    const [isShowSidebar, setIsShowSidebar] = useState(true)
+interface SidebarProps {
+  isLoading: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
+    const [isShowSidebar, setIsShowSidebar] = useState<boolean>(true)
     const onShowSidebar = () => {
         setIsShowSidebar((value) => !value)
     }
@@ -212,7 +248,7 @@ const Sidebar = ({ isLoading }) => {
                         sourceType="svg"
                         source={FoldIcon}
                         size={18}
-                        color="var(--text-color)"
+                        color="var(--icon-color)"
                         onClick={onShowSidebar}
                     />
                 </Tooltip>

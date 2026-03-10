@@ -40,11 +40,12 @@
 }
 
 .tooltip {
-     background-color: var(--text-color);
+     background-color: color-mix(in srgb, var(--text-color) 94%, transparent);
      color: var(--bg-color);
      padding: 8px 12px;
-     border-radius: 8px;
-     font-size: 14px;
+     border-radius: 10px;
+     font-size: 13px;
+     box-shadow: var(--soft-shadow);
 } 
 
 .absolute {
@@ -65,7 +66,7 @@
   left: 50%;
   transform: translateX(-50%);
   border-width: 5px 5px 0 5px;
-  border-color: var(--text-color) transparent transparent transparent;
+  border-color: color-mix(in srgb, var(--text-color) 94%, transparent) transparent transparent transparent;
 }
 
  .tooltip-arrow-bottom {
@@ -73,7 +74,7 @@
   left: 50%;
   transform: translateX(-50%);
   border-width: 0 5px 5px 5px;
-  border-color: transparent transparent var(--text-color) transparent;
+  border-color: transparent transparent color-mix(in srgb, var(--text-color) 94%, transparent) transparent;
 }
 
 .tooltip-arrow-left {
@@ -81,7 +82,7 @@
   right: -5px;
   transform: translateY(-50%);
   border-width: 5px 0 5px 5px;
-  border-color: transparent transparent transparent var(--text-color);
+  border-color: transparent transparent transparent color-mix(in srgb, var(--text-color) 94%, transparent);
 }
 
 .tooltip-arrow-right {
@@ -89,5 +90,5 @@
   left: -5px;
   transform: translateY(-50%);
   border-width: 5px 5px 5px 0;
-  border-color: transparent var(--text-color) transparent transparent;
+  border-color: transparent color-mix(in srgb, var(--text-color) 94%, transparent) transparent transparent;
 }

@@ -1,17 +1,22 @@
 import { useState, useEffect, useRef } from "react"
 import Dialog from "@/components/Dialog"
-
 import { useChatDispatch } from "@/context/ChatContext"
+import { CovIdListItem } from "@/utils/localMessages"
 
 import './index.css'
 
-const EditTitDialog = (props) => {
-    const { isConfirmDialogOpen, setIsConfirmDialogOpen, covItem } = props
+interface EditTitDialogProps {
+    isConfirmDialogOpen: boolean;
+    setIsConfirmDialogOpen: (show: boolean) => void;
+    covItem: CovIdListItem;
+}
+
+const EditTitDialog: React.FC<EditTitDialogProps> = ({ isConfirmDialogOpen, setIsConfirmDialogOpen, covItem }) => {
     const [isForce, setIsForce] = useState(false)
     const [chatTit, setChatTit] = useState(covItem?.title || '')
     const dispatch = useChatDispatch()
-    const editRef = useRef()
-    const inputWrapRef = useRef()
+    const editRef = useRef<HTMLInputElement>(null)
+    const inputWrapRef = useRef<HTMLDivElement>(null)
     const MAXLENGTH = 30
 
     useEffect(() => {
@@ -20,7 +25,6 @@ const EditTitDialog = (props) => {
             window.removeEventListener('click', handleOutClick)
         }
     }, [])
-
 
     // 确认修改title
     const handleConfirm = () => {
@@ -34,24 +38,21 @@ const EditTitDialog = (props) => {
         setIsConfirmDialogOpen(false)
     }
 
-    // // 重命名
-    // const onRename = (item) => {
-    //     setChatTit(item.title)
-    //     setCurCov(item)
-    //     setIsConfirmDialogOpen(true)
-    // }
-
     // 打开弹窗点击输入框容器需要聚焦输入框
-    const focusInput = (e) => {
-        editRef.current.focus()
+    const focusInput = (_: React.MouseEvent<HTMLDivElement>) => {
+        editRef.current?.focus()
         setIsForce(true)
     }
 
     // 点击输入框外元素取消聚焦
-    const handleOutClick = (e) => {
-        if (!inputWrapRef.current?.contains(e.target)) {
+    const handleOutClick = (e: MouseEvent) => {
+        if (!inputWrapRef.current?.contains(e.target as Node)) {
             setIsForce(false)
         }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setChatTit(e.target.value)
     }
 
     return (
@@ -73,7 +74,7 @@ const EditTitDialog = (props) => {
                     className="editInput"
                     maxLength={MAXLENGTH}
                     value={chatTit}
-                    onInput={e => { setChatTit(e.target.value) }}
+                    onInput={handleInputChange}
                 />
                 <span className="inputControl">{chatTit.length}/{MAXLENGTH}</span>
             </div>

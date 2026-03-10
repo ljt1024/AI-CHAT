@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ChatAI from './views/Chat'
-import ShareMsg from './views/ShareMsg'
+import ChatAI from './views/Chat/index.tsx'
+import ShareMsg from './views/ShareMsg/index.tsx'
 
 function App() {
 

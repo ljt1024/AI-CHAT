@@ -2,14 +2,14 @@
 .message {
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
-  /* opacity: 0; */
+  margin-bottom: 28px;
+  align-items: flex-start;
   animation-fill-mode: forwards;
 }
 
 .message.user {
  flex-direction: row-reverse;
- align-items: center;
+ align-items: flex-start;
 }
 
 .avatar img {
@@ -17,11 +17,13 @@
   width: 36px;
   height: 36px;
   padding: 2px;
-  background-color: #fff;
+  background-color: var(--avatar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: var(--soft-shadow);
+  border: 1px solid var(--border-color);
 }
 
 @media (max-width: 768px) {
@@ -29,31 +31,51 @@
     width: 28px;
     height: 28px;
   }
+  
+  .message {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
 }
 
 .bubble-wrap {
-  /* max-width: 70%; */
   width: 100%;
-  /* background: var(--user-bubble-bg); */
   position: relative;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  /* padding-right: 40px; */
+  gap: 6px;
 }
 
 @media (max-width: 768px) {
   .bubble-wrap {
     max-width: 100%;
   }
+  
+  .bubble {
+    padding: 10px 14px;
+  }
+  
+  .message.bot .bubble-wrap {
+    margin-right: 0;
+  }
+  
+  .message.user .bubble {
+    margin-left: 0;
+  }
 }
 
 
 .bubble {
-  /* width: calc(100% - 32px); */
-  padding: 12px 16px;
-  border-radius: 12px;
-  word-break: break-all;
+  padding: 16px 18px;
+  border-radius: 20px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  position: relative;
+  border: 1px solid var(--border-color);
+  background: var(--bot-bubble-bg);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
 }
 
 .bubbleFold {
@@ -62,20 +84,45 @@
 }
 
 .message.bot .bubble-wrap {
-  /* border-radius: 16px 16px 16px 4px; */
-  margin-right: 48px;
+  margin-right: clamp(0px, 4vw, 56px);
+}
+
+.message.user .bubble-wrap {
+  width: fit-content;
+  max-width: min(72%, 520px);
+  margin-left: auto;
+  align-items: flex-end;
+  overflow: visible;
 }
 
 .botName {
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: bold;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  letter-spacing: 0.08em;
+  color: var(--text-muted-color);
+  text-transform: uppercase;
 }
 
 .message.user .bubble {
   background: var(--user-bubble-bg);
-  margin-left: 48px;
+  border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, transparent);
+  box-shadow: var(--user-bubble-shadow);
+  margin-left: 0;
   align-self: flex-end;
+  max-width: 100%;
+}
+
+.message.user .bubble::after {
+  /* content: "";
+  position: absolute;
+  inset: 1px 1px auto auto;
+  width: 46%;
+  height: 50%;
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 60%);
+  opacity: 0.7;
+  pointer-events: none; */
 }
 
 .message.user .bubble-wrap:hover > .userTimestamp {
@@ -88,4 +135,73 @@
 
 .message.bot .bubble {
   background: var(--bot-bubble-bg);
+}
+
+.content {
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.message-attachment-image {
+  display: block;
+  width: clamp(168px, 26vw, 240px);
+  max-width: 100%;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
+  box-shadow: var(--soft-shadow);
+  object-fit: cover;
+}
+
+.message.user .message-attachments {
+  justify-content: flex-end;
+}
+
+.message-attachment-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.message.user .message-attachment-files {
+  justify-content: flex-end;
+}
+
+.message-attachment-file {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .message.user .bubble-wrap {
+    max-width: calc(100% - 24px);
+  }
+
+  .message-attachment-image {
+    width: min(220px, 100%);
+  }
 }

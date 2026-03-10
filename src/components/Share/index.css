@@ -5,6 +5,6 @@
 }
 
 .previewHandle button:first-child {
-    background: var(--primary-color);
-    color: #fff;
+    background: var(--secondary-color);
+    color: #ffffff;
 }

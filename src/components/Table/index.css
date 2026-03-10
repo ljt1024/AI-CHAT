@@ -10,7 +10,7 @@
 .custom-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-body);
 }
 
 .custom-table th {
@@ -19,7 +19,7 @@
   text-align: left;
   font-weight: 600;
   font-size: 14px;
-  color: #585d66;
+  color: var(--text-muted-color);
   border-bottom: 2px solid var(--table-header-bg);
   position: relative;
 }
@@ -27,24 +27,24 @@
 .custom-table td {
   padding: 12px;
   font-size: 14px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table-bordered th,
 .table-bordered td {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
 }
 
 .custom-table tr {
-    color: #333;
+    color: var(--text-color);
 }
 
 .table-striped tbody tr:nth-child(odd) {
-  background-color: #f9f9f9 !important;
+  background-color: var(--table-row-striped) !important;
 }
 
 .table-hover tbody tr:hover {
-  background-color: #f0f0f0 !important;
+  background-color: var(--table-row-hover) !important;
 }
 
 .clickable {
@@ -52,7 +52,7 @@
 }
 
 .clickable:hover {
-  background-color: #e6f7ff !important;
+  background-color: var(--surface-hover) !important;
 }
 
 .sortable {
@@ -60,7 +60,7 @@
 }
 
 .sortable:hover {
-  background-color: #eaeaea;
+  background-color: var(--surface-hover);
 }
 
 .header-content {
@@ -76,14 +76,16 @@
 .filter-input {
   width: 100%;
   padding: 4px 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  background: var(--surface-color);
   border-radius: 4px;
   font-size: 14px;
 }
 
 .no-data {
   text-align: center;
-  color: #999;
+  color: var(--text-muted-color);
   font-style: italic;
   padding: 24px !important;
 }
@@ -94,7 +96,7 @@
   align-items: center;
   margin-top: 16px;
   padding: 12px;
-  background-color: #f9f9f9;
+  background-color: var(--surface-elevated);
   border-radius: 4px;
 }
 
@@ -106,22 +108,24 @@
 
 .page-size-select {
   padding: 6px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: white;
+  background-color: var(--surface-color);
+  color: var(--text-color);
 }
 
 .pagination-btn {
   padding: 6px 12px;
-  border: 1px solid #ddd;
-  background-color: white;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+  color: var(--text-color);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #eaeaea;
+  background-color: var(--surface-hover);
 }
 
 .pagination-btn:disabled {
@@ -143,5 +147,37 @@
   .custom-table th,
   .custom-table td {
     padding: 8px;
+  }
+  
+  .table-container {
+    margin: 12px 0;
+  }
+  
+  .custom-table th {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+  
+  .custom-table td {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-container {
+    padding: 8px 4px;
+  }
+  
+  .custom-table th,
+  .custom-table td {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 }

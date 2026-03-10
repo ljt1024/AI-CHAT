@@ -1,0 +1,307 @@
+/* 输入区域 */
+.input-area {
+  padding: 10px 20px 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, color-mix(in srgb, var(--surface-color) 78%, transparent) 100%);
+  display: flex;
+  justify-content: center;
+}
+
+.input-area--welcome {
+  padding: 0;
+  background: transparent;
+  width: min(860px, 100%);
+}
+
+.input-container {
+  max-width: 1020px;
+  width: 100%;
+  position: relative;
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  border-radius: 24px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(16px) saturate(120%);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.input-container:focus-within {
+  border-color: color-mix(in srgb, var(--secondary-color) 22%, var(--border-strong));
+  box-shadow: var(--focus-ring), var(--card-shadow);
+  transform: translateY(-1px);
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.send-button-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  min-height: 36px;
+}
+
+.send-button-left,
+.send-button-right {
+  display: flex;
+  align-items: center;
+}
+
+.input-send {
+  width: 36px;
+  height: 36px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  color: var(--icon-muted-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease;
+  padding: 0;
+  margin-right: 0;
+  box-shadow: none;
+}
+
+.input-send svg {
+  stroke-width: 2.25;
+}
+
+.input-send--active {
+  background: linear-gradient(180deg, var(--secondary-color), color-mix(in srgb, var(--secondary-color) 72%, white));
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--secondary-color) 52%, transparent);
+  box-shadow: 0 18px 24px -18px color-mix(in srgb, var(--secondary-color) 48%, transparent);
+}
+
+.input-send--idle {
+  opacity: 0.74;
+}
+
+.input-left {
+  display: flex;
+  align-items: center;
+}
+
+.input-settings {
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.input-settings:hover {
+  opacity: 1;
+}
+
+.input-center {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  padding: 2px 0;
+}
+
+.input-center input,
+.input-center textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 15px;
+  padding: 0;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: none;
+  min-height: 46px;
+  box-shadow: none;
+  appearance: none;
+}
+
+.input-center input::placeholder,
+.input-center textarea::placeholder {
+  color: var(--text-muted-color);
+  opacity: 0.75;
+  font-size: 15px;
+}
+
+.input-center input:focus,
+.input-center textarea:focus,
+.input-center input:focus-visible,
+.input-center textarea:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.input-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 14px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.input-dropdown:hover {
+  opacity: 1;
+}
+
+.input-attach {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+  color: var(--text-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.input-attach:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--secondary-color) 18%, var(--border-strong));
+  background: var(--surface-hover);
+}
+
+.input-attach:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.input-attach.is-uploading {
+  border-color: var(--secondary-color);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.uploaded-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 8px 0;
+}
+
+.uploaded-file-item {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 52%, var(--surface-elevated));
+  color: var(--text-color);
+  padding: 4px 10px;
+  gap: 8px;
+}
+
+.uploaded-file-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.uploaded-file-remove {
+  border: none;
+  background: transparent;
+  color: var(--icon-muted-color);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 14px;
+  padding: 0;
+}
+
+.uploaded-file-remove:hover {
+  color: var(--danger-color);
+}
+
+.uploaded-file-uploading {
+  font-size: 12px;
+  color: var(--text-muted-color);
+  padding: 4px 2px;
+}
+
+.input-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.input-send--active:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--secondary-color) 90%, white), color-mix(in srgb, var(--secondary-color) 76%, white));
+  transform: translateY(-1px);
+  box-shadow: 0 20px 28px -18px color-mix(in srgb, var(--secondary-color) 52%, transparent);
+  filter: saturate(1.04);
+}
+
+.stop-btn {
+  background: var(--danger-color) !important;
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--danger-color) 68%, transparent);
+}
+
+.input-send:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .input-area {
+    padding: 10px;
+  }
+
+  .input-area--welcome {
+    width: 100%;
+    padding: 0;
+  }
+
+  .input-container {
+    border-radius: 16px;
+    padding: 6px;
+  }
+
+  .input-wrapper {
+    padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .input-center input,
+  .input-center textarea {
+    font-size: 16px; /* 防止iOS缩放 */
+    min-height: 48px;
+  }
+
+  .uploaded-file-name {
+    max-width: 160px;
+  }
+
+  .input-send {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+}

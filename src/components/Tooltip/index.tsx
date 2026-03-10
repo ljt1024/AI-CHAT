@@ -1,37 +1,29 @@
-import React, {
+import {
   useState,
   useRef,
   useEffect,
-  useCallback
+  useCallback,
+  ReactNode
 } from 'react';
 import ReactDOM from 'react-dom';
 
-
 import './index.css'
-// 类型定义
-// type Placement = 'top' | 'bottom' | 'left' | 'right';
-// type Trigger = 'hover' | 'click';
 
-// interface TooltipProps {
-//   /** 触发元素 */
-//   children: React.ReactElement;
-//   /** 提示内容 */
-//   content: ReactNode;
-//   /** 显示位置 */
-//   placement?: Placement;
-//   /** 触发方式 */
-//   trigger?: Trigger;
-//   /** 自定义样式 */
-//   style?: CSSProperties;
-//   /** 自定义类名 */
-//   className?: string;
-//   /** 延迟显示时间（毫秒） */
-//   delay?: number;
-//   /** 是否禁用 */
-//   disabled?: boolean;
-// }
+type Placement = 'top' | 'bottom' | 'left' | 'right';
+type Trigger = 'hover' | 'click';
 
-const Tooltip = ({
+interface TooltipProps {
+  children: ReactNode;
+  content: ReactNode;
+  placement?: Placement;
+  trigger?: Trigger;
+  style?: React.CSSProperties;
+  className?: string;
+  delay?: number;
+  disabled?: boolean;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({
   children,
   content,
   placement = 'top',
@@ -43,16 +35,16 @@ const Tooltip = ({
 }) => {
   const [visible, setVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const triggerRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const delayTimer = useRef(null);
+  const triggerRef = useRef<HTMLElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const delayTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 计算位置
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const triggerRect = (triggerRef.current as HTMLElement).getBoundingClientRect();
+    const tooltipRect = (tooltipRef.current as HTMLElement).getBoundingClientRect();
     const scrollY = window.scrollY || window.pageYOffset;
     const scrollX = window.scrollX || window.pageXOffset;
 
@@ -120,12 +112,12 @@ const Tooltip = ({
   }, []);
 
   // 点击外部关闭
-  const handleClickOutside = useCallback((e) => {
+  const handleClickOutside = useCallback((e: MouseEvent) => {
     if (
       tooltipRef.current && 
-      !tooltipRef.current.contains(e.target) && 
+      !(tooltipRef.current as HTMLElement).contains(e.target as Node) && 
       triggerRef.current &&
-      !triggerRef.current.contains(e.target)
+      !(triggerRef.current as HTMLElement).contains(e.target as Node)
     ) {
       hideTooltip();
     }
@@ -213,7 +205,7 @@ const Tooltip = ({
   };
 
   // 获取箭头位置类名
-  const getArrowClass = (pos) => {
+  const getArrowClass = (pos: Placement) => {
     switch (pos) {
       case 'top': return 'tooltip-arrow-top';
       case 'bottom': return 'tooltip-arrow-bottom';

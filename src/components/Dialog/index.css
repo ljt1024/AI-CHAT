@@ -5,11 +5,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  background-color: var(--overlay-color);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 120000;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
@@ -21,9 +22,10 @@
 }
 
 .dialog {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--dialog-shadow);
   overflow: hidden;
   transform: translateY(20px);
   transition: transform 0.3s ease;
@@ -54,14 +56,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .dialog-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;  
-  color: #333;
+  color: var(--text-color);
 }
 
 .dialog-close {
@@ -69,7 +71,7 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted-color);
   padding: 0;
   width: 24px;
   height: 24px;
@@ -80,13 +82,8 @@
 }
 
 .dialog-close:hover {
-   transform: rotate(360deg);
-   transition: all 2s;
-}
-
-.dialog-close:hover {
-  background-color: #f5f5f5;
-  color: #666;
+  background-color: var(--surface-hover);
+  color: var(--text-color);
   outline: none;
   border: 0;
 }
@@ -95,28 +92,30 @@
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  color: var(--text-color);
 }
 
 .dialog-footer {
   padding: 16px 24px;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
 .dialog-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .dialog-button.confirm {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--secondary-color);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--secondary-color) 54%, transparent);
 }
 
 .dialog-button.confirm:disabled {
@@ -125,22 +124,62 @@
 }
 
 .dialog-button.confirm:hover {
-  background-color: rgb(153 143 227);
+  background-color: color-mix(in srgb, var(--secondary-color) 86%, white);
+  transform: translateY(-1px);
 }
 
 .dialog-button.cancel {
-  background-color: #f5f5f5;
-  color: #666;
+  background-color: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  color: var(--text-muted-color);
+  border: 1px solid var(--border-color);
 }
 
 .dialog-button.cancel:hover {
-  background-color: #eaeaea;
+  background-color: var(--surface-hover);
+  color: var(--text-color);
+  transform: translateY(-1px);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .dialog.small {
+    width: 90%;
+    max-width: 360px;
+  }
+  
+  .dialog.medium {
+    width: 90%;
+    max-width: 450px;
+  }
+  
+  .dialog.large {
+    width: 90%;
+    max-width: 550px;
+  }
+  
+  .dialog-header,
+  .dialog-content,
+  .dialog-footer {
+    padding: 16px;
+  }
+  
+  .dialog-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-overlay {
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
   .dialog {
-    width: 90% !important;
-    margin: 20px;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    height: 80%;
+    /* max-height: calc(100vh - 20px); */
+    align-self: center;
   }
   
   .dialog-header,

@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, ReactNode } from "react";
 import { 
     getLastMessages, 
     getCovIdList, 
@@ -8,14 +8,31 @@ import {
     storageImportMessages,
     getSelectId,
     getMessageByCovId,
-    delAllMessages 
+    delAllMessages,
+    Message,
+    Conversation,
+    CovIdListItem
 } from "@/utils/localMessages"
 
-const ChatContext = createContext(null)
+// 类型定义
+interface ChatData {
+    covList: CovIdListItem[];
+    messages: Message[];
+}
 
-const ChatDispatchContext = createContext(null)
+interface ChatAction {
+    type: string;
+    messages?: Message | Message[];
+    item?: { title: string; id: string };
+    id?: string;
+    data?: any;
+}
 
-export const ChatProvider = ({ children }) => {
+const ChatContext = createContext<ChatData | null>(null)
+
+const ChatDispatchContext = createContext<React.Dispatch<ChatAction> | null>(null)
+
+export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [chatData, dispatch] = useReducer(chatReducer, initialChatData)
 
     return (
@@ -48,7 +65,7 @@ const initialChatData = {
     messages: []
 }
 
-const chatReducer = (chatData, action) => {
+const chatReducer = (chatData: ChatData, action: ChatAction): ChatData => {
     switch (action.type) {
         // 获取历史消息
         case 'getLastMessages': {
@@ -69,8 +86,21 @@ const chatReducer = (chatData, action) => {
                     messages: [...preMessages, ...messages]
                 }
             }
-            // 只修改最后一条message
-            preMessages[preMessages.length - 1] = messages
+            if (messages) {
+                // 只修改最后一条message
+                preMessages[preMessages.length - 1] = messages
+                return {
+                    ...chatData,
+                    messages: preMessages
+                }
+            }
+            return chatData;
+        }
+        // 删除最后一条消息（用于重试）
+        case 'removeLastMessage': {
+            if (chatData.messages.length === 0) return chatData
+            const preMessages = [...chatData.messages]
+            preMessages.pop()
             return {
                 ...chatData,
                 messages: preMessages
@@ -93,7 +123,8 @@ const chatReducer = (chatData, action) => {
         }
         // 修改会话title
         case 'editCovTitle': {
-            const { title, id } = action.item
+            const { title, id } = action.item || {}
+            if (!title || !id) return chatData;
             const preCovList = [...chatData.covList]
             return {
                 ...chatData,
@@ -113,42 +144,29 @@ const chatReducer = (chatData, action) => {
         // 置顶会话
         case 'top': {
             const id = action.id
-            const preCovList = [...chatData.covList]
-            let newCovList = []
-            let curCov = null
+            if (!id) return chatData;
             storageMessagesTop(id)
-            preCovList.map(item => {
-                if (item.id === id) {
-                    curCov = {
-                        ...item,
-                        isTop: !item.isTop
-                    }
-                } else {
-                    newCovList.push({
-                        ...item,
-                        isTop: false
-                    })
-                }
-            })
-            newCovList.push(curCov)
+            // 重新获取会话列表，确保顺序正确
+            const covList = getCovIdList()
             return {
                 ...chatData,
-                covList: newCovList
+                covList: [...covList]
             }
         }
         // 删除某个会话
         case 'delete': {
             const { id } = action
+            if (!id) return chatData;
             const preCovList = [...chatData.covList]
-            let newCovList = []
+            let newCovList: CovIdListItem[] = []
             preCovList.map(item => {
                 if (item.id !== id) {
                     newCovList.push(item)
                 }
             })
-            storageMessagesDelete(id)
-            // 如果删除的是当前选中的需要清空当前的message
             const selectId = getSelectId()
+            // 如果删除的是当前选中的需要清空当前的message
+            storageMessagesDelete(id)
             return {
                 covList: newCovList,
                 messages: selectId === id ? [] : chatData.messages
@@ -167,15 +185,20 @@ const chatReducer = (chatData, action) => {
             const { data } = action
             const result = storageImportMessages(data)
             const selectId = getSelectId()
+            const covList = result.map((item: Conversation) => {
+                return {
+                    id: item.covId,
+                    title: item.covTitle || item.data[0]?.content || '',
+                    isTop: item.isTop || false,
+                    messageLen: item.data.length,
+                    createTime: item.data[0]?.timestamp,
+                    latestTime: item.data[item.data.length - 1]?.timestamp
+                }
+            })
+            const curMessage = selectId ? getMessageByCovId(selectId).curMessage : null
             return {
-                covList: result.map(item=>{
-                    return {
-                        covId: item.covId,
-                        isTop: item.isTop,
-                        title: item.title
-                    }
-                }),
-                messages: selectId ? getMessageByCovId(selectId).curMessage : []
+                covList,
+                messages: curMessage?.data || []
             }
         }
         default: {
@@ -183,5 +206,4 @@ const chatReducer = (chatData, action) => {
         }
     }
 }
-
 

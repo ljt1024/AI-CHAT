@@ -8,11 +8,12 @@ const ShareMsg = () => {
     // const reasoning_content = searchParams.get('reasoning_content')
     // TODO 分享从后端获取
 
-
     return <>
-        <blockquote>
-            <MarkdownContent msg={reasoning_content} />
-        </blockquote>
+        {
+            reasoning_content && <blockquote>
+                <MarkdownContent msg={reasoning_content} />
+            </blockquote>
+        }
         <MarkdownContent msg={content} />
     </>
 }

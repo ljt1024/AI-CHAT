@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development",
+    "build": "vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -13,7 +13,7 @@
     "axios": "^1.9.0",
     "dompurify": "^3.2.6",
     "highlight.js": "^11.11.1",
-    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
@@ -30,6 +30,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "vite-plugin-svgr": "^4.3.0"
   }

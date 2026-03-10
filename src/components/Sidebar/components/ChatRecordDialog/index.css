@@ -4,13 +4,13 @@
 }
 
 .globalHandle {
-    color: #333;
+    color: var(--text-color);
     font-size: 14px;
 }
 
 .globalHandle button {
     background-color: var(--primary-color);
-    color: #fff;
+    color: var(--user-bubble-text);
     border-radius: 6px;
     outline: none;
     border: 0;
@@ -35,8 +35,8 @@
     left: -28px;
     width: 52px;
     font-size: 10px;
-    color: #fff;
+    color: var(--user-bubble-text);
     padding: 2px 0;
-    background-color: #ff9800;
+    background-color: var(--warning-color);
     clip-path: polygon(40% 0%, 72% 0%, 100% 100%, 0% 100%);
 }

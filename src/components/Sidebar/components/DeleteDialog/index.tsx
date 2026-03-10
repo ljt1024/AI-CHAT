@@ -1,12 +1,19 @@
 import { useChatDispatch } from "@/context/ChatContext"
+import { CovIdListItem } from "@/utils/localMessages"
 import Dialog from "@/components/Dialog"
 
-const DeleteDialog = (props) => {
-    const { isShowDeleteDialog, setIsShowDeleteDialog, covItem, type = 0 } = props
+interface DeleteDialogProps {
+    isShowDeleteDialog: boolean;
+    setIsShowDeleteDialog: (show: boolean) => void;
+    covItem: CovIdListItem | null;
+    type?: number;
+}
+
+const DeleteDialog: React.FC<DeleteDialogProps> = ({ isShowDeleteDialog, setIsShowDeleteDialog, covItem, type = 0 }) => {
     const dispatch = useChatDispatch()
 
     const handleConfirmDelete = () => {
-        if (type === 0) {
+        if (type === 0 && covItem) {
             dispatch({
                 type: 'delete',
                 id: covItem.id

@@ -5,7 +5,7 @@ import './index.css';
 
 // 图标组件
 const SuccessIcon = () => (
-  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" style={{color: 'green'}}>
+  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm6.8 8.4l-7.3 8.1a1 1 0 01-1.5 0l-3.2-3.6a1 1 0 011.5-1.4l2.5 2.8 6.6-7.3a1 1 0 011.4 1.4z" />
   </svg>
 );
@@ -37,11 +37,20 @@ const LoadingIcon = () => (
   </svg>
 );
 
+interface MessageItemProps {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning' | 'loading';
+  content: string;
+  duration?: number;
+  onClose: (id: string) => void;
+  style?: React.CSSProperties;
+}
+
 // 消息项组件
-const MessageItem = ({ id, type, content, duration = 2000, onClose, style }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ id, type, content, duration = 2000, onClose, style }) => {
 
   const [visible, setVisible] = useState(false);
-  const timerRef = useRef(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // 显示动画
@@ -71,7 +80,7 @@ const MessageItem = ({ id, type, content, duration = 2000, onClose, style }) => 
 
   const getIcon = () => {
     switch (type) {
-      case 'success': return <SuccessIcon style={{color: 'green'}}/>;
+      case 'success': return <SuccessIcon />;
       case 'error': return <ErrorIcon />;
       case 'info': return <InfoIcon />;
       case 'warning': return <WarningIcon />;
@@ -92,15 +101,24 @@ const MessageItem = ({ id, type, content, duration = 2000, onClose, style }) => 
   );
 };
 
-MessageItem.defaultProps = {
-  type: 'info',
-  duration: 3000
-};
+
+
+interface Message {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning' | 'loading';
+  content: string;
+  duration?: number;
+  style?: React.CSSProperties;
+}
+
+interface MessageContainerProps {
+  position: string;
+  messages: Message[];
+  removeMessage: (id: string) => void;
+}
 
 // 消息容器组件
-const MessageContainer = (props) => {
-
-  const { position, messages, removeMessage } = props
+const MessageContainer: React.FC<MessageContainerProps> = ({ position, messages, removeMessage }) => {
 
   return (
     <>
@@ -122,8 +140,21 @@ const MessageContainer = (props) => {
   );
 };
 
+// 创建Context
+const MessageContext = createContext<MessagePopAPI | null>(null);
+
+interface MessagePopAPI {
+  success: (content: string, duration?: number) => void;
+  error: (content: string, duration?: number) => void;
+  info: (content: string, duration?: number) => void;
+  warning: (content: string, duration?: number) => void;
+  loading: (content: string, duration?: number) => void;
+  custom: (options: { type: 'success' | 'error' | 'info' | 'warning' | 'loading'; content: string; duration?: number; style?: React.CSSProperties }) => void;
+  clear: () => void;
+}
+
 // 自定义Hook使用消息组件
-const useMessagePop = () => {
+const useMessagePop = (): MessagePopAPI => {
   const context = useContext(MessageContext);
   if (!context) {
     throw new Error('useMessagePop must be used within a MessageProvider');
@@ -131,16 +162,18 @@ const useMessagePop = () => {
   return context;
 };
 
-// 创建Context
-const MessageContext = createContext(null);
+interface MessagePopProviderProps {
+  children: React.ReactNode;
+}
 
 // 消息提供者组件
-const MessagePopProvider = ({ children, ...props }) => {
-  const [messages, setMessages] = useState([]);
+const MessagePopProvider: React.FC<MessagePopProviderProps> = ({ children }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const position = 'topCenter';
   const maxCount = 5;
+  
   // 添加消息
-  const addMessage = (message) => {
+  const addMessage = (message: Omit<Message, 'id'>) => {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
     setMessages(prev => {
@@ -154,7 +187,7 @@ const MessagePopProvider = ({ children, ...props }) => {
   };
 
   // 移除消息
-  const removeMessage = (id) => {
+  const removeMessage = (id: string) => {
     setMessages(prev => prev.filter(msg => msg.id !== id));
   };
 
@@ -164,13 +197,13 @@ const MessagePopProvider = ({ children, ...props }) => {
   };
 
   // 暴露方法给上下文
-  const api = {
-    success: (content, duration) => addMessage({ type: 'success', content, duration }),
-    error: (content, duration) => addMessage({ type: 'error', content, duration }),
-    info: (content, duration) => addMessage({ type: 'info', content, duration }),
-    warning: (content, duration) => addMessage({ type: 'warning', content, duration }),
-    loading: (content, duration) => addMessage({ type: 'loading', content, duration }),
-    custom: (options) => addMessage(options),
+  const api: MessagePopAPI = {
+    success: (content: string, duration?: number) => addMessage({ type: 'success', content, duration }),
+    error: (content: string, duration?: number) => addMessage({ type: 'error', content, duration }),
+    info: (content: string, duration?: number) => addMessage({ type: 'info', content, duration }),
+    warning: (content: string, duration?: number) => addMessage({ type: 'warning', content, duration }),
+    loading: (content: string, duration?: number) => addMessage({ type: 'loading', content, duration }),
+    custom: (options: { type: 'success' | 'error' | 'info' | 'warning' | 'loading'; content: string; duration?: number; style?: React.CSSProperties }) => addMessage(options),
     clear: clearAll
   };
 
@@ -188,8 +221,14 @@ const MessagePopProvider = ({ children, ...props }) => {
   );
 };
 
+interface MessagePortalProps {
+  position: string;
+  messages: Message[];
+  removeMessage: (id: string) => void;
+}
+
 // 使用Portal渲染消息容器
-const MessagePortal = (props) => {
+const MessagePortal: React.FC<MessagePortalProps> = (props) => {
   const [container] = useState(() => {
     const els = document.querySelectorAll('.global-message-container')
     if (els.length > 0) {

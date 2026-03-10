@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Dialog from '@/components/Dialog'
 import Table from '@/components/Table'
 import { useChat, useChatDispatch } from "@/context/ChatContext"
@@ -7,23 +7,51 @@ import RenameIcon from "@/assets/icons/rename.svg?react"
 import Icon from "@/components/Icon"
 import JsonUploader from '@/components/JsonUploader'
 import { exportJson } from "@/utils"
-import { getLoclMessages, getCovIdList } from "@/utils/localMessages"
+import { getLoclMessages, getCovIdList, CovIdListItem, Conversation } from "@/utils/localMessages"
 import EditTitDialog from "../EditTitDialog"
 import DeleteDialog from '../DeleteDialog'
 
 import './index.css'
 
-const ChatRecordDialog = (props) => {
-    const { isShowRecordDialog, setIsShowRecordDialog } = props
+interface ChatRecordDialogProps {
+    isShowRecordDialog: boolean;
+    setIsShowRecordDialog: (show: boolean) => void;
+}
+
+const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog, setIsShowRecordDialog }) => {
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowUploader, setIsShowUploader] = useState(false)
-    const [covItem, setCovItem] = useState(null)
-    const [importData, setImportData] = useState([])
-    const [importChat, setImportChat] = useState([])
+    const [covItem, setCovItem] = useState<CovIdListItem | null>(null)
+    const [importData, setImportData] = useState<CovIdListItem[]>([])
+    const [importChat, setImportChat] = useState<Conversation[]>([])
     const [delType, setDelType] = useState(0) // 0 删除单个, 1全部删除
     const { covList } = useChat()
     const dispatch = useChatDispatch()
+
+    const sortedCovList = useMemo(() => {
+        const getTimeValue = (time?: string) => {
+            if (!time) return 0
+            const timestamp = new Date(time).getTime()
+            return Number.isNaN(timestamp) ? 0 : timestamp
+        }
+
+        return [...covList].sort((a, b) => {
+            // 第一优先级：置顶会话永远在上面
+            if (a.isTop !== b.isTop) {
+                return a.isTop ? -1 : 1
+            }
+
+            // 第二优先级：最新会话时间倒序（最近在最上）
+            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
+            if (latestDiff !== 0) {
+                return latestDiff
+            }
+
+            // 兜底：创建时间倒序，避免同时间出现不稳定顺序
+            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
+        })
+    }, [covList])
 
     const handleRecordConfirm = () => {
         setIsShowRecordDialog(false)
@@ -40,12 +68,12 @@ const ChatRecordDialog = (props) => {
        onCloseUploader()
     }
 
-    const handleEdit = (item) => {
+    const handleEdit = (item: CovIdListItem) => {
         setIsConfirmDialogOpen(true)
         setCovItem(item)
     }
 
-    const handleDelete = (item) => {
+    const handleDelete = (item: CovIdListItem) => {
         setIsShowDeleteDialog(true)
         setCovItem(item)
         setDelType(0)
@@ -64,7 +92,7 @@ const ChatRecordDialog = (props) => {
         })
     }
 
-    const handleJsonUpload = (jsonData, filename) => {
+    const handleJsonUpload = (jsonData: Conversation[], filename: string) => {
         console.log('上传的JSON数据:', jsonData);
         console.log('文件名:', filename);
         const initCovList = getCovIdList(jsonData)
@@ -89,7 +117,7 @@ const ChatRecordDialog = (props) => {
             key: 'id',
             title: 'ID',
             width: '240px',
-            render: (value, row) => (
+            render: (_: any, row: CovIdListItem) => (
                 <div className='idWrap'>
                     <div>{row.id}</div>
                     {
@@ -106,31 +134,35 @@ const ChatRecordDialog = (props) => {
         {
             key: 'createTime',
             title: '创建时间',
-            render: (value) => (
+            width: '180px',
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
         {
             key: 'latestTime',
             title: '最新对话时间',
-            render: (value) => (
+            width: '180px',
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
         {
             key: 'messageLen',
             title: '对话条数',
+            width: '100px',
         },
         {
             key: 'operate',
             title: '操作',
-            render: (_, column) => (
+            width: '80px',
+            render: (_: any, column: CovIdListItem) => (
                 <div>
                     <Icon
                         sourceType="svg"
                         source={RenameIcon}
                         size={16}
-                        color="var(--text-color)"
+                        color="var(--icon-color)"
                         onClick={() => { handleEdit(column) }}
                     />
                     <Icon
@@ -159,14 +191,14 @@ const ChatRecordDialog = (props) => {
         {
             key: 'createTime',
             title: '创建时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
         {
             key: 'latestTime',
             title: '最新对话时间',
-            render: (value) => (
+            render: (value: any) => (
                 <span>{new Date(value).toLocaleString()}</span>
             )
         },
@@ -198,29 +230,31 @@ const ChatRecordDialog = (props) => {
     ]
 
     return (
-        <Dialog
-            isOpen={isShowRecordDialog}
-            onClose={() => setIsShowRecordDialog(false)}
-            title="对话记录"
-            type="confirm"
-            size="large"
-            className='reacordDialog'
-            onConfirm={handleRecordConfirm}
-        >
-            <div className='globalHandle'>
-                <button onClick={() => { exportChat() }}>导出</button>
-                <button onClick={() => { setIsShowUploader(true) }}>导入</button>
-                <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>删除全部会话</button>
-            </div>
-            <Table
-                columns={columns}
-                data={[...covList].reverse()}
-                defaultPageSize={1000}
-                striped={true}
-                hover={true}
-                bordered={false}
-                showPagination={false}
-            />
+        <>
+            <Dialog
+                isOpen={isShowRecordDialog}
+                onClose={() => setIsShowRecordDialog(false)}
+                title="对话记录"
+                type="confirm"
+                size="large"
+                className='reacordDialog'
+                onConfirm={handleRecordConfirm}
+            >
+                <div className='globalHandle'>
+                    <button onClick={() => { exportChat() }}>导出</button>
+                    <button onClick={() => { setIsShowUploader(true) }}>导入</button>
+                    <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>删除全部会话</button>
+                </div>
+                <Table
+                    columns={columns}
+                    data={sortedCovList}
+                    defaultPageSize={1000}
+                    striped={true}
+                    hover={true}
+                    bordered={false}
+                    showPagination={false}
+                />
+            </Dialog>
 
             <Dialog
                 isOpen={isShowUploader}
@@ -259,7 +293,7 @@ const ChatRecordDialog = (props) => {
                 }
             </Dialog>
             {
-                isConfirmDialogOpen && <EditTitDialog
+                isConfirmDialogOpen && covItem && <EditTitDialog
                     isConfirmDialogOpen={isConfirmDialogOpen}
                     setIsConfirmDialogOpen={setIsConfirmDialogOpen}
                     covItem={covItem}
@@ -273,7 +307,7 @@ const ChatRecordDialog = (props) => {
                     type={delType}
                 />
             }
-        </Dialog>
+        </>
     )
 }
 

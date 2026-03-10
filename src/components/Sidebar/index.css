@@ -1,16 +1,22 @@
 .sidebar {
-    width: 280px;
-    height: calc(100vh);
-    background-color: var(--bg-color);
-    border-right: 1px solid var(--border-color);
+    width: 288px;
+    height: 100%;
+    background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
+    border: 1px solid var(--border-color);
+    border-radius: 26px;
     position: relative;
-    padding: 24px 12px 12px 12px;
+    padding: 22px 16px 16px 16px;
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(18px) saturate(120%);
 }
 
 .hiddenSideBar {
     max-width: 0;
     min-width: 0;
     padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 .hiddenSideBar .fold-icon {
@@ -22,24 +28,26 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    /* overflow-x: hidden; */
+    overflow-x: visible;
 }
 
 .fold-icon {
     position: absolute;
-    right: -13px;
+    right: -16px;
     top: 50%;
     z-index: 999;
     margin-top: -10px;
     transform: rotate(180deg);
-    border-radius: 50%;
-    background-color: var(--border-color);
+    border-radius: 14px;
+    background-color: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 24px;
-    width: 24px;
+    height: 28px;
+    width: 28px;
+    box-shadow: var(--soft-shadow);
 }
 
 .fold-icon > span {
@@ -50,6 +58,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
 }
 
 .covTitLeft {
@@ -59,6 +69,9 @@
 
 .titText {
     margin-left: 8px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-family: var(--font-body);
 }
 
 .covList {
@@ -66,9 +79,9 @@
    overflow-y: auto;
    overflow-x: hidden;
    position: relative;
-   padding-right: 200px;
+   /* padding-right: 200px; */
    box-sizing: content-box;
-   margin-right: -200px;
+   /* margin-right: -200px; */
 }
 /* 去除默认滚动条 */
 .covList::-webkit-scrollbar {
@@ -80,23 +93,40 @@
 }
 
 .newCov,.covItem  {
-    border: 1px dashed var(--border-color);
-    padding: 12px;
+    border: 1px solid var(--border-color);
+    padding: 12px 14px;
     font-size: 14px;
     margin-top: 16px;
     cursor: pointer;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+    box-shadow: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .covItem  {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* position: relative; */
+    position: relative;
+    overflow: hidden;
 }
 
 .curCov {
-    border-color: var(--primary-color) !important;
-    color: var(--primary-color) !important;
+    border-color: color-mix(in srgb, var(--secondary-color) 34%, transparent) !important;
+    color: var(--text-color) !important;
+    background: color-mix(in srgb, var(--primary-color) 72%, var(--surface-elevated));
+    box-shadow: var(--primary-shadow);
+}
+
+.curCov .covName {
+    font-weight: 600;
+}
+
+.curCov:hover {
+    border-color: color-mix(in srgb, var(--secondary-color) 34%, transparent) !important;
+    color: var(--text-color) !important;
+    background: color-mix(in srgb, var(--primary-color) 72%, var(--surface-elevated)) !important;
 }
 
 .covName {
@@ -108,13 +138,18 @@
 }
 
 .newCov:hover {
-     border-color: var(--secondary-color);
-     color: var(--secondary-color);
+     border-color: color-mix(in srgb, var(--secondary-color) 32%, transparent);
+     background: var(--surface-hover);
+     transform: translateY(-1px);
+     box-shadow: var(--soft-shadow);
 }
 
 .covItem:hover {
-     border-color: var(--secondary-color);
-     color: var(--secondary-color);
+     border-color: color-mix(in srgb, var(--secondary-color) 32%, transparent);
+     color: var(--text-color);
+     background: var(--surface-hover);
+     transform: translateY(-1px);
+     box-shadow: var(--soft-shadow);
 }
 
 .covItem:hover .covOperation{
@@ -130,8 +165,8 @@
     transform: rotate(90deg);
     font-size: 14px;
     font-weight: bold;
-    /* visibility: hidden; */
     display: none;
+    color: var(--icon-muted-color);
 }
 
 .operationBox {
@@ -139,13 +174,14 @@
 }
 
 .operationBox .operationItem {
-    padding: 6px 8px;
+    padding: 7px 10px;
     display: flex;
     align-items: center;
+    border-radius: 10px;
 }
 
 .operationBox .operationItem:hover {
-    background-color: #f5f0f0;
+    background-color: var(--surface-hover);
 }
 
 .operationTit {
@@ -158,8 +194,9 @@
     width: 100%;
     height: 38px;
     padding: 0 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
 }
 
 .forceWrap {
@@ -169,6 +206,8 @@
 .editInput {
     border: none;
     flex: 1;
+    color: var(--text-color);
+    background: transparent;
 }
 
 .editInput:focus {
@@ -177,12 +216,34 @@
 }
 
 .inputControl {
-    color: #666666;
+    color: var(--text-muted-color);
     font-size: 14px;
     margin-left: 12px;
 }
 
 .deleteTip {
-    color: #000000;
+    color: var(--text-color);
     font-size: 14px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 260px;
+        height: calc(100dvh - 24px);
+        position: absolute;
+        z-index: 100;
+        transform: translateX(0);
+        transition: transform 0.3s ease;
+        margin: 12px;
+    }
+    
+    .hiddenSideBar {
+        transform: translateX(-100%);
+    }
+    
+    .hiddenSideBar .fold-icon {
+        transform: rotate(0deg);
+        right: -18px;
+    }
 }

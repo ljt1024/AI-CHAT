@@ -1,14 +1,19 @@
 import React, { useState, useRef, useCallback } from 'react';
 import './index.css';
 
-const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+interface JsonUploaderProps {
+  onJsonUpload?: (json: any, filename: string) => void;
+  maxFileSize?: number;
+}
+
+const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderProps) => {
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 处理文件选择
-  const handleFileSelect = useCallback((file) => {
+  const handleFileSelect = useCallback((file: File) => {
     // 验证文件类型
     if (file.type !== 'application/json') {
       setError('请选择JSON文件');
@@ -25,13 +30,13 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }) => {
     setError(null);
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (e: ProgressEvent<FileReader>) => {
       try {
-        const jsonContent = JSON.parse(e.target.result);
+        const jsonContent = JSON.parse(e.target?.result as string);
         onJsonUpload && onJsonUpload(jsonContent, file.name);
         setError(null);
       } catch (parseError) {
-        setError('无法解析JSON文件: ' + parseError.message);
+        setError('无法解析JSON文件: ' + (parseError as Error).message);
       } finally {
         setIsLoading(false);
       }
@@ -51,27 +56,27 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }) => {
   };
 
   // 处理文件输入变化
-  const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       handleFileSelect(file);
     }
     // 重置input值，允许重复选择同一文件
-    e.target.value = null;
+    e.target.value = '';
   };
 
   // 处理拖放事件
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     

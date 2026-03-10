@@ -1,66 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap');
+
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  background-color: var(--bg-color);
+  background: var(--bg-gradient);
+  color: var(--text-color);
+  font-family: var(--font-body);
+  transition: background 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+  letter-spacing: 0.1px;
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  background-attachment: fixed;
 }
 
 body p {
-   margin: 0;
+  margin: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  background: var(--page-glow);
+  opacity: 1;
+}
+
+body::after {
+  background: var(--page-overlay);
+  opacity: 0.92;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 * {
   box-sizing: border-box;
 }
 
-ol, li {
+ol,
+li {
   margin: revert;
   padding: revert;
   list-style: revert;
 }
 
-
-
-/* ::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #d1d8e0;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #a5b1c2;
-    width: 0;
-} */
-
-/* 深色/浅色模式变量 */
 :root {
-  --bg-color: #ffffff;
-  --text-color: #1a1a1a;
-  --avatar-bg: #2d2d2d;
-  --user-bubble-bg: rgba(82, 61, 228.8);
-  --bot-bubble-bg: #f0f2f5;
-  --border-color: #e0e0e0;
-  --input-bg: #f5f5f5;
-  --primary-color: rgba(82, 61, 228.8);
-  --secondary-color: #92adc9;
-  --mask-color: linear-gradient(rgba(255, 255, 255, 0) 9%, rgb(255, 255, 255) 100%);
-  --danger-color: #ff3000;
-  --table-header-bg: #edf1ff;
+  color-scheme: light;
+  --font-display: "Sora", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --font-body: "Manrope", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --bg-color: #f3f7fc;
+  --bg-gradient: linear-gradient(180deg, #f8fbff 0%, #f4f8fd 44%, #edf3fa 100%);
+  --page-glow:
+    radial-gradient(circle at 8% 8%, rgba(101, 143, 255, 0.22) 0%, transparent 30%),
+    radial-gradient(circle at 92% 12%, rgba(128, 189, 255, 0.18) 0%, transparent 28%),
+    radial-gradient(circle at 50% 108%, rgba(210, 224, 255, 0.42) 0%, transparent 46%);
+  --page-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.18) 24%, rgba(255, 255, 255, 0) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0));
+  --surface-color: rgba(255, 255, 255, 0.82);
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --surface-hover: rgba(241, 246, 255, 0.98);
+  --panel-bg: rgba(248, 251, 255, 0.72);
+  --text-color: #152033;
+  --text-muted-color: #60708a;
+  --icon-color: #172538;
+  --icon-muted-color: #73839b;
+  --avatar-bg: #d9e6fb;
+  --user-bubble-bg: linear-gradient(180deg, #dce9ff 0%, #d1e2ff 100%);
+  --user-bubble-text: #17324f;
+  --user-bubble-shadow: 0 18px 30px -22px rgba(75, 123, 255, 0.42);
+  --bot-bubble-bg: rgba(255, 255, 255, 0.82);
+  --border-color: rgba(124, 145, 181, 0.22);
+  --border-strong: rgba(94, 121, 168, 0.38);
+  --input-bg: rgba(255, 255, 255, 0.96);
+  --primary-color: #e8f0ff;
+  --primary-hover: #dde9ff;
+  --primary-strong: #c7d8ff;
+  --primary-shadow: 0 14px 26px -20px rgba(76, 124, 255, 0.34);
+  --secondary-color: #4c7cff;
+  --success-color: #32a572;
+  --info-color: #4d82ff;
+  --warning-color: #c78a39;
+  --warning-soft-bg: #fff4df;
+  --danger-color: #d15b57;
+  --danger-hover: #b94845;
+  --danger-soft-bg: #ffe9e7;
+  --mask-color: linear-gradient(rgba(243, 247, 252, 0) 6%, #f3f7fc 100%);
+  --overlay-color: rgba(14, 21, 34, 0.44);
+  --table-header-bg: #e8f0ff;
+  --table-row-striped: #f7faff;
+  --table-row-hover: #eef4ff;
+  --button-ghost-bg: rgba(232, 240, 255, 0.52);
+  --button-ghost-hover: rgba(220, 232, 255, 0.9);
+  --code-header-bg: #1b2940;
+  --code-header-text: #edf4ff;
+  --scroll-btn-bg: rgba(255, 255, 255, 0.86);
+  --scroll-btn-border: rgba(106, 129, 164, 0.28);
+  --share-save-bg: #4c7cff;
+  --share-link-bg: #4c7cff;
+  --panel-shadow: 0 28px 60px -38px rgba(22, 36, 56, 0.28),
+    0 16px 32px -24px rgba(70, 94, 131, 0.18);
+  --card-shadow: 0 20px 32px -26px rgba(22, 36, 56, 0.22),
+    0 8px 18px -16px rgba(70, 94, 131, 0.2);
+  --soft-shadow: 0 14px 24px -20px rgba(22, 36, 56, 0.18);
+  --focus-ring: 0 0 0 3px rgba(76, 124, 255, 0.18);
+  --popover-shadow: 0 20px 44px -32px rgba(20, 33, 54, 0.24),
+    0 10px 18px -14px rgba(20, 33, 54, 0.18);
+  --dialog-shadow: 0 24px 48px -30px rgba(20, 33, 54, 0.28);
+  --selection-bg: rgba(76, 124, 255, 0.22);
+  --selection-text: #152033;
+  --mobile-menu-bg: rgba(255, 255, 255, 0.92);
+  --preview-canvas-bg: #f7faff;
 }
 
 [data-theme="dark"] {
-  --bg-color: #1a1a1a;
-  --text-color: #ffffff;
-  --avatar-bg: #f0f2f5;
-  --user-bubble-bg: rgba(82, 61, 228.8);
-  --bot-bubble-bg: #2d2d2d;
-  --border-color: #3d3d3d;
-  --input-bg: #2d2d2d;
-  --primary-color: rgba(82, 61, 228.8);
-  --secondary-color: #92adc9;
-  --mask-color: linear-gradient(rgba(255, 255, 255, 0) 9%, #1a1a1a 100%);
-  --danger-color: #ff3000;
-  --table-header-bg: #edf1ff;
+  color-scheme: dark;
+  --bg-color: #0d1522;
+  --bg-gradient: linear-gradient(180deg, #0d1522 0%, #101a2b 46%, #0b1220 100%);
+  --page-glow:
+    radial-gradient(circle at 12% 10%, rgba(78, 125, 255, 0.28) 0%, transparent 26%),
+    radial-gradient(circle at 90% 16%, rgba(98, 140, 255, 0.18) 0%, transparent 22%),
+    radial-gradient(circle at 50% 112%, rgba(31, 65, 128, 0.4) 0%, transparent 44%);
+  --page-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  --surface-color: rgba(17, 25, 39, 0.82);
+  --surface-elevated: rgba(21, 32, 50, 0.94);
+  --surface-hover: rgba(28, 42, 66, 0.96);
+  --panel-bg: rgba(12, 18, 30, 0.76);
+  --text-color: #eef4ff;
+  --text-muted-color: #93a5c0;
+  --icon-color: #eef4ff;
+  --icon-muted-color: #9eb4d4;
+  --avatar-bg: #1f3350;
+  --user-bubble-bg: linear-gradient(180deg, #27456b 0%, #203a5a 100%);
+  --user-bubble-text: #edf4ff;
+  --user-bubble-shadow: 0 18px 34px -24px rgba(80, 124, 255, 0.34);
+  --bot-bubble-bg: rgba(16, 25, 39, 0.94);
+  --border-color: rgba(108, 136, 182, 0.2);
+  --border-strong: rgba(119, 151, 206, 0.36);
+  --input-bg: rgba(17, 25, 39, 0.94);
+  --primary-color: #15284b;
+  --primary-hover: #1a3360;
+  --primary-strong: #274b8b;
+  --primary-shadow: 0 14px 28px -20px rgba(80, 124, 255, 0.26);
+  --secondary-color: #7ca8ff;
+  --success-color: #4bc48a;
+  --info-color: #78abff;
+  --warning-color: #e1ac55;
+  --warning-soft-bg: #382a14;
+  --danger-color: #ff8a7a;
+  --danger-hover: #ff6f5a;
+  --danger-soft-bg: #44242c;
+  --mask-color: linear-gradient(rgba(13, 21, 34, 0) 6%, #0d1522 100%);
+  --overlay-color: rgba(5, 10, 18, 0.72);
+  --table-header-bg: #162b52;
+  --table-row-striped: rgba(18, 28, 45, 0.92);
+  --table-row-hover: rgba(26, 40, 64, 0.98);
+  --button-ghost-bg: rgba(21, 40, 75, 0.78);
+  --button-ghost-hover: rgba(31, 53, 95, 0.95);
+  --code-header-bg: #0c1422;
+  --code-header-text: #eaf2ff;
+  --scroll-btn-bg: rgba(18, 28, 45, 0.92);
+  --scroll-btn-border: rgba(108, 136, 182, 0.28);
+  --share-save-bg: #7ca8ff;
+  --share-link-bg: #7ca8ff;
+  --panel-shadow: 0 36px 80px -44px rgba(0, 0, 0, 0.78),
+    0 18px 30px -22px rgba(0, 0, 0, 0.52);
+  --card-shadow: 0 22px 38px -28px rgba(0, 0, 0, 0.64),
+    0 10px 18px -18px rgba(0, 0, 0, 0.48);
+  --soft-shadow: 0 16px 28px -22px rgba(0, 0, 0, 0.54);
+  --focus-ring: 0 0 0 3px rgba(124, 168, 255, 0.22);
+  --popover-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.62),
+    0 12px 24px -18px rgba(0, 0, 0, 0.44);
+  --dialog-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.7);
+  --selection-bg: rgba(124, 168, 255, 0.28);
+  --selection-text: #eef4ff;
+  --mobile-menu-bg: rgba(21, 32, 50, 0.94);
+  --preview-canvas-bg: #101a2b;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 移动端适配基础样式 */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
