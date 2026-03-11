@@ -8,6 +8,7 @@ import ChatInputControl, { UploadedFileItem } from '@/components/ChatInputContro
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { newChat, storageMessages, removeLastAssistantMessage, Message, MessageAttachment, getSelectId, getMessageByCovId } from '@/utils/localMessages'
 import { ModelListResponse, ModelOption, supportsDeepThinking, supportsImageUnderstanding as modelSupportsImageUnderstanding } from '@/types/model';
 
@@ -117,6 +118,7 @@ const ChatAI: React.FC = () => {
   )
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage()
   const { messages } = useChat()
   const dispatch = useChatDispatch()
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
@@ -199,7 +201,7 @@ const ChatAI: React.FC = () => {
             id: DEFAULT_MODEL_ID,
             name: 'DeepSeek Reasoner',
             provider: 'deepseek',
-            description: '默认推理模型',
+            description: t('chat.defaultDescription'),
             supportsStream: true,
             supportsThinking: true,
             supportsFileUpload: false,
@@ -245,7 +247,7 @@ const ChatAI: React.FC = () => {
 
 
   const getLoadingMessage = (): Message => ({
-    content: '思考中...',
+    content: t('chat.loading'),
     reasoning_content: '',
     isBot: true,
     timestamp: new Date().toISOString(),
@@ -413,7 +415,7 @@ const ChatAI: React.FC = () => {
         dispatch({
           type: 'addMessages',
           messages: {
-            content: '⚠️ 服务器繁忙, 请稍后再试！',
+            content: t('chat.serverBusy'),
             isBot: true,
             isError: true
           }
@@ -582,7 +584,7 @@ const ChatAI: React.FC = () => {
             {isWelcomeConversation ? (
               <div className="new-conversation-panel">
                 <h1 className="new-conversation-title">AICHAT</h1>
-                <p className="new-conversation-subtitle">你的AI问答助手</p>
+                <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
                 <ChatInputControl
                   variant="welcome"
                   inputText={inputText}

@@ -2,16 +2,25 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
     background: linear-gradient(90deg, color-mix(in srgb, var(--surface-elevated) 78%, transparent), rgba(255, 255, 255, 0));
     backdrop-filter: blur(14px);
 }
 
+.headerPrimary {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .headerActions {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .modelName {
@@ -19,14 +28,17 @@
     font-weight: 700;
     font-family: var(--font-body);
     letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .modelSelectButton {
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 180px;
-    max-width: 280px;
+    min-width: 120px;
+    max-width: 180px;
     border-radius: 14px;
     border: 1px solid var(--border-color);
     background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
@@ -210,10 +222,18 @@
 @media (max-width: 768px) {
     .chatHeaderOperate {
         padding: 12px 14px;
+        gap: 10px;
     }
     
+    .headerPrimary {
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+    }
+
     .modelName {
         font-size: 13px;
+        min-width: 0;
     }
 
     .headerActions {
@@ -221,8 +241,8 @@
     }
 
     .modelSelectButton {
-        min-width: 130px;
-        max-width: 170px;
+        min-width: 84px;
+        max-width: 110px;
         padding: 7px 10px;
     }
 

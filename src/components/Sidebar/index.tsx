@@ -15,6 +15,7 @@ import DeleteDialog from "./components/DeleteDialog"
 
 import Icon from "../Icon"
 import { useChat, useChatDispatch } from "@/context/ChatContext"
+import { useLanguage } from "@/context/LanguageContext"
 import { getSelectId, storageSelectId, CovIdListItem } from "@/utils/localMessages"
 
 import './index.css'
@@ -25,6 +26,7 @@ interface ConversationProps {
 }
 
 const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading }) => {
+    const { t } = useLanguage()
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowRecordDialog, setIsShowRecordDialog] = useState(false)
@@ -120,7 +122,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                             >
 
                             </Icon>
-                            <span className="titText">对话记录</span>
+                            <span className="titText">{t('sidebar.history')}</span>
                         </div>
                         <Icon
                             sourceType="svg"
@@ -131,7 +133,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                         />
                     </div>
                     <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}>
-                        新开对话
+                        {t('sidebar.newConversation')}
                     </div>
                 </div>
             }
@@ -158,7 +160,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     size={18}
                                                     color="var(--icon-color)"
                                                 />
-                                                <span className="operationTit">重命名</span>
+                                                <span className="operationTit">{t('sidebar.rename')}</span>
                                             </div>
                                             <div className="operationItem" onClick={() => onSetTop(item)}>
                                                 <Icon
@@ -167,7 +169,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     size={18}
                                                     color="var(--icon-color)"
                                                 />
-                                                <span className="operationTit">{item.isTop ? '取消置顶' : '置顶'}</span>
+                                                <span className="operationTit">{item.isTop ? t('sidebar.unpin') : t('sidebar.pin')}</span>
                                             </div>
                                             <div className="operationItem" onClick={() => { onDeleteHandle(item) }}>
                                                 <Icon
@@ -176,7 +178,7 @@ const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading })
                                                     size={18}
                                                     color="var(--danger-color)"
                                                 />
-                                                <span className="operationTit">删除</span>
+                                                <span className="operationTit">{t('sidebar.delete')}</span>
                                             </div>
                                         </div>
 
@@ -229,6 +231,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
+    const { t } = useLanguage()
     const [isShowSidebar, setIsShowSidebar] = useState<boolean>(true)
     const onShowSidebar = () => {
         setIsShowSidebar((value) => !value)
@@ -243,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
             {/* <img src={ArrowDown} alt="" className="fold-icon" onClick={onShowSidebar} /> */}
 
             <div className="fold-icon">
-                <Tooltip content={`${isShowSidebar ? '收起' : '展开'}`} placement="right" style={{ marginLeft: '10px' }}>
+                <Tooltip content={`${isShowSidebar ? t('sidebar.collapse') : t('sidebar.expand')}`} placement="right" style={{ marginLeft: '10px' }}>
                     <Icon
                         sourceType="svg"
                         source={FoldIcon}

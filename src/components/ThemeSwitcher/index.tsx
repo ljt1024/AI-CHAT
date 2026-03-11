@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import lightIcon from '../../assets/light.png'
 import darkIcon from '../../assets/dark.png'
@@ -6,8 +7,9 @@ import './index.css'
 
 const ThemeSwitcher = () => {
     const { theme, toggleTheme } = useTheme();
+    const { t } = useLanguage();
     const buttonRef = useRef<HTMLButtonElement>(null);
-    const nextThemeLabel = theme === 'dark' ? '明亮模式' : '暗黑模式';
+    const nextThemeLabel = theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark');
     const currentIcon = theme === 'dark' ? lightIcon : darkIcon;
 
     const onToggleTheme = () => {
@@ -25,8 +27,8 @@ const ThemeSwitcher = () => {
                 type="button"
                 className="theme-button"
                 onClick={onToggleTheme}
-                aria-label={`切换到${nextThemeLabel}`}
-                title={`切换到${nextThemeLabel}`}
+                aria-label={nextThemeLabel}
+                title={nextThemeLabel}
             >
                 <span className="theme-icon">
                     <img src={currentIcon} alt="" />

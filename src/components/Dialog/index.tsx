@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { createPortal } from 'react-dom';
 import './index.css';
 
@@ -23,11 +24,11 @@ interface DialogProps {
 const Dialog: React.FC<DialogProps> = ({
   isOpen,
   onClose,
-  title = "提示",
+  title,
   children,
   type = "alert",
-  confirmText = "确定",
-  cancelText = "取消",
+  confirmText,
+  cancelText,
   confirmButtonStyle = {},
   isDisabledConfirm = false,
   onConfirm,
@@ -37,7 +38,11 @@ const Dialog: React.FC<DialogProps> = ({
   size = "medium",
   className = "",
 }) => {
+  const { t } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogTitle = title ?? t('dialog.defaultTitle');
+  const dialogConfirmText = confirmText ?? t('dialog.confirm');
+  const dialogCancelText = cancelText ?? t('dialog.cancel');
   
   // 处理ESC键关闭
   useEffect(() => {
@@ -85,12 +90,12 @@ const Dialog: React.FC<DialogProps> = ({
       >
         {/* 标题区域 */}
         <div className="dialog-header">
-          <h2 id="dialog-title" className="dialog-title">{title}</h2>
+          <h2 id="dialog-title" className="dialog-title">{dialogTitle}</h2>
           {showCloseButton && (
             <button 
               className="dialog-close"
               onClick={onClose}
-              aria-label="关闭对话框"
+              aria-label={t('dialog.close')}
             >
               &times;
             </button>
@@ -113,7 +118,7 @@ const Dialog: React.FC<DialogProps> = ({
                   className="dialog-button cancel"
                   onClick={onClose}
                 >
-                  {cancelText}
+                  {dialogCancelText}
                 </button>
               )}
               <button 
@@ -123,7 +128,7 @@ const Dialog: React.FC<DialogProps> = ({
                 autoFocus
                 disabled={isDisabledConfirm}
               >
-                {confirmText}
+                {dialogConfirmText}
               </button>
             </>
           )}

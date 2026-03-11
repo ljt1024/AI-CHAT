@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { useMessagePop } from '@/components/MessagePop';
 import './index.css';
 
@@ -49,6 +50,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   const hasInput = inputText.trim().length > 0
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useLanguage()
   const messagePop = useMessagePop()
 
   const isImageFile = (file: File) => {
@@ -64,7 +66,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && imageOnlyUpload && !isImageFile(file)) {
-      messagePop.error('当前模型仅支持上传图片文件')
+      messagePop.error(t('input.onlyImageError'))
       e.target.value = ''
       return
     }
@@ -102,7 +104,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
               value={inputText}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={onTextareaKeyDown}
-              placeholder="请输入你的问题..."
+              placeholder={t('input.placeholder')}
               disabled={isLoading}
               rows={2}
               spellCheck={false}
@@ -119,14 +121,14 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                     type="button"
                     className="uploaded-file-remove"
                     onClick={() => onRemoveUploadedFile(file.fileId)}
-                    aria-label={`移除${file.name}`}
+                    aria-label={t('input.removeFile', { name: file.name })}
                   >
                     ×
                   </button>
                 )}
               </div>
             ))}
-            {isUploadingFile && <div className="uploaded-file-uploading">文件上传中...</div>}
+            {isUploadingFile && <div className="uploaded-file-uploading">{t('input.uploading')}</div>}
           </div>
         )}
         <div className="send-button-row">
@@ -138,7 +140,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   className={`input-attach ${isUploadingFile ? 'is-uploading' : ''}`.trim()}
                   onClick={onClickUpload}
                   disabled={isLoading || isUploadingFile}
-                  title={isUploadingFile ? '文件上传中...' : '上传文件'}
+                  title={isUploadingFile ? t('input.uploading') : t('input.upload')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -161,8 +163,8 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                 className={`input-thinking ${isThinkingEnabled ? 'is-active' : 'is-inactive'}`.trim()}
                 onClick={onToggleThinking}
                 disabled={isLoading}
-                title={isThinkingEnabled ? '关闭深度思考' : '开启深度思考'}
-                aria-label={isThinkingEnabled ? '关闭深度思考' : '开启深度思考'}
+                title={isThinkingEnabled ? t('input.disableThinking') : t('input.enableThinking')}
+                aria-label={isThinkingEnabled ? t('input.disableThinking') : t('input.enableThinking')}
                 aria-pressed={isThinkingEnabled}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -171,7 +173,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   <path d="M9 20.5h6"></path>
                   <path d="M12 6v7"></path>
                 </svg>
-                <span className="input-thinking-label">深度思考</span>
+                <span className="input-thinking-label">{t('input.thinkingLabel')}</span>
               </button>
             )}
           </div>
