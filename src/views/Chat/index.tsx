@@ -101,6 +101,12 @@ const isImageFile = (file: File): boolean => {
   return /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name)
 }
 
+const cloneMessage = (message: Message): Message => ({
+  ...message,
+  usage: message.usage ? { ...message.usage } : undefined,
+  attachments: message.attachments ? [...message.attachments] : undefined
+})
+
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
   const [inputText, setInputText] = useState('');
@@ -118,6 +124,8 @@ const ChatAI: React.FC = () => {
   )
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const streamFrameRef = useRef<number | null>(null)
+  const streamPendingMessageRef = useRef<Message | null>(null)
   const { t } = useLanguage()
   const { messages } = useChat()
   const dispatch = useChatDispatch()
@@ -149,6 +157,35 @@ const ChatAI: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({});
   };
 
+  const cancelStreamRender = () => {
+    if (streamFrameRef.current === null) return
+    cancelAnimationFrame(streamFrameRef.current)
+    streamFrameRef.current = null
+  }
+
+  const flushStreamRender = () => {
+    cancelStreamRender()
+    const pendingMessage = streamPendingMessageRef.current
+    if (!pendingMessage) return
+    dispatch({
+      type: 'addMessages',
+      messages: cloneMessage(pendingMessage)
+    } as any)
+  }
+
+  const scheduleStreamRender = () => {
+    if (streamFrameRef.current !== null) return
+    streamFrameRef.current = requestAnimationFrame(() => {
+      streamFrameRef.current = null
+      const pendingMessage = streamPendingMessageRef.current
+      if (!pendingMessage) return
+      dispatch({
+        type: 'addMessages',
+        messages: cloneMessage(pendingMessage)
+      } as any)
+    })
+  }
+
   useEffect(() => {
     dispatch({type: 'getLastMessages'})
     const showSrollBtnHeight = 200
@@ -161,6 +198,14 @@ const ChatAI: React.FC = () => {
 
       return () => {
         messagesRefCurrent.removeEventListener('scroll', () => {})
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (streamFrameRef.current !== null) {
+        cancelAnimationFrame(streamFrameRef.current)
       }
     }
   }, [])
@@ -278,6 +323,8 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
+      streamPendingMessageRef.current = null
+      cancelStreamRender()
       const firstAttachment = userMessage.attachments?.[0]
       const requestMode = userMessage.attachmentRequestType
         || (supportsImageUnderstanding && isImageAttachment(firstAttachment) ? 'image_url' : undefined)
@@ -333,7 +380,11 @@ const ChatAI: React.FC = () => {
         body: JSON.stringify(requestBody),
       });
 
-      const reader = response.body?.getReader();
+      if (!response.ok || !response.body) {
+        throw new Error(`chat request failed, status: ${response.status}`)
+      }
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       assistantMessage = {
         content: '',
@@ -346,43 +397,47 @@ const ChatAI: React.FC = () => {
       }
 
       let flag = false
+      let streamBuffer = ''
+      const scheduleAssistantRender = () => {
+        streamPendingMessageRef.current = assistantMessage
+        scheduleStreamRender()
+      }
+      const flushAssistantRender = () => {
+        streamPendingMessageRef.current = assistantMessage
+        flushStreamRender()
+      }
       const parseSSEEvent = (event: string) => {
-        const lines = event;
+        const lines = event
+          .split('\n')
+          .filter((line) => line.startsWith('data:'))
+          .map((line) => line.slice(5).trimStart())
+          .join('\n')
+        if (!lines) return
         try {
-          let str = lines.split(": ")[1]
           // sse最终以'data: [DONE]'结束
-          if (str === '[DONE]') {
+          if (lines === '[DONE]') {
             assistantMessage.isLoading = false
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            flushAssistantRender()
             return
           }
-          let data: SSEData = JSON.parse(str);
+          let data: SSEData = JSON.parse(lines);
           if (data.usage) {
             assistantMessage.usage = data.usage
           }
 
           // 正式回复内容
-          if (data.choices[0].delta.content !== null) {
+          if (data.choices[0].delta.content !== null && data.choices[0].delta.content !== undefined) {
             if (flag) {
               assistantMessage.content += '\n\n'
             }
             assistantMessage.content += data.choices[0].delta.content || ''
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            scheduleAssistantRender()
             flag = false
             // 思考内容
           } else {
             flag = true
             assistantMessage.reasoning_content += data.choices[0].delta.reasoning_content || ''
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            scheduleAssistantRender()
           }
         } catch (error) {
           console.log(error)
@@ -390,28 +445,42 @@ const ChatAI: React.FC = () => {
       }
 
       // 持续读取流数据
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            reader.releaseLock();
-            break;
-          }
-          const chunk = decoder.decode(value);
-          // SSE 事件以双换行分隔
-          const events = chunk.split("\n\n");
-          for (const event of events) {
-            if (event.trim() === "") continue;
-            parseSSEEvent(event);
-          }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        streamBuffer += decoder.decode(value, { stream: true });
+        streamBuffer = streamBuffer.replace(/\r\n/g, '\n')
+        const events = streamBuffer.split("\n\n");
+        streamBuffer = events.pop() || ''
+        for (const event of events) {
+          if (event.trim() === "") continue;
+          parseSSEEvent(event);
         }
       }
-      storageMessages(assistantMessage, currentConversationModel)
+      streamBuffer += decoder.decode()
+      streamBuffer = streamBuffer.replace(/\r\n/g, '\n')
+      if (streamBuffer.trim()) {
+        parseSSEEvent(streamBuffer)
+      }
+      assistantMessage.isLoading = false
+      flushAssistantRender()
+      reader.releaseLock();
+      storageMessages(cloneMessage(assistantMessage), currentConversationModel)
     } catch (error: any) {
       console.log(error)
       if (error.name === "AbortError") {
+        if (streamPendingMessageRef.current) {
+          assistantMessage.isLoading = false
+          flushStreamRender()
+        } else {
+          cancelStreamRender()
+        }
         console.log('请求被中断')
       } else {
+        cancelStreamRender()
+        streamPendingMessageRef.current = null
         dispatch({
           type: 'addMessages',
           messages: {
