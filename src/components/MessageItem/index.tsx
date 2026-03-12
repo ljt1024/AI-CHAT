@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MarkdownContent from '../MarkDownContent';
 import Tooltip from '../Tooltip';
 import Icon from '../Icon';
@@ -6,7 +6,6 @@ import BotIcon from '../../assets/bot.svg';
 import UserIcon from '../../assets/user.svg';
 import CopyIcon from "../../assets/icons/copy.svg?react";
 import FoldArrowIcon from '../../assets/foldArrow.png';
-import { debounce } from '../../utils';
 import { useCopy } from '../../hooks/useCopy';
 import { useLanguage } from '@/context/LanguageContext';
 import { useMessagePop } from '../MessagePop';
@@ -33,28 +32,38 @@ const MessageItem: React.FC<MessageItemProps> = ({
   canRetry = false,
   onRetry
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [canCollapse, setCanCollapse] = useState(false)
   const shareRef = useRef<HTMLDivElement>(null);
+  const prevLoadingRef = useRef(msg.isLoading)
   const { t, dateLocale } = useLanguage()
   const { handleCopy } = useCopy()
   const messagePop = useMessagePop()
 
-  const checkHeight = useCallback(
-    debounce(() => {
-      console.log(contentRef.current)
-      if (contentRef.current) {
-        const shouldCollapse = contentRef.current.scrollHeight > 200;
-        console.log(shouldCollapse, 'shouldCollapse')
-        setIsExpanded(shouldCollapse);
-      }
-    }, 300),
-    []
-  );
-
   useEffect(() => {
-    checkHeight()
-  }, [msg]);
+    const wasLoading = prevLoadingRef.current
+    prevLoadingRef.current = msg.isLoading
+
+    if (!msg.isBot || msg.isLoading) {
+      setCanCollapse(false)
+      setIsCollapsed(false)
+      return
+    }
+
+    const justFinishedStreaming = Boolean(wasLoading && !msg.isLoading)
+
+    const frameId = requestAnimationFrame(() => {
+      const bubbleElement = shareRef.current
+      if (!bubbleElement) return
+      const shouldCollapse = bubbleElement.scrollHeight > 200
+      setCanCollapse(shouldCollapse)
+      setIsCollapsed(justFinishedStreaming ? false : shouldCollapse)
+    })
+
+    return () => {
+      cancelAnimationFrame(frameId)
+    }
+  }, [msg.isBot, msg.isLoading, msg.content, msg.reasoning_content]);
 
   const onShare = () => {
     setShareTarget(shareRef.current)
@@ -92,7 +101,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <img src={UserIcon} alt="用户" className="bot-avatar" />
         )}
       </div> */}
-      <div className="bubble-wrap" ref={contentRef}>
+      <div className="bubble-wrap">
         {
           msg.isBot && <div className='botName'>{botName}</div>
         }
@@ -101,7 +110,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             {msg.timestamp && new Date(msg.timestamp).toLocaleString(dateLocale)}
           </div>
         }
-        <div className={`${msg.isBot && isExpanded ? 'bubble bubbleFold' : 'bubble'}`} ref={shareRef}>
+        <div className={`${msg.isBot && isCollapsed ? 'bubble bubbleFold' : 'bubble'}`} ref={shareRef}>
           <div className={msg.isBot ? 'content' : 'content userContent'}>
             {
               msg.isBot ? <>
@@ -194,11 +203,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         )}
         {
-          msg.isBot && isExpanded &&
+          msg.isBot && canCollapse && isCollapsed &&
           <div className='messageFoldWrap'>
             <div className='foldMask'></div>
             <div className='foldIcon'>
-              <img src={FoldArrowIcon} alt={t('message.expandContent')} style={{ width: '12px', height: '12px' }} onClick={() => { setIsExpanded(false) }} />
+              <img src={FoldArrowIcon} alt={t('message.expandContent')} style={{ width: '12px', height: '12px' }} onClick={() => { setIsCollapsed(false) }} />
             </div>
           </div>
         }
