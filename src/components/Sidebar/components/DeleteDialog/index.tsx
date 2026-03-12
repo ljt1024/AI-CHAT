@@ -1,4 +1,5 @@
 import { useChatDispatch } from "@/context/ChatContext"
+import { useLanguage } from "@/context/LanguageContext"
 import { CovIdListItem } from "@/utils/localMessages"
 import Dialog from "@/components/Dialog"
 
@@ -11,6 +12,7 @@ interface DeleteDialogProps {
 
 const DeleteDialog: React.FC<DeleteDialogProps> = ({ isShowDeleteDialog, setIsShowDeleteDialog, covItem, type = 0 }) => {
     const dispatch = useChatDispatch()
+    const { t } = useLanguage()
 
     const handleConfirmDelete = () => {
         if (type === 0 && covItem) {
@@ -30,13 +32,13 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({ isShowDeleteDialog, setIsSh
         <Dialog
             isOpen={isShowDeleteDialog}
             onClose={() => setIsShowDeleteDialog(false)}
-            title={type === 0 ? '删除' : '删除全部'}
+            title={type === 0 ? t('delete.singleTitle') : t('delete.allTitle')}
             type="confirm"
             confirmButtonStyle={{ backgroundColor: 'var(--danger-color)', outline: 'none' }}
             onConfirm={handleConfirmDelete}
         >
             <div className="deleteTip">
-                确定删除{type === 0 ? '此条' : '全部'}对话记录吗？此操作不可逆，请谨慎操作
+                {type === 0 ? t('delete.singleContent') : t('delete.allContent')}
             </div>
         </Dialog>
     )

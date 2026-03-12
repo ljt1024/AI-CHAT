@@ -1,4 +1,6 @@
 import React, { useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+import { useMessagePop } from '@/components/MessagePop';
 import './index.css';
 
 export interface UploadedFileItem {
@@ -17,10 +19,14 @@ interface ChatInputControlProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onStopSSE: () => void;
   supportsFileUpload?: boolean;
+  imageOnlyUpload?: boolean;
+  supportsThinking?: boolean;
+  isThinkingEnabled?: boolean;
   uploadedFiles?: UploadedFileItem[];
   isUploadingFile?: boolean;
   onUploadFile?: (file: File) => void;
   onRemoveUploadedFile?: (uploadedFileId: string) => void;
+  onToggleThinking?: () => void;
   variant?: 'bottom' | 'welcome';
 }
 
@@ -31,14 +37,26 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onSubmit,
   onStopSSE,
   supportsFileUpload = false,
+  imageOnlyUpload = false,
+  supportsThinking = false,
+  isThinkingEnabled = false,
   uploadedFiles = [],
   isUploadingFile = false,
   onUploadFile,
   onRemoveUploadedFile,
+  onToggleThinking,
   variant = 'bottom'
 }) => {
   const hasInput = inputText.trim().length > 0
+  const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useLanguage()
+  const messagePop = useMessagePop()
+
+  const isImageFile = (file: File) => {
+    if (file.type.startsWith('image/')) return true
+    return /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name)
+  }
 
   const onClickUpload = () => {
     if (!supportsFileUpload || isLoading || isUploadingFile) return
@@ -47,14 +65,30 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    if (file && imageOnlyUpload && !isImageFile(file)) {
+      messagePop.error(t('input.onlyImageError'))
+      e.target.value = ''
+      return
+    }
     if (file && onUploadFile) {
       onUploadFile(file)
     }
     e.target.value = ''
   }
 
+  const onTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const nativeEvent = e.nativeEvent as KeyboardEvent
+    if (e.key !== 'Enter' || e.shiftKey || nativeEvent.isComposing) return
+    e.preventDefault()
+    formRef.current?.requestSubmit()
+  }
+
   return (
-    <form className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()} onSubmit={onSubmit}>
+    <form
+      ref={formRef}
+      className={`input-area ${variant === 'welcome' ? 'input-area--welcome' : ''}`.trim()}
+      onSubmit={onSubmit}
+    >
       <div className="input-container">
         <div className="input-wrapper">
           <div className="input-left">
@@ -69,7 +103,8 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
             <textarea
               value={inputText}
               onChange={(e) => onInputChange(e.target.value)}
-              placeholder="请输入你的问题..."
+              onKeyDown={onTextareaKeyDown}
+              placeholder={t('input.placeholder')}
               disabled={isLoading}
               rows={2}
               spellCheck={false}
@@ -86,14 +121,14 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                     type="button"
                     className="uploaded-file-remove"
                     onClick={() => onRemoveUploadedFile(file.fileId)}
-                    aria-label={`移除${file.name}`}
+                    aria-label={t('input.removeFile', { name: file.name })}
                   >
                     ×
                   </button>
                 )}
               </div>
             ))}
-            {isUploadingFile && <div className="uploaded-file-uploading">文件上传中...</div>}
+            {isUploadingFile && <div className="uploaded-file-uploading">{t('input.uploading')}</div>}
           </div>
         )}
         <div className="send-button-row">
@@ -105,7 +140,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   className={`input-attach ${isUploadingFile ? 'is-uploading' : ''}`.trim()}
                   onClick={onClickUpload}
                   disabled={isLoading || isUploadingFile}
-                  title={isUploadingFile ? '文件上传中...' : '上传文件'}
+                  title={isUploadingFile ? t('input.uploading') : t('input.upload')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -117,9 +152,29 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   ref={fileInputRef}
                   type="file"
                   className="file-input-hidden"
+                  accept={imageOnlyUpload ? 'image/*' : undefined}
                   onChange={onFileChange}
                 />
               </>
+            )}
+            {supportsThinking && (
+              <button
+                type="button"
+                className={`input-thinking ${isThinkingEnabled ? 'is-active' : 'is-inactive'}`.trim()}
+                onClick={onToggleThinking}
+                disabled={isLoading}
+                title={isThinkingEnabled ? t('input.disableThinking') : t('input.enableThinking')}
+                aria-label={isThinkingEnabled ? t('input.disableThinking') : t('input.enableThinking')}
+                aria-pressed={isThinkingEnabled}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.5 3.5A4.5 4.5 0 0 0 5 8c0 1.55.8 2.9 2 3.7V13a2 2 0 0 0 2 2h1v1H9a2 2 0 0 0-2 2v2.5"></path>
+                  <path d="M14.5 3.5A4.5 4.5 0 0 1 19 8c0 1.55-.8 2.9-2 3.7V13a2 2 0 0 1-2 2h-1v1h1a2 2 0 0 1 2 2v2.5"></path>
+                  <path d="M9 20.5h6"></path>
+                  <path d="M12 6v7"></path>
+                </svg>
+                <span className="input-thinking-label">{t('input.thinkingLabel')}</span>
+              </button>
             )}
           </div>
           <div className="send-button-right">

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import './index.css';
 
 interface JsonUploaderProps {
@@ -7,6 +8,7 @@ interface JsonUploaderProps {
 }
 
 const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderProps) => {
+  const { t } = useLanguage();
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,13 +18,13 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderP
   const handleFileSelect = useCallback((file: File) => {
     // 验证文件类型
     if (file.type !== 'application/json') {
-      setError('请选择JSON文件');
+      setError(t('json.selectJson'));
       return;
     }
 
     // 验证文件大小
     if (file.size > maxFileSize) {
-      setError(`文件大小不能超过 ${maxFileSize / 1024}KB`);
+      setError(t('json.maxFileSize', { size: maxFileSize / 1024 }));
       return;
     }
 
@@ -36,19 +38,19 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderP
         onJsonUpload && onJsonUpload(jsonContent, file.name);
         setError(null);
       } catch (parseError) {
-        setError('无法解析JSON文件: ' + (parseError as Error).message);
+        setError(t('json.parseError', { message: (parseError as Error).message }));
       } finally {
         setIsLoading(false);
       }
     };
 
     reader.onerror = () => {
-      setError('读取文件时发生错误');
+      setError(t('json.readError'));
       setIsLoading(false);
     };
 
     reader.readAsText(file);
-  }, [maxFileSize, onJsonUpload]);
+  }, [maxFileSize, onJsonUpload, t]);
 
   // 处理点击上传
   const handleClickUpload = () => {
@@ -96,13 +98,13 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderP
         onClick={handleClickUpload}
       >
         {isLoading ? (
-          <div className="upload-status">正在处理...</div>
+          <div className="upload-status">{t('json.processing')}</div>
         ) : (
           <>
             <div className="upload-icon">📄</div>
             <div className="upload-text">
-              <p>点击或拖放JSON文件到这里</p>
-              <p className="upload-hint">最大文件大小: {maxFileSize / 1024}KB</p>
+              <p>{t('json.dropHint')}</p>
+              <p className="upload-hint">{t('json.fileSizeHint', { size: maxFileSize / 1024 })}</p>
             </div>
           </>
         )}

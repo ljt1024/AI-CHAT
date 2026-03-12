@@ -8,6 +8,7 @@ import CopyIcon from "../../assets/icons/copy.svg?react";
 import FoldArrowIcon from '../../assets/foldArrow.png';
 import { debounce } from '../../utils';
 import { useCopy } from '../../hooks/useCopy';
+import { useLanguage } from '@/context/LanguageContext';
 import { useMessagePop } from '../MessagePop';
 import { Message as MessageType } from '../../utils/localMessages';
 
@@ -35,6 +36,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   const [isExpanded, setIsExpanded] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
+  const { t, dateLocale } = useLanguage()
   const { handleCopy } = useCopy()
   const messagePop = useMessagePop()
 
@@ -61,7 +63,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   const onCopy = () => {
     handleCopy(msg.content || '', () => {
-      messagePop.success('复制成功')
+      messagePop.success(t('message.copySuccess'))
     })
   }
 
@@ -96,7 +98,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         }
         {
           !msg.isBot && <div className='userTime'>
-            {msg.timestamp && new Date(msg.timestamp).toLocaleString()}
+            {msg.timestamp && new Date(msg.timestamp).toLocaleString(dateLocale)}
           </div>
         }
         <div className={`${msg.isBot && isExpanded ? 'bubble bubbleFold' : 'bubble'}`} ref={shareRef}>
@@ -142,7 +144,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div className={msg.isBot ? 'timestamp' : 'timestamp userTimestamp'}>
             <div className='footerInfo'>
               {!msg.isBot &&
-                <Tooltip content="复制" placement="bottom">
+                <Tooltip content={t('message.copy')} placement="bottom">
                   <Icon
                     sourceType="svg"
                     source={CopyIcon}
@@ -155,15 +157,15 @@ const MessageItem: React.FC<MessageItemProps> = ({
               {
                 msg.isBot && !msg.isLoading &&
                 <span className='tokenInfo'>
-                  <span>输入token：{msg?.usage?.prompt_tokens}</span>
-                  <span style={{ paddingLeft: '8px' }}>输出token：{msg?.usage?.completion_tokens}</span>
+                  <span>{t('message.inputTokens')}：{msg?.usage?.prompt_tokens}</span>
+                  <span style={{ paddingLeft: '8px' }}>{t('message.outputTokens')}：{msg?.usage?.completion_tokens}</span>
                 </span>
               }
             </div>
             {msg.isBot && !msg.isLoading &&
               <div className='botActions'>
                 {canRetry && (
-                  <Tooltip content="重试" placement="bottom">
+                  <Tooltip content={t('message.retry')} placement="bottom">
                     <button type="button" className='retry' onClick={onRetryHandle}>
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                         <path d="M3 12a9 9 0 0 1 15.36-6.36L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -174,7 +176,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     </button>
                   </Tooltip>
                 )}
-                <Tooltip content="分享" placement="bottom">
+                <Tooltip content={t('message.share')} placement="bottom">
                   <button type="button" className='retry' onClick={onShare}>
                     <svg
                       className='share'
@@ -196,7 +198,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div className='messageFoldWrap'>
             <div className='foldMask'></div>
             <div className='foldIcon'>
-              <img src={FoldArrowIcon} alt="展开内容" style={{ width: '12px', height: '12px' }} onClick={() => { setIsExpanded(false) }} />
+              <img src={FoldArrowIcon} alt={t('message.expandContent')} style={{ width: '12px', height: '12px' }} onClick={() => { setIsExpanded(false) }} />
             </div>
           </div>
         }

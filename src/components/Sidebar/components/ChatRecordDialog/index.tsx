@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Dialog from '@/components/Dialog'
 import Table from '@/components/Table'
 import { useChat, useChatDispatch } from "@/context/ChatContext"
+import { useLanguage } from "@/context/LanguageContext"
 import DeleteIcon from "@/assets/icons/delete.svg?react"
 import RenameIcon from "@/assets/icons/rename.svg?react"
 import Icon from "@/components/Icon"
@@ -19,6 +20,7 @@ interface ChatRecordDialogProps {
 }
 
 const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog, setIsShowRecordDialog }) => {
+    const { t, dateLocale } = useLanguage()
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
     const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
     const [isShowUploader, setIsShowUploader] = useState(false)
@@ -122,39 +124,39 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
                     <div>{row.id}</div>
                     {
                         row.isTop &&
-                        <div className="topTag">置顶</div>
+                        <div className="topTag">{t('record.top')}</div>
                     }
                 </div>
             )
         },
         {
             key: 'title',
-            title: '对话名称',
+            title: t('record.column.name'),
         },
         {
             key: 'createTime',
-            title: '创建时间',
+            title: t('record.column.createTime'),
             width: '180px',
             render: (value: any) => (
-                <span>{new Date(value).toLocaleString()}</span>
+                <span>{new Date(value).toLocaleString(dateLocale)}</span>
             )
         },
         {
             key: 'latestTime',
-            title: '最新对话时间',
+            title: t('record.column.latestTime'),
             width: '180px',
             render: (value: any) => (
-                <span>{new Date(value).toLocaleString()}</span>
+                <span>{new Date(value).toLocaleString(dateLocale)}</span>
             )
         },
         {
             key: 'messageLen',
-            title: '对话条数',
+            title: t('record.column.count'),
             width: '100px',
         },
         {
             key: 'operate',
-            title: '操作',
+            title: t('record.column.actions'),
             width: '80px',
             render: (_: any, column: CovIdListItem) => (
                 <div>
@@ -186,25 +188,25 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
         },
         {
             key: 'title',
-            title: '对话名称',
+            title: t('record.column.name'),
         },
         {
             key: 'createTime',
-            title: '创建时间',
+            title: t('record.column.createTime'),
             render: (value: any) => (
-                <span>{new Date(value).toLocaleString()}</span>
+                <span>{new Date(value).toLocaleString(dateLocale)}</span>
             )
         },
         {
             key: 'latestTime',
-            title: '最新对话时间',
+            title: t('record.column.latestTime'),
             render: (value: any) => (
-                <span>{new Date(value).toLocaleString()}</span>
+                <span>{new Date(value).toLocaleString(dateLocale)}</span>
             )
         },
         {
             key: 'messageLen',
-            title: '对话条数',
+            title: t('record.column.count'),
         },
         // {
         //     key: 'operate',
@@ -234,16 +236,16 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
             <Dialog
                 isOpen={isShowRecordDialog}
                 onClose={() => setIsShowRecordDialog(false)}
-                title="对话记录"
+                title={t('record.title')}
                 type="confirm"
                 size="large"
                 className='reacordDialog'
                 onConfirm={handleRecordConfirm}
             >
                 <div className='globalHandle'>
-                    <button onClick={() => { exportChat() }}>导出</button>
-                    <button onClick={() => { setIsShowUploader(true) }}>导入</button>
-                    <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>删除全部会话</button>
+                    <button onClick={() => { exportChat() }}>{t('record.export')}</button>
+                    <button onClick={() => { setIsShowUploader(true) }}>{t('record.import')}</button>
+                    <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>{t('record.deleteAll')}</button>
                 </div>
                 <Table
                     columns={columns}
@@ -259,7 +261,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
             <Dialog
                 isOpen={isShowUploader}
                 onClose={onCloseUploader}
-                title="导入会话"
+                title={t('record.importTitle')}
                 type="confirm"
                 size="small"
                 className='reacordDialog'
@@ -277,7 +279,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
                     importData.length > 0 &&
                     <>
                         <div className='globalHandle'>
-                            <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={() => { onClearImport() }}>清空数据</button>
+                            <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={() => { onClearImport() }}>{t('record.clearData')}</button>
                         </div>
                         <Table
                             columns={importColums}
