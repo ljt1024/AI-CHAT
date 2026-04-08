@@ -129,8 +129,8 @@
   }
 
   .new-conversation-panel {
-    justify-content: flex-start;
-    padding: 40px 16px 16px;
+    justify-content: center;
+    padding: 24px 16px 36px;
     gap: 10px;
   }
 

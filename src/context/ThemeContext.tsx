@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -36,18 +37,31 @@ export const applyTheme = (theme: ThemeMode) => {
   root.style.colorScheme = theme;
 };
 
+interface ThemeTransitionOrigin {
+  x: number;
+  y: number;
+}
+
+interface ThemeDocument extends Document {
+  startViewTransition?: (update: () => void) => {
+    ready: Promise<void>;
+    finished: Promise<void>;
+    updateCallbackDone: Promise<void>;
+  };
+}
+
 interface ThemeContextValue {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
-  toggleTheme: () => void;
+  toggleTheme: (origin?: ThemeTransitionOrigin) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<ThemeMode>(() => getPreferredTheme());
+  const [theme, setThemeState] = useState<ThemeMode>(() => getPreferredTheme());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyTheme(theme);
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
@@ -59,7 +73,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (event: MediaQueryListEvent) => {
-      setTheme(event.matches ? 'dark' : 'light');
+      setThemeState(event.matches ? 'dark' : 'light');
     };
 
     if (typeof mediaQuery.addEventListener === 'function') {
@@ -74,9 +88,51 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       theme,
-      setTheme,
-      toggleTheme: () => {
-        setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));
+      setTheme: (nextTheme: ThemeMode) => {
+        setThemeState(nextTheme);
+      },
+      toggleTheme: (origin?: ThemeTransitionOrigin) => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        const themeDocument = document as ThemeDocument;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!themeDocument.startViewTransition || prefersReducedMotion) {
+          setThemeState(nextTheme);
+          return;
+        }
+
+        const x = origin?.x ?? window.innerWidth - 32;
+        const y = origin?.y ?? 32;
+        const endRadius = Math.hypot(
+          Math.max(x, window.innerWidth - x),
+          Math.max(y, window.innerHeight - y)
+        );
+
+        const transition = themeDocument.startViewTransition(() => {
+          flushSync(() => {
+            setThemeState(nextTheme);
+          });
+        });
+
+        transition.ready
+          .then(() => {
+            document.documentElement.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${endRadius}px at ${x}px ${y}px)`
+                ]
+              },
+              {
+                duration: 560,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                pseudoElement: '::view-transition-new(root)'
+              }
+            );
+          })
+          .catch(() => {
+            setThemeState(nextTheme);
+          });
       }
     }),
     [theme]

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import './index.css';
 
 interface TableProps {
@@ -28,6 +29,7 @@ const Table: React.FC<TableProps> = ({
   className = '',
   onRowClick = null
 }) => {
+  const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [sortBy, setSortBy] = useState<string | null>(defaultSortBy);
@@ -138,7 +140,7 @@ const Table: React.FC<TableProps> = ({
                       type="text"
                       value={filters[column.key] || ''}
                       onChange={(e) => handleFilter(column.key, e.target.value)}
-                      placeholder={`筛选 ${column.title}`}
+                      placeholder={t('table.filter', { title: column.title })}
                       className="filter-input"
                     />
                   </div>
@@ -165,7 +167,7 @@ const Table: React.FC<TableProps> = ({
           ) : (
             <tr>
               <td colSpan={columns.length} className="no-data">
-                暂无数据
+                {t('table.noData')}
               </td>
             </tr>
           )}
@@ -175,8 +177,11 @@ const Table: React.FC<TableProps> = ({
       {showPagination && processedData.length > 0 && (
         <div className="pagination-container">
           <div className="pagination-info">
-            显示 {Math.min((currentPage - 1) * pageSize + 1, processedData.length)} 到{' '}
-            {Math.min(currentPage * pageSize, processedData.length)} 条，共 {processedData.length} 条
+            {t('table.summary', {
+              start: Math.min((currentPage - 1) * pageSize + 1, processedData.length),
+              end: Math.min(currentPage * pageSize, processedData.length),
+              total: processedData.length
+            })}
           </div>
           <div className="pagination-controls">
             <select 
@@ -184,10 +189,10 @@ const Table: React.FC<TableProps> = ({
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               className="page-size-select"
             >
-              <option value={5}>5 条/页</option>
-              <option value={10}>10 条/页</option>
-              <option value={20}>20 条/页</option>
-              <option value={50}>50 条/页</option>
+              <option value={5}>{t('table.pageSize5')}</option>
+              <option value={10}>{t('table.pageSize10')}</option>
+              <option value={20}>{t('table.pageSize20')}</option>
+              <option value={50}>{t('table.pageSize50')}</option>
             </select>
             
             <button 
@@ -195,18 +200,18 @@ const Table: React.FC<TableProps> = ({
               disabled={currentPage === 1}
               className="pagination-btn"
             >
-              首页
+              {t('table.first')}
             </button>
             <button 
               onClick={() => handlePageChange(currentPage - 1)} 
               disabled={currentPage === 1}
               className="pagination-btn"
             >
-              上一页
+              {t('table.prev')}
             </button>
             
             <span className="pagination-page">
-              第 {currentPage} 页 / 共 {totalPages} 页
+              {t('table.page', { current: currentPage, total: totalPages })}
             </span>
             
             <button 
@@ -214,14 +219,14 @@ const Table: React.FC<TableProps> = ({
               disabled={currentPage === totalPages}
               className="pagination-btn"
             >
-              下一页
+              {t('table.next')}
             </button>
             <button 
               onClick={() => handlePageChange(totalPages)} 
               disabled={currentPage === totalPages}
               className="pagination-btn"
             >
-              末页
+              {t('table.last')}
             </button>
           </div>
         </div>
