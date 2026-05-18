@@ -72,6 +72,8 @@ initAbortController()
 
 const MODEL_STORAGE_KEY = 'selectedModelId'
 const DEFAULT_MODEL_ID = 'deepseek-reasoner'
+const CONTEXT_HISTORY_LIMIT = 20
+const CONTEXT_MESSAGE_CHAR_LIMIT = 8000
 
 const getModelsApiUrl = (chatApiUrl: string): string => {
   if (chatApiUrl && /^https?:\/\//.test(chatApiUrl)) {
@@ -106,6 +108,70 @@ const cloneMessage = (message: Message): Message => ({
   usage: message.usage ? { ...message.usage } : undefined,
   attachments: message.attachments ? [...message.attachments] : undefined
 })
+
+const trimContentForContext = (content: string): string => {
+  const trimmedContent = content.trim()
+  if (trimmedContent.length <= CONTEXT_MESSAGE_CHAR_LIMIT) {
+    return trimmedContent
+  }
+
+  return `${trimmedContent.slice(0, CONTEXT_MESSAGE_CHAR_LIMIT)}\n\n[Message truncated for context]`
+}
+
+const toRequestMessage = (
+  message: Message,
+  options: { includeImageAttachments: boolean; truncateContent?: boolean }
+): RequestMessage | null => {
+  if (message.isLoading || message.isError) return null
+  if (message.role !== 'user' && message.role !== 'assistant') return null
+
+  const contentText = options.truncateContent === false
+    ? (message.content || '').trim()
+    : trimContentForContext(message.content || '')
+  const imageParts = options.includeImageAttachments
+    ? (message.attachments || [])
+      .filter(isImageAttachment)
+      .map((attachment) => ({
+        type: 'image_url' as const,
+        image_url: {
+          url: attachment.url as string
+        }
+      }))
+    : []
+
+  if (imageParts.length > 0) {
+    return {
+      role: message.role,
+      content: [
+        ...imageParts,
+        ...(contentText ? [{ type: 'text' as const, text: contentText }] : [])
+      ]
+    }
+  }
+
+  if (!contentText) return null
+
+  return {
+    role: message.role,
+    content: contentText
+  }
+}
+
+const buildContextMessages = (
+  historyMessages: Message[],
+  latestUserMessage: RequestMessage,
+  includeImageAttachments: boolean
+): RequestMessage[] => {
+  const contextMessages = historyMessages
+    .map((message) => toRequestMessage(message, {
+      includeImageAttachments,
+      truncateContent: true
+    }))
+    .filter((message): message is RequestMessage => Boolean(message))
+    .slice(-CONTEXT_HISTORY_LIMIT)
+
+  return [...contextMessages, latestUserMessage]
+}
 
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
@@ -300,7 +366,11 @@ const ChatAI: React.FC = () => {
     role: 'assistant'
   })
 
-  const requestAssistantReply = async (userMessage: Message, appendUserMessage: boolean) => {
+  const requestAssistantReply = async (
+    userMessage: Message,
+    appendUserMessage: boolean,
+    historyMessages: Message[]
+  ) => {
     let assistantMessage = getLoadingMessage()
     const currentConversationModel = {
       id: selectedModelId,
@@ -329,32 +399,24 @@ const ChatAI: React.FC = () => {
       const requestMode = userMessage.attachmentRequestType
         || (supportsImageUnderstanding && isImageAttachment(firstAttachment) ? 'image_url' : undefined)
         || (firstAttachment?.fileId ? 'file_id' : undefined)
-      const requestMessage: RequestMessage = requestMode === 'image_url' && firstAttachment?.url
-        ? {
-          role: userMessage.role,
-          content: [
-            {
-              type: 'image_url',
-              image_url: {
-                url: firstAttachment.url
-              }
-            },
-            {
-              type: 'text',
-              text: userMessage.content
-            }
-          ]
-        }
-        : {
-          role: userMessage.role,
-          content: userMessage.content
-        }
+      const requestMessage = toRequestMessage(userMessage, {
+        includeImageAttachments: requestMode === 'image_url',
+        truncateContent: false
+      }) || {
+        role: userMessage.role,
+        content: userMessage.content
+      }
+      const requestMessages = buildContextMessages(
+        historyMessages,
+        requestMessage,
+        supportsImageUnderstanding
+      )
       const requestBody: Record<string, any> = {
-        messages: [requestMessage],
+        messages: requestMessages,
         "model": selectedModelId,
         "thinking": isThinkingEnabled,
         "frequency_penalty": 0,
-        "max_tokens": 2048,
+        "max_tokens": 2048 * 10,
         "presence_penalty": 0,
         "response_format": {
           "type": "text"
@@ -370,6 +432,7 @@ const ChatAI: React.FC = () => {
         "top_logprobs": null
       }
       if (requestMode === 'file_id' && firstAttachment?.fileId) {
+        requestBody.fileIds = [firstAttachment.fileId]
         requestBody.fileId = firstAttachment.fileId
       }
 
@@ -542,7 +605,7 @@ const ChatAI: React.FC = () => {
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
 
-    await requestAssistantReply(newMessage, true)
+    await requestAssistantReply(newMessage, true, messages)
   };
 
   const handleRetryLastAnswer = async () => {
@@ -562,7 +625,7 @@ const ChatAI: React.FC = () => {
     setShareTargetElement(null)
     localStorage.setItem('isNewCov', 'false')
 
-    await requestAssistantReply(lastUserMessage, false)
+    await requestAssistantReply(lastUserMessage, false, messages.slice(0, -2))
   }
 
   const onStopSSE = () => {
