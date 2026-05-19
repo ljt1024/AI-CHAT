@@ -3,63 +3,24 @@ import ChatHeaderOperate from '@/components/ChatHeaderOperate';
 import MessageItem from '@/components/MessageItem';
 import Sidebar from '@/components/Sidebar';
 import Share from '@/components/Share';
-//@ts-ignore
-import ChatInputControl, { UploadedFileItem } from '@/components/ChatInputControl';
+import ChatInputControl from '@/components/ChatInputControl';
 import ArrowDownIcon from '@/assets/arrowDown.svg?react';
 import { MessagePopProvider } from '@/components/MessagePop'
 import { useChat, useChatDispatch } from '@/context/ChatContext';
-import { newChat, storageMessages, removeLastAssistantMessage, Message, MessageAttachment, getSelectId, getMessageByCovId } from '@/utils/localMessages'
-import { ModelListResponse, ModelOption } from '@/types/model';
+import { useLanguage } from '@/context/LanguageContext';
+import { newChat, storageMessages, removeLastAssistantMessage, Message, getSelectId, getMessageByCovId } from '@/utils/localMessages'
+import { MODEL_STORAGE_KEY } from './constants';
+import { SSEData } from './types';
+import { useChatModels } from './hooks/useChatModels';
+import { useFileUpload } from './hooks/useFileUpload';
+import {
+  buildContextMessages,
+  cloneMessage,
+  isImageAttachment,
+  toRequestMessage
+} from './utils';
 
 import './chat.css';
-
-interface SSEData {
-  choices: Array<{
-    delta: {
-      content: string | null;
-      reasoning_content?: string;
-    };
-  }>;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-  };
-}
-
-interface FileUploadResponse {
-  code?: number;
-  data?: {
-    fileId?: string;
-    fileName?: string;
-    mimeType?: string;
-    size?: number;
-    createdAt?: string;
-    url?: string;
-    ossUrl?: string;
-    fileUrl?: string;
-  };
-  msg?: string;
-}
-
-type RequestMessageContent =
-  | string
-  | Array<
-    | {
-      type: 'image_url';
-      image_url: {
-        url: string;
-      };
-    }
-    | {
-      type: 'text';
-      text: string;
-    }
-  >
-
-interface RequestMessage {
-  role: 'user' | 'assistant';
-  content: RequestMessageContent;
-}
 
 let controller: AbortController | null = null
 let signal: AbortSignal | null = null
@@ -69,36 +30,6 @@ function initAbortController() {
 }
 initAbortController()
 
-const MODEL_STORAGE_KEY = 'selectedModelId'
-const DEFAULT_MODEL_ID = 'deepseek-reasoner'
-
-const getModelsApiUrl = (chatApiUrl: string): string => {
-  if (chatApiUrl && /^https?:\/\//.test(chatApiUrl)) {
-    return new URL('/api/models', chatApiUrl).toString()
-  }
-  return '/api/models'
-}
-
-const getFileUploadApiUrl = (chatApiUrl: string): string => {
-  if (chatApiUrl && /^https?:\/\//.test(chatApiUrl)) {
-    return new URL('/api/files/upload', chatApiUrl).toString()
-  }
-  return '/api/files/upload'
-}
-
-const getUploadedFileUrl = (fileData?: FileUploadResponse['data']): string | undefined => {
-  if (!fileData) return undefined
-  return fileData.ossUrl || fileData.url || fileData.fileUrl
-}
-
-const isImageAttachment = (attachment?: MessageAttachment): boolean => Boolean(
-  attachment?.url && attachment.mimeType?.startsWith('image/')
-)
-
-const getModelCapabilities = (model: ModelOption | null): string[] => {
-  const source = model?.inputModalities || model?.modalities || model?.capabilities || []
-  return Array.isArray(source) ? source.map((item) => String(item).toLowerCase()) : []
-}
 
 const ChatAI: React.FC = () => {
   const chatApiUrl = ((import.meta as any).env.VITE_CHAT_BASE_URL || '') as string
@@ -107,15 +38,11 @@ const ChatAI: React.FC = () => {
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
   const [isShowShare, setIsShowShare] = useState(false)
   const [shareTargetElement, setShareTargetElement] = useState<HTMLElement | null>(null)
-  const [models, setModels] = useState<ModelOption[]>([])
-  const [isModelsLoading, setIsModelsLoading] = useState(false)
-  const [isUploadingFile, setIsUploadingFile] = useState(false)
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([])
-  const [selectedModelId, setSelectedModelId] = useState<string>(
-    localStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL_ID
-  )
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const streamFrameRef = useRef<number | null>(null)
+  const streamPendingMessageRef = useRef<Message | null>(null)
+  const { t } = useLanguage()
   const { messages } = useChat()
   const dispatch = useChatDispatch()
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
@@ -127,22 +54,37 @@ const ChatAI: React.FC = () => {
     if (!selectId) return null
     return getMessageByCovId(selectId).curMessage
   }, [messages, isNewConversation])
-  const selectedModel = useMemo(
-    () => models.find((model) => model.id === selectedModelId) || null,
-    [models, selectedModelId]
-  )
-  const selectedModelName = selectedModel?.name || selectedConversation?.modelName || selectedModelId || 'AI Assistant'
-  const supportsImageUnderstanding = useMemo(() => {
-    const capabilities = getModelCapabilities(selectedModel)
-    return Boolean(
-      selectedModel?.supportsVision
-      || selectedModel?.supportsImageUnderstanding
-      || selectedModel?.supportsImageUrl
-      || capabilities.includes('image')
-      || capabilities.includes('vision')
-    )
-  }, [selectedModel])
-  const supportsFileUpload = Boolean(selectedModel?.supportsFileUpload || supportsImageUnderstanding)
+  const {
+    models,
+    isModelsLoading,
+    setSelectedModelId,
+    selectedModel,
+    selectedModelId,
+    selectedModelName,
+    supportsImageUnderstanding,
+    modelSupportsThinking,
+    supportsFileUpload,
+    isThinkingEnabled,
+    onToggleThinking
+  } = useChatModels({
+    chatApiUrl,
+    selectedConversation,
+    isLoading,
+    defaultDescription: t('chat.defaultDescription')
+  })
+  const {
+    uploadedFiles,
+    isUploadingFile,
+    setUploadedFiles,
+    onUploadFile,
+    onRemoveUploadedFile
+  } = useFileUpload({
+    chatApiUrl,
+    selectedModelId,
+    supportsFileUpload,
+    supportsImageUnderstanding,
+    isLoading
+  })
 
   const handleInputChange = (value: string) => {
     setInputText(value);
@@ -153,85 +95,60 @@ const ChatAI: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({});
   };
 
+  const cancelStreamRender = () => {
+    if (streamFrameRef.current === null) return
+    cancelAnimationFrame(streamFrameRef.current)
+    streamFrameRef.current = null
+  }
+
+  const flushStreamRender = () => {
+    cancelStreamRender()
+    const pendingMessage = streamPendingMessageRef.current
+    if (!pendingMessage) return
+    dispatch({
+      type: 'addMessages',
+      messages: cloneMessage(pendingMessage)
+    } as any)
+  }
+
+  const scheduleStreamRender = () => {
+    if (streamFrameRef.current !== null) return
+    streamFrameRef.current = requestAnimationFrame(() => {
+      streamFrameRef.current = null
+      const pendingMessage = streamPendingMessageRef.current
+      if (!pendingMessage) return
+      dispatch({
+        type: 'addMessages',
+        messages: cloneMessage(pendingMessage)
+      } as any)
+    })
+  }
+
   useEffect(() => {
     dispatch({type: 'getLastMessages'})
-    const showSrollBtnHeight = 200
+    const showScrollBtnHeight = 200
     const messagesRefCurrent = messagesRef.current
     if (messagesRefCurrent) {
-      messagesRefCurrent.addEventListener('scroll', () => {
+      const handleMessagesScroll = () => {
         const bottomHeight = messagesRefCurrent.scrollHeight - messagesRefCurrent.scrollTop - messagesRefCurrent.clientHeight
-        setIsShowScrollBtn(bottomHeight >= showSrollBtnHeight)
-      })
+        setIsShowScrollBtn(bottomHeight >= showScrollBtnHeight)
+      }
+
+      messagesRefCurrent.addEventListener('scroll', handleMessagesScroll)
 
       return () => {
-        messagesRefCurrent.removeEventListener('scroll', () => {})
+        messagesRefCurrent.removeEventListener('scroll', handleMessagesScroll)
       }
     }
   }, [])
 
   useEffect(() => {
-    const fetchModels = async () => {
-      setIsModelsLoading(true)
-      try {
-        const response = await fetch(getModelsApiUrl(chatApiUrl), {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json'
-          }
-        })
-        if (!response.ok) {
-          throw new Error(`failed to fetch models, status: ${response.status}`)
-        }
-        const result: ModelListResponse = await response.json()
-        const modelList = Array.isArray(result.data) ? result.data : []
-        setModels(modelList)
-
-        if (modelList.length > 0) {
-          const enabledList = modelList.filter((model) => model.enabled)
-          const availableList = enabledList.length > 0 ? enabledList : modelList
-          const cachedModelId = localStorage.getItem(MODEL_STORAGE_KEY)
-          const matchedModel = availableList.find((model) => model.id === cachedModelId)
-            || availableList.find((model) => model.id === DEFAULT_MODEL_ID)
-            || availableList[0]
-          if (matchedModel) {
-            setSelectedModelId(matchedModel.id)
-            localStorage.setItem(MODEL_STORAGE_KEY, matchedModel.id)
-          }
-        }
-      } catch (error) {
-        console.log(error)
-        setModels([
-          {
-            id: DEFAULT_MODEL_ID,
-            name: 'DeepSeek Reasoner',
-            provider: 'deepseek',
-            description: '默认推理模型',
-            supportsStream: true,
-            supportsFileUpload: false,
-            enabled: true
-          }
-        ])
-        setSelectedModelId(DEFAULT_MODEL_ID)
-        localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_MODEL_ID)
-      } finally {
-        setIsModelsLoading(false)
+    return () => {
+      if (streamFrameRef.current !== null) {
+        cancelAnimationFrame(streamFrameRef.current)
       }
     }
-
-    fetchModels()
-  }, [chatApiUrl])
-
-  useEffect(() => {
-    if (!selectedConversation?.modelId || selectedConversation.modelId === selectedModelId) return
-    setSelectedModelId(selectedConversation.modelId)
-    localStorage.setItem(MODEL_STORAGE_KEY, selectedConversation.modelId)
-  }, [selectedConversation?.modelId, selectedModelId])
-
-  useEffect(() => {
-    if (!supportsFileUpload && uploadedFiles.length > 0) {
-      setUploadedFiles([])
-    }
-  }, [supportsFileUpload, uploadedFiles.length])
+  }, [])
 
   useEffect(() => {
     if (isWelcomeConversation || messages.length === 0) {
@@ -239,18 +156,13 @@ const ChatAI: React.FC = () => {
     }
   }, [isWelcomeConversation, messages.length])
 
-  // 检测主动滚动事件，需要停止滑动到最底部行为
-  window.addEventListener('scroll', ()=> {
-    console.log('滚动了')
-  })
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
 
   const getLoadingMessage = (): Message => ({
-    content: '思考中...',
+    content: t('chat.loading'),
     reasoning_content: '',
     isBot: true,
     timestamp: new Date().toISOString(),
@@ -258,7 +170,11 @@ const ChatAI: React.FC = () => {
     role: 'assistant'
   })
 
-  const requestAssistantReply = async (userMessage: Message, appendUserMessage: boolean) => {
+  const requestAssistantReply = async (
+    userMessage: Message,
+    appendUserMessage: boolean,
+    historyMessages: Message[]
+  ) => {
     let assistantMessage = getLoadingMessage()
     const currentConversationModel = {
       id: selectedModelId,
@@ -281,35 +197,30 @@ const ChatAI: React.FC = () => {
     setIsLoading(true);
 
     try {
+      streamPendingMessageRef.current = null
+      cancelStreamRender()
       const firstAttachment = userMessage.attachments?.[0]
       const requestMode = userMessage.attachmentRequestType
         || (supportsImageUnderstanding && isImageAttachment(firstAttachment) ? 'image_url' : undefined)
         || (firstAttachment?.fileId ? 'file_id' : undefined)
-      const requestMessage: RequestMessage = requestMode === 'image_url' && firstAttachment?.url
-        ? {
-          role: userMessage.role,
-          content: [
-            {
-              type: 'image_url',
-              image_url: {
-                url: firstAttachment.url
-              }
-            },
-            {
-              type: 'text',
-              text: userMessage.content
-            }
-          ]
-        }
-        : {
-          role: userMessage.role,
-          content: userMessage.content
-        }
+      const requestMessage = toRequestMessage(userMessage, {
+        includeImageAttachments: requestMode === 'image_url',
+        truncateContent: false
+      }) || {
+        role: userMessage.role,
+        content: userMessage.content
+      }
+      const requestMessages = buildContextMessages(
+        historyMessages,
+        requestMessage,
+        supportsImageUnderstanding
+      )
       const requestBody: Record<string, any> = {
-        messages: [requestMessage],
+        messages: requestMessages,
         "model": selectedModelId,
+        "thinking": isThinkingEnabled,
         "frequency_penalty": 0,
-        "max_tokens": 2048,
+        "max_tokens": 2048 * 10,
         "presence_penalty": 0,
         "response_format": {
           "type": "text"
@@ -325,6 +236,7 @@ const ChatAI: React.FC = () => {
         "top_logprobs": null
       }
       if (requestMode === 'file_id' && firstAttachment?.fileId) {
+        requestBody.fileIds = [firstAttachment.fileId]
         requestBody.fileId = firstAttachment.fileId
       }
 
@@ -335,7 +247,11 @@ const ChatAI: React.FC = () => {
         body: JSON.stringify(requestBody),
       });
 
-      const reader = response.body?.getReader();
+      if (!response.ok || !response.body) {
+        throw new Error(`chat request failed, status: ${response.status}`)
+      }
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       assistantMessage = {
         content: '',
@@ -348,43 +264,47 @@ const ChatAI: React.FC = () => {
       }
 
       let flag = false
+      let streamBuffer = ''
+      const scheduleAssistantRender = () => {
+        streamPendingMessageRef.current = assistantMessage
+        scheduleStreamRender()
+      }
+      const flushAssistantRender = () => {
+        streamPendingMessageRef.current = assistantMessage
+        flushStreamRender()
+      }
       const parseSSEEvent = (event: string) => {
-        const lines = event;
+        const lines = event
+          .split('\n')
+          .filter((line) => line.startsWith('data:'))
+          .map((line) => line.slice(5).trimStart())
+          .join('\n')
+        if (!lines) return
         try {
-          let str = lines.split(": ")[1]
           // sse最终以'data: [DONE]'结束
-          if (str === '[DONE]') {
+          if (lines === '[DONE]') {
             assistantMessage.isLoading = false
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            flushAssistantRender()
             return
           }
-          let data: SSEData = JSON.parse(str);
+          let data: SSEData = JSON.parse(lines);
           if (data.usage) {
             assistantMessage.usage = data.usage
           }
 
           // 正式回复内容
-          if (data.choices[0].delta.content !== null) {
+          if (data.choices[0].delta.content !== null && data.choices[0].delta.content !== undefined) {
             if (flag) {
               assistantMessage.content += '\n\n'
             }
             assistantMessage.content += data.choices[0].delta.content || ''
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            scheduleAssistantRender()
             flag = false
             // 思考内容
           } else {
             flag = true
             assistantMessage.reasoning_content += data.choices[0].delta.reasoning_content || ''
-            dispatch({
-              type: 'addMessages',
-              messages: assistantMessage
-            } as any)
+            scheduleAssistantRender()
           }
         } catch (error) {
           console.log(error)
@@ -392,32 +312,46 @@ const ChatAI: React.FC = () => {
       }
 
       // 持续读取流数据
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            reader.releaseLock();
-            break;
-          }
-          const chunk = decoder.decode(value);
-          // SSE 事件以双换行分隔
-          const events = chunk.split("\n\n");
-          for (const event of events) {
-            if (event.trim() === "") continue;
-            parseSSEEvent(event);
-          }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        streamBuffer += decoder.decode(value, { stream: true });
+        streamBuffer = streamBuffer.replace(/\r\n/g, '\n')
+        const events = streamBuffer.split("\n\n");
+        streamBuffer = events.pop() || ''
+        for (const event of events) {
+          if (event.trim() === "") continue;
+          parseSSEEvent(event);
         }
       }
-      storageMessages(assistantMessage, currentConversationModel)
+      streamBuffer += decoder.decode()
+      streamBuffer = streamBuffer.replace(/\r\n/g, '\n')
+      if (streamBuffer.trim()) {
+        parseSSEEvent(streamBuffer)
+      }
+      assistantMessage.isLoading = false
+      flushAssistantRender()
+      reader.releaseLock();
+      storageMessages(cloneMessage(assistantMessage), currentConversationModel)
     } catch (error: any) {
       console.log(error)
       if (error.name === "AbortError") {
+        if (streamPendingMessageRef.current) {
+          assistantMessage.isLoading = false
+          flushStreamRender()
+        } else {
+          cancelStreamRender()
+        }
         console.log('请求被中断')
       } else {
+        cancelStreamRender()
+        streamPendingMessageRef.current = null
         dispatch({
           type: 'addMessages',
           messages: {
-            content: '⚠️ 服务器繁忙, 请稍后再试！',
+            content: t('chat.serverBusy'),
             isBot: true,
             isError: true
           }
@@ -475,7 +409,7 @@ const ChatAI: React.FC = () => {
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
 
-    await requestAssistantReply(newMessage, true)
+    await requestAssistantReply(newMessage, true, messages)
   };
 
   const handleRetryLastAnswer = async () => {
@@ -495,7 +429,7 @@ const ChatAI: React.FC = () => {
     setShareTargetElement(null)
     localStorage.setItem('isNewCov', 'false')
 
-    await requestAssistantReply(lastUserMessage, false)
+    await requestAssistantReply(lastUserMessage, false, messages.slice(0, -2))
   }
 
   const onStopSSE = () => {
@@ -521,43 +455,6 @@ const ChatAI: React.FC = () => {
     setShareTargetElement(null)
   }
 
-  const onUploadFile = async (file: File) => {
-    if (!supportsFileUpload || isUploadingFile || isLoading) return
-    setIsUploadingFile(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('model', selectedModelId)
-
-      const response = await fetch(getFileUploadApiUrl(chatApiUrl), {
-        method: 'POST',
-        body: formData
-      })
-      if (!response.ok) {
-        throw new Error(`file upload failed, status: ${response.status}`)
-      }
-      const result: FileUploadResponse = await response.json()
-      const fileData = result.data || {}
-      const uploadedFile: UploadedFileItem = {
-        fileId: `${Date.now()}-${file.name}`,
-        serverFileId: fileData.fileId,
-        url: getUploadedFileUrl(fileData),
-        name: fileData.fileName || file.name,
-        mimeType: fileData.mimeType || file.type,
-        size: fileData.size || file.size
-      }
-      setUploadedFiles([uploadedFile])
-    } catch (error) {
-      console.log(error)
-    } finally {
-      setIsUploadingFile(false)
-    }
-  }
-
-  const onRemoveUploadedFile = (uploadedFileId: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.fileId !== uploadedFileId))
-  }
-
 
   return (
     <MessagePopProvider>
@@ -580,16 +477,20 @@ const ChatAI: React.FC = () => {
             {isWelcomeConversation ? (
               <div className="new-conversation-panel">
                 <h1 className="new-conversation-title">AICHAT</h1>
-                <p className="new-conversation-subtitle">你的AI问答助手</p>
+                <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
                 <ChatInputControl
                   variant="welcome"
                   inputText={inputText}
                   isLoading={isLoading}
                   supportsFileUpload={supportsFileUpload}
+                  imageOnlyUpload={supportsImageUnderstanding}
+                  supportsThinking={modelSupportsThinking}
+                  isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}
                   isUploadingFile={isUploadingFile}
                   onUploadFile={onUploadFile}
                   onRemoveUploadedFile={onRemoveUploadedFile}
+                  onToggleThinking={onToggleThinking}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}
@@ -629,10 +530,14 @@ const ChatAI: React.FC = () => {
               inputText={inputText}
               isLoading={isLoading}
               supportsFileUpload={supportsFileUpload}
+              imageOnlyUpload={supportsImageUnderstanding}
+              supportsThinking={modelSupportsThinking}
+              isThinkingEnabled={isThinkingEnabled}
               uploadedFiles={uploadedFiles}
               isUploadingFile={isUploadingFile}
               onUploadFile={onUploadFile}
               onRemoveUploadedFile={onRemoveUploadedFile}
+              onToggleThinking={onToggleThinking}
               onInputChange={handleInputChange}
               onSubmit={handleSubmit}
               onStopSSE={onStopSSE}

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import html2canvas from 'html2canvas-pro';
 import dompurify from 'dompurify';
+import { useLanguage } from '@/context/LanguageContext';
 import { useMessagePop } from '@/components/MessagePop';
 
 const defaultOptions = {
@@ -17,6 +18,7 @@ export const useScreenshot = (
     const [image, setImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { t } = useLanguage()
     const messagePop = useMessagePop()
 
     const takeScreenshot = async (target: HTMLElement | null) => {
@@ -48,7 +50,7 @@ export const useScreenshot = (
         } catch (err) {
             console.log(err)
             setError(err instanceof Error ? err.message : 'Failed to capture screenshot');
-            messagePop.error('图片生成异常')
+            messagePop.error(t('screenshot.error'))
             return null;
         } finally {
             setIsLoading(false);

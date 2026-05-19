@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import Dialog from "@/components/Dialog"
 import { useChatDispatch } from "@/context/ChatContext"
+import { useLanguage } from "@/context/LanguageContext"
 import { CovIdListItem } from "@/utils/localMessages"
 
 import './index.css'
@@ -12,6 +13,7 @@ interface EditTitDialogProps {
 }
 
 const EditTitDialog: React.FC<EditTitDialogProps> = ({ isConfirmDialogOpen, setIsConfirmDialogOpen, covItem }) => {
+    const { t } = useLanguage()
     const [isForce, setIsForce] = useState(false)
     const [chatTit, setChatTit] = useState(covItem?.title || '')
     const dispatch = useChatDispatch()
@@ -59,7 +61,7 @@ const EditTitDialog: React.FC<EditTitDialogProps> = ({ isConfirmDialogOpen, setI
         <Dialog
             isOpen={isConfirmDialogOpen}
             onClose={() => setIsConfirmDialogOpen(false)}
-            title="编辑对话名称"
+            title={t('edit.title')}
             type="confirm"
             onConfirm={handleConfirm}
         >

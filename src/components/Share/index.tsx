@@ -1,4 +1,5 @@
 import { useScreenshot } from '../../hooks/useScreenshot';
+import { useLanguage } from '@/context/LanguageContext';
 import { createPortal } from 'react-dom';
 import PictuerIcon from '../../assets/pictuer.png'
 
@@ -10,6 +11,7 @@ interface ShareProps {
 }
 
 const Share: React.FC<ShareProps> = ({ targetElement, setIsShowShare }) => {
+    const { t } = useLanguage()
     const {
         image,
         isImgLoading,
@@ -40,16 +42,16 @@ const Share: React.FC<ShareProps> = ({ targetElement, setIsShowShare }) => {
                 <div className='previewImg'>
                     <img
                         src={image}
-                        alt="预览"
+                        alt={t('share.previewAlt')}
                         style={{ width: '100%' }}
                     />
                 </div>
                 <div className='previewHandle'>
                     <button onClick={() => download(`screenshot_${Date.now()}.jpg`)}>
-                        保  存
+                        {t('share.save')}
                     </button>
                     <button onClick={onClosePreview}>
-                        关  闭
+                        {t('share.close')}
                     </button>
                 </div>
             </div>
@@ -61,7 +63,7 @@ const Share: React.FC<ShareProps> = ({ targetElement, setIsShowShare }) => {
             <div className='shareWrap'>
                 <div className='shareItem savePicture' onClick={onTakeScreenshot}>
                     <img src={PictuerIcon} alt="" />
-                    <span>{isImgLoading ? '图片生成中' : '保存图片'}</span>
+                    <span>{isImgLoading ? t('share.generating') : t('share.saveImage')}</span>
                 </div>
             </div>
             {previewNode && typeof document !== 'undefined' ? createPortal(previewNode, document.body) : null}
