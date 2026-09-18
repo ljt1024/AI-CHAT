@@ -4,6 +4,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { createHttpError } = require('../utils/http');
 const { sanitizeFileName } = require('../utils/upload');
+const { generatePdfBuffer } = require('./pdfService');
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const PDF_MIME_TYPE = 'application/pdf';
@@ -97,18 +98,6 @@ function normalizeDocumentRequest(body, contentFallback = '') {
     mimeType: format === 'pdf' ? PDF_MIME_TYPE : DOCX_MIME_TYPE,
     paragraphs: finalParagraphs,
   };
-}
-
-function buildPlainText({ title, paragraphs }) {
-  const chunks = [];
-
-  if (title) {
-    chunks.push(title);
-    chunks.push('');
-  }
-
-  chunks.push(...paragraphs);
-  return chunks.join('\n\n').trim();
 }
 
 function encodeRtfText(text) {
@@ -224,32 +213,10 @@ async function generateDocxBuffer(documentData) {
   }
 }
 
-async function generatePdfBuffer(documentData) {
-  if (!fs.existsSync('/usr/sbin/cupsfilter')) {
-    throw createHttpError(500, '当前环境缺少 cupsfilter，无法生成 PDF 文档');
-  }
-
-  const tempDir = createTempDir();
-  const inputPath = path.join(tempDir, 'document.txt');
-
-  try {
-    fs.writeFileSync(inputPath, buildPlainText(documentData), 'utf8');
-    const { stdout } = await runCommand('/usr/sbin/cupsfilter', ['-m', 'application/pdf', inputPath], 'PDF 文档生成失败');
-
-    if (!Buffer.isBuffer(stdout) || stdout.length === 0) {
-      throw createHttpError(500, 'PDF 文档生成失败: 未产出有效文件内容');
-    }
-
-    return stdout;
-  } finally {
-    cleanupTempDir(tempDir);
-  }
-}
-
-async function generateDocumentFile(body, contentFallback = '') {
+async function generateDocumentFile(body, contentFallback = '', options = {}) {
   const documentData = normalizeDocumentRequest(body, contentFallback);
   const buffer = documentData.format === 'pdf'
-    ? await generatePdfBuffer(documentData)
+    ? await generatePdfBuffer(documentData, options)
     : await generateDocxBuffer(documentData);
 
   return {

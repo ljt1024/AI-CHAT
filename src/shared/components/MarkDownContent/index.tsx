@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
+import { resolveFileDownloadUrl } from '@/shared/utils/fileDownloads';
 import remarkGfm from 'remark-gfm';
 import hljs from 'highlight.js';
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -297,6 +298,7 @@ const MarkdownContent = React.memo(({ msg }: MarkdownContentProps) => {
             remarkPlugins={[remarkGfm]}
             components={{
                 code: codeBlockRenderer,
+                a: ({ href, children, title }) => <a href={resolveFileDownloadUrl(href)} title={title}>{children}</a>,
             }}>
             {msg}
         </ReactMarkdown>

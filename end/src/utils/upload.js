@@ -36,7 +36,7 @@ const IMAGE_FILE_EXTENSIONS = new Set([
 
 function sanitizeFileName(fileName) {
   const name = typeof fileName === 'string' && fileName.trim() ? fileName.trim() : 'file';
-  return name.replace(/[/\\?%*:|"<>]/g, '_');
+  return name.replace(/[/\\?%*:|"<>\x00-\x1F\x7F]/g, '_');
 }
 
 function parseBoundary(contentType) {

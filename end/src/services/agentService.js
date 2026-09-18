@@ -45,10 +45,10 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
       const result = await graph.invoke({
         input: request.input, history, workingHistory, turnId: request.turnId,
         summary: previous.values.summary || '', summarizedMessages: previous.values.summarizedMessages || 0,
-        steps: [], output: '', iteration: 0,
+        steps: [], output: '', iteration: 0, artifacts: [],
       }, config);
       signal?.throwIfAborted();
-      const response = { id: randomUUID(), sessionId: request.sessionId, input: request.input, output: result.output, steps: result.steps, memoryMessages: result.history.length };
+      const response = { id: randomUUID(), sessionId: request.sessionId, input: request.input, output: result.output, steps: result.steps, memoryMessages: result.history.length, artifacts: result.artifacts || [] };
       emit({ type: 'done', result: response });
       return response;
     } finally { active.delete(request.sessionId); }

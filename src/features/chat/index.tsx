@@ -14,6 +14,8 @@ import { SSEData } from './types';
 import { useChatModels } from './hooks/useChatModels';
 import { useFileUpload } from './hooks/useFileUpload';
 import { streamAgents } from '@/features/agents/api';
+import type { AgentArtifact } from '@/features/agents/types';
+import { ArtifactPreviewPanel } from '@/features/agents/components/ArtifactPreviewPanel';
 import {
   buildContextMessages,
   cloneMessage,
@@ -29,6 +31,8 @@ const ChatAI: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAgentMode, setIsAgentMode] = useState(() => localStorage.getItem('chat.agentMode') === 'true');
+  const [previewSelection, setPreviewSelection] = useState<{ sessionId: string; artifact: AgentArtifact } | null>(null);
+  const setPreviewArtifact = (artifact: AgentArtifact) => setPreviewSelection({ sessionId: getSelectId() || '', artifact });
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
   const [isShowShare, setIsShowShare] = useState(false)
   const [shareTargetElement, setShareTargetElement] = useState<HTMLElement | null>(null)
@@ -39,6 +43,9 @@ const ChatAI: React.FC = () => {
   const { t } = useLanguage()
   const { messages } = useChat()
   const dispatch = useChatDispatch()
+  const previewArtifact = previewSelection?.sessionId === getSelectId() && messages.length ? previewSelection.artifact : null
+  const previewArtifacts = messages.flatMap(message => message.artifacts || []).filter(file => file.format === 'pdf' || file.format === 'pptx')
+  if (previewArtifact && !previewArtifacts.some(file => file.fileId === previewArtifact.fileId)) previewArtifacts.push(previewArtifact)
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
   const hasSelectedConversation = Boolean(getSelectId())
   const isWelcomeConversation = messages.length === 0 && (isNewConversation || !hasSelectedConversation)
@@ -376,7 +383,7 @@ const ChatAI: React.FC = () => {
     setIsLoading(true)
     let assistant: Message = {
       content: '', role: 'assistant', isBot: true, timestamp: new Date().toISOString(),
-      isLoading: true, agentStatus: 'running', agentSteps: [], memoryMessages: 0, agentTurnId: turnId,
+      isLoading: true, agentStatus: 'running', agentSteps: [], memoryMessages: 0, agentTurnId: turnId, artifacts: [],
     }
     if (appendUser) storageMessages(userMessage, model)
     dispatch({ type: 'addMessages', messages: appendUser ? [userMessage, assistant] : [assistant] })
@@ -388,6 +395,10 @@ const ChatAI: React.FC = () => {
       await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId }, (event) => {
         if (event.type === 'start') assistant.memoryMessages = event.memoryMessages
         if (event.type === 'memory') assistant.summarizedMessages = event.summarizedMessages
+        if (event.type === 'artifact') {
+          assistant.artifacts = [...(assistant.artifacts || []).filter((file) => file.fileId !== event.artifact.fileId), event.artifact]
+          if (event.artifact.format === 'pdf' || event.artifact.format === 'pptx') setPreviewSelection({ sessionId, artifact: event.artifact })
+        }
         if (event.type === 'answer_start') assistant.content = ''
         if (event.type === 'delta') assistant.content += event.text
         if (event.type === 'step_delta') {
@@ -405,6 +416,7 @@ const ChatAI: React.FC = () => {
           assistant.content = event.result.output
           assistant.agentSteps = event.result.steps
           assistant.agentStatus = 'completed'
+          assistant.artifacts = event.result.artifacts || assistant.artifacts
         }
         render()
       }, requestController.signal)
@@ -519,13 +531,11 @@ const ChatAI: React.FC = () => {
 
   return (
     <MessagePopProvider>
-      <div className="chat-container">
+      <div className={`chat-container${previewArtifact ? ' chat-container--preview' : ''}`}>
         <Sidebar
           isLoading={isLoading}
         />
-        {/* {isShowShare && <div className='shareCancel' onClick={() => setIsShowShare(false)}>取消分享</div>}
-        {!isShowShare && <ThemeSwitcher />} */}
-        <div className='messages-content'>
+        <div className="chat-workspace">
           <ChatHeaderOperate
             isShowShare={isShowShare}
             onCancelShare={setIsShowShare}
@@ -534,13 +544,65 @@ const ChatAI: React.FC = () => {
             isModelLoading={isModelsLoading || isLoading}
             onSelectModel={onSelectModel}
           />
-          <div className='messages-scollWrap' ref={messagesRef}>
-            {isWelcomeConversation ? (
-              <div className="new-conversation-panel">
-                <h1 className="new-conversation-title">AICHAT</h1>
-                <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
+          <div className="chat-panels">
+            <div className='messages-content'>
+              <div className='messages-scollWrap' ref={messagesRef}>
+                {isWelcomeConversation ? (
+                  <div className="new-conversation-panel">
+                    <h1 className="new-conversation-title">AICHAT</h1>
+                    <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
+                    <ChatInputControl
+                      variant="welcome"
+                      inputText={inputText}
+                      isLoading={isLoading}
+                      supportsFileUpload={supportsFileUpload && !isAgentMode}
+                      imageOnlyUpload={supportsImageUnderstanding}
+                      supportsThinking={modelSupportsThinking && !isAgentMode}
+                      isThinkingEnabled={isThinkingEnabled}
+                      uploadedFiles={uploadedFiles}
+                      isUploadingFile={isUploadingFile}
+                      onUploadFile={onUploadFile}
+                      onRemoveUploadedFile={onRemoveUploadedFile}
+                      onToggleThinking={onToggleThinking}
+                      isAgentMode={isAgentMode}
+                      onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                      onInputChange={handleInputChange}
+                      onSubmit={handleSubmit}
+                      onStopSSE={onStopSSE}
+                    />
+                  </div>
+                ) : (
+                  <div className="messages-wrap">
+                    {messages.map((msg: Message, index: number) => (
+                      <MessageItem
+                        msg={msg}
+                        key={index}
+                        botName={selectedModelName}
+                        setIsShowShare={setIsShowShare}
+                        setShareTarget={setShareTargetElement}
+                        canRetry={msg.isBot && !msg.isLoading && index === messages.length - 1 && !isLoading}
+                        onRetry={handleRetryLastAnswer}
+                        onPreviewArtifact={setPreviewArtifact}
+                      />
+                    ))}
+                    {isLoading && (
+                      <div className="typing-indicator">
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+
+              {
+                isShowShare && <Share targetElement={shareTargetElement} setIsShowShare={setIsShowShare}/>
+              }
+
+              {!isWelcomeConversation && (
                 <ChatInputControl
-                  variant="welcome"
                   inputText={inputText}
                   isLoading={isLoading}
                   supportsFileUpload={supportsFileUpload && !isAgentMode}
@@ -558,64 +620,18 @@ const ChatAI: React.FC = () => {
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}
                 />
-              </div>
-            ) : (
-              <div className="messages-wrap">
-                {messages.map((msg: Message, index: number) => (
-                  <MessageItem
-                    msg={msg}
-                    key={index}
-                    botName={selectedModelName}
-                    setIsShowShare={setIsShowShare}
-                    setShareTarget={setShareTargetElement}
-                    canRetry={msg.isBot && !msg.isLoading && index === messages.length - 1 && !isLoading}
-                    onRetry={handleRetryLastAnswer}
-                  />
-                ))}
-                {isLoading && (
-                  <div className="typing-indicator">
-                    <div className="dot"></div>
-                    <div className="dot"></div>
-                    <div className="dot"></div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
+              )}
+
+              {!isWelcomeConversation && isShowScrollBtn &&
+                <div className="chatScrollBottom" onClick={() => {
+                  scrollToBottom()
+                  setIsShowScrollBtn(false)
+                }}>
+                  <ArrowDownIcon className="chatScrollBottomIcon" />
+                </div>}
+            </div>
+            {previewArtifact && <ArtifactPreviewPanel key={previewArtifact.fileId} artifact={previewArtifact} artifacts={previewArtifacts} onSelect={setPreviewArtifact} onClose={() => setPreviewSelection(null)} />}
           </div>
-
-          {
-            isShowShare && <Share targetElement={shareTargetElement} setIsShowShare={setIsShowShare}/>
-          }
-
-          {!isWelcomeConversation && (
-            <ChatInputControl
-              inputText={inputText}
-              isLoading={isLoading}
-              supportsFileUpload={supportsFileUpload && !isAgentMode}
-              imageOnlyUpload={supportsImageUnderstanding}
-              supportsThinking={modelSupportsThinking && !isAgentMode}
-              isThinkingEnabled={isThinkingEnabled}
-              uploadedFiles={uploadedFiles}
-              isUploadingFile={isUploadingFile}
-              onUploadFile={onUploadFile}
-              onRemoveUploadedFile={onRemoveUploadedFile}
-              onToggleThinking={onToggleThinking}
-              isAgentMode={isAgentMode}
-              onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
-              onInputChange={handleInputChange}
-              onSubmit={handleSubmit}
-              onStopSSE={onStopSSE}
-            />
-          )}
-
-          {!isWelcomeConversation && isShowScrollBtn &&
-            <div className="chatScrollBottom" onClick={() => {
-              scrollToBottom()
-              setIsShowScrollBtn(false)
-            }}>
-              <ArrowDownIcon className="chatScrollBottomIcon" />
-            </div>}
         </div>
       </div>
     </MessagePopProvider>

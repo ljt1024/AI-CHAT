@@ -37,6 +37,7 @@ export interface AgentStep {
 }
 
 export interface AgentResult {
+  artifacts?: AgentArtifact[];
   id: string;
   sessionId: string;
   input: string;
@@ -45,9 +46,22 @@ export interface AgentResult {
   memoryMessages: number;
 }
 
+export interface AgentArtifact {
+  fileId: string;
+  fileName: string;
+  format: 'pdf' | 'xlsx' | 'pptx';
+  previewFileId?: string;
+  pageCount?: number;
+  mimeType: string;
+  size: number;
+  downloadPath: string;
+  createdAt: string;
+}
+
 export type AgentEvent =
   | { type: 'start'; sessionId: string; memoryMessages: number }
   | { type: 'memory'; summarizedMessages: number; recentMessages: number }
+  | { type: 'artifact'; artifact: AgentArtifact }
   | { type: 'step'; step: AgentStep }
   | { type: 'step_delta'; stepId: string; text: string; reset?: boolean }
   | { type: 'answer_start' }

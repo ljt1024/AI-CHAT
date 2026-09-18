@@ -1,4 +1,5 @@
 .chatHeaderOperate {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -223,6 +224,7 @@
     .chatHeaderOperate {
         padding: 12px 14px;
         gap: 10px;
+        flex-wrap: wrap;
     }
     
     .headerPrimary {

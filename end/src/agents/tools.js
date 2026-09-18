@@ -2,6 +2,7 @@ const { tool } = require('@langchain/core/tools');
 const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
 const { z } = require('zod');
 const { getAgent } = require('./registry');
+const { createArtifactTools } = require('./artifactTools');
 
 function createAgentTools(model, agentIds) {
   return [
@@ -24,6 +25,7 @@ function createAgentTools(model, agentIds) {
     tool(() => new Date().toISOString(), {
       name: 'current_time', description: '获取当前 UTC 时间。', schema: z.object({}),
     }),
+    ...createArtifactTools(),
     ...agentIds.map((id) => {
       const agent = getAgent(id);
       return tool(async ({ task }, config) => {

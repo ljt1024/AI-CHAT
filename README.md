@@ -252,7 +252,7 @@ src/
 
 ## 智能体模式
 
-输入框下方开启「智能体模式」后，请求进入 `/api/agents/run`，由后端 LangGraph 状态图执行 ReAct 循环，模型通过 LangChain 调用。可用工具包括四则运算、当前时间、规划/分析/写作智能体委派。模型按任务选择工具，没有联网搜索或文件执行能力。
+输入框下方开启「智能体模式」后，请求进入 `/api/agents/run`，由后端 LangGraph 状态图执行 ReAct 循环，模型通过 LangChain 调用。可用工具包括四则运算、当前时间、规划/分析/写作智能体委派，以及 PDF、Excel、PPT 文件生成。模型按任务选择工具，没有联网搜索或任意代码执行能力。
 
 页面实时显示执行说明、工具参数和观察结果，完成后保留展开状态，也可以手动折叠。展示内容是面向用户的决策摘要和工具记录。答案通过 SSE 增量返回，停止按钮可中断执行。
 
@@ -265,6 +265,21 @@ src/
 当前记忆不自动同步普通聊天或导入的浏览器历史。浏览器删除会话只删除本地记录，不删除服务端 checkpoint。摘要可能省略细节；阈值按字符估算，近期原文和当前任务仍受模型上下文窗口限制。
 
 ## 智能体验证
+
+### 文件生成与下载
+
+在智能体模式中直接输入：
+
+- 「把以上方案整理成中文 PDF，提供下载。」
+- 「导出 Excel：项目和金额两列，设计1200、开发3400，金额列需要合计。」
+
+智能体通过 `export_pdf` / `export_excel` / `export_pptx` 实际生成文件，在对话中显示文件名、格式、大小和下载按钮。生成文件的步骤继续实时返回；卡片在文件保存成功后立即出现。文件和下载地址保存在后端，刷新页面后可继续下载，后续问答可以引用已生成的文件地址。
+
+PDF 使用 PDFKit 和随项目提供的 Noto 简体中文字体，支持中文标题、段落、分页和基本标题样式，不依赖 macOS 打印命令。Excel 使用 ExcelJS 生成标准 `.xlsx`，支持多工作表、冻结表头、筛选、数字/文本类型和 SUM 合计公式。当前不支持任意 Excel 公式或复杂 PDF 图表排版。
+
+文件存放在 `end/local_storage/uploads/`，索引在 `file-index.json`，均不进入 Git。部署时保留 `end/assets/fonts/` 并为 `local_storage` 配置持久化目录。已经成功生成的文件，即使后续回答失败或用户停止，仍可通过已有卡片下载；不会自动删除旧版本文件。
+
+### 检查命令
 
 ```bash
 npm test --prefix end
@@ -279,9 +294,27 @@ python3 -m pip install playwright
 python3 -m playwright install chromium
 python3 scripts/verify_agents.py --url http://127.0.0.1:5175/ai
 python3 scripts/verify_step_stream.py --url http://127.0.0.1:5175/ai
+python3 scripts/verify_artifacts.py --url http://127.0.0.1:5175/ai
 node end/scripts/verifyMemory.js
 ```
 
 浏览器脚本验证新会话、工具轨迹、SSE、刷新后记忆与重新生成、停止和下一轮恢复，并检查浏览器异常。截图保存在 `/tmp/agent-browser-smoke.png`。`verifyMemory.js` 使用临时 SQLite 数据库和真实模型，验证长历史摘要、早期事实回忆、数据库重开和重试去重，不修改现有会话。
 
 `verify_step_stream.py` 额外观察浏览器 DOM，断言思考说明、行动参数、子智能体观察结果在执行期间多次增长，防止退化为整步完成后才显示。
+
+`verify_artifacts.py` 需要额外安装 `pypdf`、`openpyxl`，会在真实页面生成并下载 PDF 和 Excel，检查中文正文、数值、SUM 公式及缓存结果，再刷新页面验证相同文件仍可下载。
+
+### PDF / PPT 同步预览
+
+例如输入「将以上方案制作成三页 PPT，包含目标、实施步骤和验收计划」。文件保存成功后，`artifact` 事件立即打开右侧预览，不等整轮回答结束。支持翻页、缩放、切换本会话文件、下载原文件、关闭和全屏打开；全屏状态下仍可翻页、缩放和下载，按 Esc 或再次点击按钮退出。手机使用全屏面板。刷新后点击历史消息的「预览」重新查看。
+
+PDF.js 按需加载并渲染真实 PDF。PPT 使用 PptxGenJS 导出可编辑 `.pptx`，同时用相同文本、测量换行和坐标生成含中文字体的配套 PDF 预览。这不是通过 Office 转换的预览，Office 中字体替换可能造成视觉差异。每份演示文稿支持 1–20 页，每页最多 4 条要点，过长内容需拆页，不自动截断。原文件和配套预览均需保留在后端持久化目录。
+
+真实模型与浏览器验证：
+
+```bash
+python3 -m pip install playwright pypdf pymupdf
+python3 scripts/verify_preview.py --url http://127.0.0.1:5175/ai
+```
+
+覆盖 PDF / PPT 生成、自动预览、翻页、原文件下载、刷新重开和手机预览。需要本地前后端已启动、可用模型密钥及 Playwright Chromium。

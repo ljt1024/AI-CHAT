@@ -1,4 +1,5 @@
 import { AgentTrace } from '@/features/agents/components/AgentTrace';
+import { AgentArtifacts } from '@/features/agents/components/AgentArtifacts';
 import { useState, useEffect, useRef } from 'react';
 import MarkdownContent from '../MarkDownContent';
 import Tooltip from '../Tooltip';
@@ -11,6 +12,7 @@ import { useMessagePop } from '../MessagePop';
 import { Message as MessageType } from '@/shared/utils/localMessages';
 
 import './index.css'
+import type { AgentArtifact } from '@/features/agents/types';
 
 interface MessageItemProps {
   msg: MessageType;
@@ -20,6 +22,7 @@ interface MessageItemProps {
   botName?: string;
   canRetry?: boolean;
   onRetry?: () => void;
+  onPreviewArtifact?: (artifact: AgentArtifact) => void;
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({
@@ -29,7 +32,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   currentShareMessage: _currentShareMessage,
   botName = 'AI Assistant',
   canRetry = false,
-  onRetry
+  onRetry, onPreviewArtifact
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [canCollapse, setCanCollapse] = useState(false)
@@ -120,6 +123,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   </blockquote>
                 }
                 <MarkdownContent msg={msg.content || ''} />
+                <AgentArtifacts artifacts={msg.artifacts || []} onPreview={onPreviewArtifact} />
               </>
                 : <>
                   {imageAttachments.length > 0 && (

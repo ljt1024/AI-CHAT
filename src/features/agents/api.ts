@@ -1,4 +1,5 @@
 import type { AgentDefinition, AgentEvent, AgentResult } from './types';
+import { getFileDownloadUrl } from '@/shared/utils/fileDownloads';
 
 const apiUrl = (path: string) => {
   const chatUrl = import.meta.env.VITE_CHAT_BASE_URL || '/api/chat/completions';
@@ -14,6 +15,13 @@ export async function fetchAgents(signal?: AbortSignal): Promise<AgentDefinition
   const response = await fetch(apiUrl('/agents'), { signal });
   if (!response.ok) throw await readError(response);
   return (await response.json()).data;
+}
+
+export async function downloadAgentArtifact(fileId: string): Promise<Blob> {
+  if (!/^[a-f0-9-]{36}$/i.test(fileId)) throw new Error('文件标识无效');
+  const response = await fetch(getFileDownloadUrl(fileId));
+  if (!response.ok) throw await readError(response);
+  return response.blob();
 }
 
 export interface AgentRequest {

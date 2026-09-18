@@ -274,7 +274,7 @@ curl -X POST http://localhost:3001/api/chat/completions \
 
 - `document` 仅支持 `stream: false`
 - Word 文档生成依赖 macOS 自带的 `textutil`
-- PDF 文档生成依赖 macOS 自带的 `cupsfilter`
+- PDF 文档生成使用 PDFKit 与 `assets/fonts/NotoSansCJKsc-Regular.otf` 内嵌中文字体，支持跨平台部署。字体采用 SIL OFL 1.1 许可证，部署时保留字体文件与许可证。
 
 ## Logging
 
@@ -348,7 +348,7 @@ curl -N http://localhost:3001/api/agents/run \
   -d '{"input":"请计算6*7","sessionId":"example-session-1","model":"deepseek-chat","stream":true}'
 ```
 
-`input` 为非空文本，`sessionId` 是当前会话唯一 ID（1–128 位字母、数字、下划线或连字符，禁止 `default`）。`model` 默认 `deepseek-chat`。可传 `agentIds` 数组限定允许委派的角色：`planner`、`researcher`、`writer`，空数组仅保留计算器和时间工具。
+`input` 为非空文本，`sessionId` 是当前会话唯一 ID（1–128 位字母、数字、下划线或连字符，禁止 `default`）。`model` 默认 `deepseek-chat`。可传 `agentIds` 数组限定允许委派的角色：`planner`、`researcher`、`writer`，空数组保留计算器、时间和文件导出工具。
 
 可选 `turnId` 使用同样的 1–128 位 ID 格式。新一轮使用新 ID，重新生成沿用原 ID 与原输入：成功后替换最后一轮，失败时保留已提交问答。重复使用更早轮次 ID 或修改同 ID 的输入返回 409。不传 ID 时服务端生成新 ID，按新一轮处理；这不是缓存接口，同 ID 重新生成仍会调用模型。
 
@@ -360,9 +360,10 @@ curl -N http://localhost:3001/api/agents/run \
 | `memory` | `summarizedMessages`, `recentMessages` | 展示摘要覆盖条数与近期原文条数 |
 | `step` | `step: {id, phase, status, output, agentId?, toolCallId?}` | 按 ID 新增或更新思考/行动/观察 |
 | `step_delta` | `stepId`, `text`, `reset?` | 为指定步骤追加增量文本；`reset: true` 时先清空占位说明 |
+| `artifact` | `artifact: {fileId, fileName, format, mimeType, size, downloadPath, createdAt, previewFileId?, pageCount?}` | 文件已保存，立即展示下载卡片与 PDF/PPT 预览 |
 | `answer_start` | 无 | 新的模型轮次开始，清空上一轮临时正文 |
 | `delta` | `text` | 追加增量正文 |
-| `done` | `result: {id, sessionId, input, output, steps, memoryMessages}` | 最终结果及写入后的记忆条数 |
+| `done` | `result: {id, sessionId, input, output, steps, memoryMessages, artifacts}` | 最终结果、文件列表及写入后的记忆条数 |
 | `error` | `message`, `requestId` | 标记失败，保留可读原因 |
 
 请求校验失败在 SSE 开始前返回 JSON 4xx；SSE 开始后的错误通过 `error` 事件返回。客户端必须收到 `done` 才能视为成功，连接提前结束应视为未完成。不传 `stream` 时返回 `{code: 200, data: result, msg: "ok"}`。
@@ -380,3 +381,9 @@ curl -N http://localhost:3001/api/agents/run \
 这些默认参数位于 `src/agents/contextMemory.js`；完整成功历史仍保存在 checkpoint 中，压缩的是模型输入，并非数据库。摘要是有损整理，字符阈值不是精确 token 预算；保留的近期原文、当前输入及工具结果仍需满足模型上下文窗口限制。
 
 测试命令 `npm test` 覆盖计算工具、增量事件、SQLite 重开恢复、会话隔离、失败/取消记忆、并发冲突、摘要分批与失败保留、重试替换、请求校验及 HTTP 流式与中断行为。真实浏览器验证见项目根目录 `scripts/verify_agents.py`；运行 `node scripts/verifyMemory.js` 可使用真实模型和临时数据库验证长历史摘要及重试恢复。
+
+### PPT 与配套预览
+
+LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并通过 PDFKit 生成使用相同文本和布局的中文 PDF 预览。`artifact.format` 为 `pptx`，`previewFileId` 指向预览 PDF，`pageCount` 为页数。两者均通过 `GET /api/files/:fileId/download` 获取，前端 PDF.js 直接读取二进制，不依赖浏览器内置 PDF 插件。PDF 文件直接使用自身 `fileId` 预览。预览面板支持原生 Fullscreen API；浏览器拒绝该 API 时使用 CSS 全屏回退，按 Esc 或按钮退出。
+
+参数为 `{title, slides: [{title, body: string[]}]}`，允许 1–20 页，每页标题最多 40 字，正文 1–4 条、每条最多 100 字；排版空间不足时工具报告错误供智能体拆页重试，不丢弃正文。PPT 预览是共用布局生成的配套 PDF，未接入 LibreOffice/Office 原文件转换，字体在 Office 中可能被替换。

@@ -1,4 +1,4 @@
-import type { AgentStep } from '@/features/agents/types'
+import type { AgentArtifact, AgentStep } from '@/features/agents/types'
 import { v4 as uuidv4 } from 'uuid'
 import { mergeArrays } from '@/shared/utils'
 
@@ -12,6 +12,7 @@ export interface MessageAttachment {
 }
 
 export interface Message {
+    artifacts?: AgentArtifact[];
     agentTurnId?: string;
     summarizedMessages?: number;
     agentSteps?: AgentStep[];

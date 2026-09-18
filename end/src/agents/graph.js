@@ -1,5 +1,5 @@
 const { StateGraph, Annotation, START, END } = require('@langchain/langgraph');
-const { HumanMessage, SystemMessage, ToolMessage } = require('@langchain/core/messages');
+const { AIMessage, HumanMessage, SystemMessage, ToolMessage } = require('@langchain/core/messages');
 const { messageText } = require('./tools');
 const { createHttpError } = require('../utils/http');
 const { randomUUID } = require('node:crypto');
@@ -11,6 +11,7 @@ const State = Annotation.Root({
   summary: Annotation(), summarizedMessages: Annotation(),
   workingHistory: Annotation(), pendingSummary: Annotation(), pendingSummarizedMessages: Annotation(),
   turnId: Annotation(), lastTurnId: Annotation(),
+  artifacts: Annotation(),
 });
 
 function createGraph({ model, tools, checkpointer, emit = () => {}, maxIterations = 12, memoryOptions }) {
@@ -18,6 +19,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
   const instruction = new SystemMessage(
     '你是解决用户问题的主智能体。利用会话记忆理解原始目标。需要时调用计算工具或委派规划、分析、写作智能体，读取工具结果后再判断下一步，直到能回答或需要用户补充信息。' +
     '计算必须调用 calculate。工具失败时可修正参数重试。简单问题直接回答，不要机械调用所有工具。' +
+    '用户要求PDF、Excel或PPT下载时，必须调用export_pdf、export_excel或export_pptx实际生成文件；只使用工具返回的下载地址，不得虚构文件链接。正文或数据不足时先澄清，示例数据须明确标注。生成成功后简短告知用户点击下载卡片。' +
     '调用工具时，尽可能同时输出一句面向用户的执行说明，说明要做什么以及目的。输出简短决策说明、工具结果摘要和最终答案，不输出内部推理草稿。不要虚构联网、文件操作或不存在的工具。'
   );
   const step = (phase, output, extra = {}) => {
@@ -100,6 +102,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
     .addNode('tools', async (state, config) => {
       const messages = [...state.messages];
       const steps = [...state.steps];
+      const artifacts = [...(state.artifacts || [])];
       for (const call of state.messages.at(-1).tool_calls) {
         config.signal?.throwIfAborted();
         const prepared = steps.find((item) => item.phase === 'action' && item.toolCallId === call.id && item.status === 'running');
@@ -117,7 +120,10 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
           if (!target) throw new Error(`工具不存在: ${call.name}`);
           output = await target.invoke(call.args, {
             signal: config.signal,
-            configurable: { onToolDelta: (text) => {
+            configurable: { onArtifact: (artifact) => {
+              artifacts.push(artifact);
+              emit({ type: 'artifact', artifact });
+            }, onToolDelta: (text) => {
               config.signal?.throwIfAborted();
               observation.output += text;
               emit({ type: 'step_delta', stepId: observation.id, text });
@@ -137,13 +143,15 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         emit({ type: 'step', step: { ...observation } });
         messages.push(new ToolMessage({ content: output, tool_call_id: call.id, name: call.name }));
       }
-      return { messages, steps };
+      return { messages, steps, artifacts };
     })
     .addNode('remember', async (state, config) => {
       config.signal?.throwIfAborted();
       const answer = state.messages.at(-1);
+      const files = state.artifacts || [];
+      const memoryAnswer = files.length ? new AIMessage(`${messageText(answer)}\n\n本轮已生成文件：\n${files.map((file) => `${file.fileName}: ${file.downloadPath}`).join('\n')}`) : answer;
       return {
-        history: [...state.workingHistory, new HumanMessage({ content: state.input, id: state.turnId }), answer],
+        history: [...state.workingHistory, new HumanMessage({ content: state.input, id: state.turnId }), memoryAnswer],
         output: messageText(answer), summary: state.pendingSummary,
         summarizedMessages: state.pendingSummarizedMessages, lastTurnId: state.turnId,
       };
