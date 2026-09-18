@@ -22,7 +22,28 @@ export function HtmlPreview({ content, streaming = false }: { content: string; s
       FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'base', 'meta', 'link', 'form'],
       FORBID_ATTR: ['href', 'action', 'formaction', 'target', 'srcset'],
     });
-    return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:20px;font-family:system-ui,sans-serif;overflow-wrap:anywhere}img,svg{max-width:100%}</style></head><body>${clean}</body></html>`;
+    // Preserve the generated root classes/styles; nesting full documents loses
+    // those attributes and breaks layouts that depend on them.
+    const parsed = new DOMParser().parseFromString(clean, 'text/html');
+    const charset = parsed.createElement('meta');
+    charset.setAttribute('charset', 'utf-8');
+    const policy = parsed.createElement('meta');
+    policy.httpEquiv = 'Content-Security-Policy';
+    policy.content = "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'";
+    const viewport = parsed.createElement('meta');
+    viewport.name = 'viewport';
+    viewport.content = 'width=device-width,initial-scale=1';
+    const defaults = parsed.createElement('style');
+    defaults.textContent = 'body{margin:20px;font-family:system-ui,sans-serif;overflow-wrap:anywhere}img,svg{max-width:100%}';
+    parsed.head.prepend(charset, policy, viewport, defaults);
+    // A generated full-screen page can hide its overflow in a narrow preview.
+    // Let the iframe own scrolling, while retaining the page's internal layout.
+    for (const root of [parsed.documentElement, parsed.body]) {
+      root.style.setProperty('overflow', 'auto', 'important');
+      root.style.setProperty('height', 'auto', 'important');
+      root.style.setProperty('max-height', 'none', 'important');
+    }
+    return `<!doctype html>${parsed.documentElement.outerHTML}`;
   }, [display]);
   return <iframe className="artifact-html-frame" title={language === 'zh' ? 'HTML 实时预览' : 'Live HTML preview'} sandbox="" referrerPolicy="no-referrer" srcDoc={source} />;
 }

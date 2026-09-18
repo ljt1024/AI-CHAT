@@ -33,8 +33,8 @@
 .artifact-preview-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 16px; border-bottom: 1px solid var(--border-color); color: var(--secondary-color); font-size: 12px; }
 .artifact-preview-status small { color: var(--text-muted-color); }
 .artifact-preview-status--failed, .artifact-preview-status--cancelled { color: var(--text-muted-color); }
-.artifact-preview-body--html { display: flex; padding: 0; }
-.artifact-html-frame { flex: 1; width: 100%; min-height: 100%; border: 0; background: white; }
+.artifact-preview-body--html { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+.artifact-html-frame { display: block; flex: 1 1 auto; width: 100%; min-width: 0; min-height: 0; height: 100%; border: 0; background: white; }
 .artifact-preview-html-note { padding: 10px 16px; font-size: 11px; color: var(--text-muted-color); border-top: 1px solid var(--border-color); }
 .artifact-draft-document { padding: 24px; background: var(--surface-color); color: var(--text-color); min-height: 100%; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
 .artifact-draft-document h1 { font-size: 23px; margin: 0 0 20px; }
