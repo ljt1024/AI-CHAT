@@ -228,6 +228,13 @@ export const storageMessagesTit = (index: number, newTitle: string): void => {
 // 存储置顶取消置顶后的messages
 export const storageMessagesTop = (id: string): void => {
     let localMessages = getLoclMessages()
+    const target = localMessages.find(item => item.covId === id)
+    if (!target) return
+    if (target.isTop) {
+        target.isTop = false
+        localStorage.setItem('messages', JSON.stringify(localMessages))
+        return
+    }
     let newList: Conversation[] = []
     let targetConversation: Conversation | null = null
     

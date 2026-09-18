@@ -28,5 +28,5 @@
 .artifact-preview.is-fullscreen .artifact-preview-body { padding: 28px; }
 .artifact-preview:fullscreen { width: 100vw; height: 100vh; max-height: 100vh; border: 0; border-radius: 0; background: var(--bg-color); }
 .chat-container--preview .messages-wrap { padding-inline: 20px; }
-@media (min-width: 1101px) and (max-width: 1400px) { .chat-container--preview { gap: 12px; padding: 12px; } .artifact-preview { flex-basis: 40vw; } }
+@media (min-width: 1101px) and (max-width: 1400px) { .artifact-preview { flex-basis: 40vw; } }
 @media (max-width: 768px) { .artifact-preview { inset: 0; border-radius: 0; } .artifact-preview-head { padding: 14px 16px; } }

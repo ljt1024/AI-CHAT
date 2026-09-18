@@ -222,7 +222,7 @@
 /* 移动端适配 */
 @media (max-width: 768px) {
     .chatHeaderOperate {
-        padding: 12px 14px;
+        padding: 12px 14px 12px 52px;
         gap: 10px;
         flex-wrap: wrap;
     }

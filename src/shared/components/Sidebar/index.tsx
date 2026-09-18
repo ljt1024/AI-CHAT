@@ -1,263 +1,145 @@
-import React, { useState, useEffect, useMemo } from "react"
-
-import Tooltip from "../Tooltip"
-import Popover from "../Popover"
-import ChatRecordDialog from "./components/ChatRecordDialog"
-import FoldIcon from "@/shared/assets/icons/fold.svg?react"
-import DeleteIcon from "@/shared/assets/icons/delete.svg?react"
-import RenameIcon from "@/shared/assets/icons/rename.svg?react"
-import TopIcon from "@/shared/assets/icons/top.svg?react"
-import FixIcon from "@/shared/assets/icons/fix.svg?react"
-import SettingIcon from "@/shared/assets/icons/setting.svg?react"
-import MesssageIcon from "@/shared/assets/icons/message.svg?react"
-import EditTitDialog from "./components/EditTitDialog"
-import DeleteDialog from "./components/DeleteDialog"
-
-import Icon from "../Icon"
-import { useChat, useChatDispatch } from "@/app/providers/ChatContext"
-import { useLanguage } from "@/app/providers/LanguageContext"
-import { getSelectId, storageSelectId, CovIdListItem } from "@/shared/utils/localMessages"
-
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import Popover from '../Popover'
+import ChatRecordDialog from './components/ChatRecordDialog'
+import EditTitDialog from './components/EditTitDialog'
+import DeleteDialog from './components/DeleteDialog'
+import { useChat, useChatDispatch } from '@/app/providers/ChatContext'
+import { useLanguage } from '@/app/providers/LanguageContext'
+import { getSelectId, storageSelectId, type CovIdListItem } from '@/shared/utils/localMessages'
 import './index.css'
 
-interface ConversationProps {
-  isShowSidebar: boolean;
-  isLoading: boolean;
+function SidebarIcon({ name }: { name: 'search' | 'panel' | 'new' | 'more' | 'records' | 'chat' }) {
+  const paths: Record<typeof name, ReactNode> = {
+    search: <><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></>,
+    panel: <><rect x="3" y="3" width="18" height="18" rx="4" /><path d="M9 3v18" /></>,
+    new: <><path d="M5 19 3 21l1-6a9 9 0 1 1 4 5" /><path d="M12 7v10m-5-5h10" /></>,
+    more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
+    records: <><circle cx="5" cy="6" r="1.5" /><circle cx="5" cy="12" r="1.5" /><circle cx="5" cy="18" r="1.5" /><path d="M11 6h9m-9 6h9m-9 6h9" /></>,
+    chat: <><path d="M20 11a8 8 0 0 1-8 8H4l-2 3V11a9 9 0 0 1 18 0Z" /><path d="m7 10 3 3 6-6" /></>,
+  }
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 
-const Conversation: React.FC<ConversationProps> = ({ isShowSidebar, isLoading }) => {
-    const { t } = useLanguage()
-    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
-    const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
-    const [isShowRecordDialog, setIsShowRecordDialog] = useState(false)
-    const [curCov, setCurCov] = useState<CovIdListItem | null>(null)
-    const { covList } = useChat()
-    const dispatch = useChatDispatch()
-
-    const sortedCovList = useMemo(() => {
-        const getTimeValue = (time?: string) => {
-            if (!time) return 0
-            const timestamp = new Date(time).getTime()
-            return Number.isNaN(timestamp) ? 0 : timestamp
-        }
-
-        return [...covList].sort((a, b) => {
-            // 第一优先级：置顶会话优先
-            if (a.isTop !== b.isTop) {
-                return a.isTop ? -1 : 1
-            }
-
-            // 第二优先级：最新会话时间倒序（最近在最上）
-            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
-            if (latestDiff !== 0) {
-                return latestDiff
-            }
-
-            // 兜底：创建时间倒序
-            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
-        })
-    }, [covList])
-
-    useEffect(() => {
-        dispatch({
-            type: 'getCovList'
-        })
-    }, [])
-
-    // 新开会话
-    const onNewCov = () => {
-        if (isLoading) return
-        localStorage.setItem('isNewCov', 'true')
-        dispatch({
-            type: 'clearMessages'
-        })
-    }
-
-    // 切换会话
-    const onSelectCov = (id: string) => {
-        if (isLoading) return
-        localStorage.setItem('isNewCov', 'false')
-        storageSelectId(id)
-        dispatch({
-            type: 'getLastMessages'
-        })
-    }
-
-    // 获取当前会话是否是新开会话
-    const getIsNewCov = () => {
-        return localStorage.getItem('isNewCov') === 'true'
-    }
-
-    // 重命名
-    const onRename = (item: CovIdListItem) => {
-        setCurCov(item)
-        setIsConfirmDialogOpen(true)
-    }
-
-    // 置顶取消置顶
-    const onSetTop = (item: CovIdListItem) => {
-        const { id } = item
-        dispatch({
-            type: 'top',
-            id
-        })
-    }
-
-    const onDeleteHandle = (item: CovIdListItem) => {
-        setCurCov(item)
-        setIsShowDeleteDialog(true)
-    }
-
-    return (
-        <div className="sideContent">
-            {
-                isShowSidebar && <div>
-                    <div className="covTit">
-                        <div className="covTitLeft">
-                            <Icon
-                                sourceType="svg"
-                                source={MesssageIcon}
-                                size={18}
-                                color="var(--icon-color)"
-                            >
-
-                            </Icon>
-                            <span className="titText">{t('sidebar.history')}</span>
-                        </div>
-                        <Icon
-                            sourceType="svg"
-                            source={SettingIcon}
-                            size={18}
-                            color="var(--icon-color)"
-                            onClick={() => setIsShowRecordDialog(true)}
-                        />
-                    </div>
-                    <div className="newCov" onClick={onNewCov} style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}>
-                        {t('sidebar.newConversation')}
-                    </div>
-                </div>
-            }
-            {
-                isShowSidebar &&
-                <div className="covList">
-                    {sortedCovList.map(item => {
-                        return (
-                            <div
-                                className={item.id === getSelectId() && !getIsNewCov() ? 'curCov covItem' : 'covItem'}
-                                key={item.id}
-                                onClick={() => { onSelectCov(item.id) }}
-                                style={{ cursor: isLoading ? 'no-drop' : 'pointer' }}
-                            >
-                                <span className="covName">{item.title}</span>
-                                <Popover
-                                    title=""
-                                    content={
-                                        <div className="operationBox">
-                                            <div className="operationItem" onClick={() => onRename(item)}>
-                                                <Icon
-                                                    sourceType="svg"
-                                                    source={RenameIcon}
-                                                    size={18}
-                                                    color="var(--icon-color)"
-                                                />
-                                                <span className="operationTit">{t('sidebar.rename')}</span>
-                                            </div>
-                                            <div className="operationItem" onClick={() => onSetTop(item)}>
-                                                <Icon
-                                                    sourceType="svg"
-                                                    source={TopIcon}
-                                                    size={18}
-                                                    color="var(--icon-color)"
-                                                />
-                                                <span className="operationTit">{item.isTop ? t('sidebar.unpin') : t('sidebar.pin')}</span>
-                                            </div>
-                                            <div className="operationItem" onClick={() => { onDeleteHandle(item) }}>
-                                                <Icon
-                                                    sourceType="svg"
-                                                    source={DeleteIcon}
-                                                    size={18}
-                                                    color="var(--danger-color)"
-                                                />
-                                                <span className="operationTit">{t('sidebar.delete')}</span>
-                                            </div>
-                                        </div>
-
-                                    }
-                                    placement="right"
-                                    trigger="click"
-                                >
-                                    {item.isTop &&
-                                        <div className="fixIcon">
-                                            <Icon
-                                                sourceType="svg"
-                                                source={FixIcon}
-                                                size={14}
-                                                color="var(--icon-muted-color)"
-                                            />
-                                        </div>}
-                                    <div className="covOperation">...</div>
-                                </Popover>
-                            </div>
-                        )
-
-                    })}
-                </div>
-            }
-            {
-                isConfirmDialogOpen && <EditTitDialog
-                    isConfirmDialogOpen={isConfirmDialogOpen}
-                    setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-                    covItem={curCov as CovIdListItem}
-                />
-            }
-            {
-                 isShowDeleteDialog && <DeleteDialog
-                    isShowDeleteDialog={isShowDeleteDialog}
-                    setIsShowDeleteDialog={setIsShowDeleteDialog}
-                    covItem={curCov}
-                />
-            }
-            <ChatRecordDialog
-                isShowRecordDialog={isShowRecordDialog}
-                setIsShowRecordDialog={setIsShowRecordDialog}
-            />
-        </div>
-    )
+const timestamp = (item: CovIdListItem) => {
+  for (const value of [item.latestTime, item.createTime]) {
+    const time = value ? Date.parse(value) : NaN
+    if (Number.isFinite(time)) return time
+  }
+  return 0
 }
 
+export default function Sidebar({ isLoading }: { isLoading: boolean }) {
+  const { t, language } = useLanguage()
+  const zh = language === 'zh'
+  const { covList } = useChat()
+  const dispatch = useChatDispatch()
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+  const [open, setOpen] = useState(() => !window.matchMedia('(max-width: 768px)').matches)
+  const [searching, setSearching] = useState(false)
+  const [query, setQuery] = useState('')
+  const [editing, setEditing] = useState<CovIdListItem | null>(null)
+  const [deleting, setDeleting] = useState<CovIdListItem | null>(null)
+  const [records, setRecords] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const expandRef = useRef<HTMLButtonElement>(null)
+  const collapseRef = useRef<HTMLButtonElement>(null)
+  const previousOpen = useRef(open)
+  // Refresh date labels after midnight or when returning to a sleeping tab.
+  const [today, setToday] = useState(() => new Date().toDateString())
 
-interface SidebarProps {
-  isLoading: boolean;
-}
+  useEffect(() => {
+    dispatch({ type: 'getCovList' })
+    const media = window.matchMedia('(max-width: 768px)')
+    const onResize = () => { setMobile(media.matches); setOpen(!media.matches) }
+    const refreshDate = () => setToday(new Date().toDateString())
+    const timer = window.setInterval(refreshDate, 60000)
+    media.addEventListener('change', onResize)
+    window.addEventListener('focus', refreshDate)
+    return () => { media.removeEventListener('change', onResize); window.removeEventListener('focus', refreshDate); window.clearInterval(timer) }
+  }, [dispatch])
 
-const Sidebar: React.FC<SidebarProps> = ({ isLoading }) => {
-    const { t } = useLanguage()
-    const [isShowSidebar, setIsShowSidebar] = useState<boolean>(true)
-    const onShowSidebar = () => {
-        setIsShowSidebar((value) => !value)
+  useEffect(() => { if (searching && open) searchRef.current?.focus() }, [searching, open])
+  useEffect(() => {
+    if (previousOpen.current !== open) (open ? collapseRef : expandRef).current?.focus()
+    previousOpen.current = open
+  }, [open])
+
+  const groups = useMemo(() => {
+    const now = new Date(today)
+    const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1)
+    const sorted = [...covList].filter(item => item.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+      .sort((a, b) => Number(b.isTop) - Number(a.isTop) || timestamp(b) - timestamp(a))
+    const result = new Map<string, CovIdListItem[]>()
+    for (const item of sorted) {
+      const time = timestamp(item)
+      const date = new Date(time)
+      const group = item.isTop ? (zh ? '置顶' : 'Pinned')
+        : !time ? (zh ? '更早' : 'Earlier')
+        : date.toDateString() === now.toDateString() ? (zh ? '今天' : 'Today')
+        : date.toDateString() === yesterday.toDateString() ? (zh ? '昨天' : 'Yesterday')
+        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      if (!result.has(group)) result.set(group, [])
+      result.get(group)!.push(item)
     }
+    return [...result.entries()]
+  }, [covList, query, today, zh])
 
-    return (
-        <div className={isShowSidebar ? 'sidebar' : 'hiddenSideBar sidebar'}>
-            <Conversation
-                isShowSidebar={isShowSidebar}
-                isLoading={isLoading}
-            />
-            {/* <img src={ArrowDown} alt="" className="fold-icon" onClick={onShowSidebar} /> */}
+  const select = (id?: string) => {
+    if (isLoading) return
+    localStorage.setItem('isNewCov', String(!id))
+    if (id) storageSelectId(id)
+    dispatch({ type: id ? 'getLastMessages' : 'clearMessages' })
+    if (!id) { setQuery(''); setSearching(false) }
+    if (mobile) setOpen(false)
+  }
 
-            <div className="fold-icon">
-                <Tooltip content={`${isShowSidebar ? t('sidebar.collapse') : t('sidebar.expand')}`} placement="right" style={{ marginLeft: '10px' }}>
-                    <Icon
-                        sourceType="svg"
-                        source={FoldIcon}
-                        size={18}
-                        color="var(--icon-color)"
-                        onClick={onShowSidebar}
-                    />
-                </Tooltip>
-            </div>
-        </div>
-    )
+  return <>
+    {mobile && open && <button type="button" className="sidebar-backdrop" aria-label={zh ? '关闭侧栏' : 'Close sidebar'} onClick={() => setOpen(false)} />}
+    <aside className={`sidebar${open ? '' : ' sidebar--collapsed'}`} aria-label={t('sidebar.history')} onKeyDown={event => {
+      if (event.key === 'Escape') {
+        if (searching) { setQuery(''); setSearching(false) }
+        else setOpen(false)
+      }
+    }}>
+      {open ? <>
+        <header className="sidebar-header">
+          <div className="sidebar-brand"><SidebarIcon name="chat" /><span>AI Chat</span></div>
+          <button type="button" className="sidebar-icon-button" aria-label={zh ? '搜索对话' : 'Search chats'} aria-expanded={searching} onClick={() => { setSearching(value => !value); setQuery('') }}><SidebarIcon name="search" /></button>
+          <button ref={collapseRef} type="button" className="sidebar-icon-button" aria-label={t('sidebar.collapse')} onClick={() => setOpen(false)}><SidebarIcon name="panel" /></button>
+        </header>
+        <button type="button" className="newCov" disabled={isLoading} onClick={() => select()}><SidebarIcon name="new" /><span>{zh ? '开启新对话' : 'New chat'}</span></button>
+        {searching && <div className="sidebar-search"><SidebarIcon name="search" /><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={zh ? '搜索对话标题' : 'Search chat titles'} aria-label={zh ? '搜索对话标题' : 'Search chat titles'} /></div>}
+        <nav className="covList" aria-label={zh ? '历史对话' : 'Chat history'}>
+          <div className="sidebar-history-tools"><button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={zh ? '管理对话记录' : 'Manage chat history'} title={zh ? '管理对话记录' : 'Manage chat history'} onClick={() => setRecords(true)}><SidebarIcon name="records" /></button></div>
+          {groups.map(([label, items]) => <section className="sidebar-group" key={label} aria-label={label}>
+            <h2>{label}</h2>
+            {items.map(item => {
+              const selected = item.id === getSelectId() && localStorage.getItem('isNewCov') !== 'true'
+              return <div className={`covItem${selected ? ' curCov' : ''}`} key={item.id}>
+                <button type="button" className="covName" disabled={isLoading} aria-current={selected ? 'page' : undefined} title={item.title} onClick={() => select(item.id)}>{item.title || (zh ? '未命名对话' : 'Untitled chat')}</button>
+                <Popover placement="bottom-end" trigger="click" content={<div className="sidebar-operations">
+                  <button type="button" disabled={isLoading} onClick={() => setEditing(item)}>{t('sidebar.rename')}</button>
+                  <button type="button" disabled={isLoading} onClick={() => dispatch({ type: 'top', id: item.id })}>{item.isTop ? t('sidebar.unpin') : t('sidebar.pin')}</button>
+                  <button type="button" disabled={isLoading} className="sidebar-delete" onClick={() => setDeleting(item)}>{t('sidebar.delete')}</button>
+                </div>}>
+                  <button type="button" className="covOperation sidebar-icon-button" disabled={isLoading} aria-label={`${zh ? '更多操作' : 'More actions'} · ${item.title}`}><SidebarIcon name="more" /></button>
+                </Popover>
+              </div>
+            })}
+          </section>)}
+          {!groups.length && <p className="sidebar-empty">{query ? (zh ? '没有找到匹配的对话' : 'No matching chats') : (zh ? '还没有对话，开始聊聊吧' : 'Start a conversation')}</p>}
+        </nav>
+        <button type="button" className="sidebar-footer" disabled={isLoading} onClick={() => setRecords(true)} aria-label={zh ? '打开会话管理' : 'Open chat management'}>
+          <span className="sidebar-avatar">AI</span><span className="sidebar-footer-label">{zh ? '我的对话' : 'My chats'}<small>{zh ? `${covList.length} 个对话` : `${covList.length} conversations`}</small></span><SidebarIcon name="more" />
+        </button>
+      </> : <div className="sidebar-rail">
+        <button ref={expandRef} type="button" className="sidebar-icon-button" aria-label={t('sidebar.expand')} onClick={() => setOpen(true)}><SidebarIcon name="panel" /></button>
+        {!mobile && <button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={zh ? '开启新对话' : 'New chat'} onClick={() => select()}><SidebarIcon name="new" /></button>}
+      </div>}
+    </aside>
+    {editing && <EditTitDialog isConfirmDialogOpen setIsConfirmDialogOpen={value => { if (!value) setEditing(null) }} covItem={editing} />}
+    {deleting && <DeleteDialog isShowDeleteDialog setIsShowDeleteDialog={value => { if (!value) setDeleting(null) }} covItem={deleting} />}
+    <ChatRecordDialog isShowRecordDialog={records} setIsShowRecordDialog={setRecords} />
+  </>
 }
-
-export default Sidebar
