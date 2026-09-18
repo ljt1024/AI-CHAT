@@ -387,3 +387,9 @@ curl -N http://localhost:3001/api/agents/run \
 LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并通过 PDFKit 生成使用相同文本和布局的中文 PDF 预览。`artifact.format` 为 `pptx`，`previewFileId` 指向预览 PDF，`pageCount` 为页数。两者均通过 `GET /api/files/:fileId/download` 获取，前端 PDF.js 直接读取二进制，不依赖浏览器内置 PDF 插件。PDF 文件直接使用自身 `fileId` 预览。预览面板支持原生 Fullscreen API；浏览器拒绝该 API 时使用 CSS 全屏回退，按 Esc 或按钮退出。
 
 参数为 `{title, slides: [{title, body: string[]}]}`，允许 1–20 页，每页标题最多 40 字，正文 1–4 条、每条最多 100 字；排版空间不足时工具报告错误供智能体拆页重试，不丢弃正文。PPT 预览是共用布局生成的配套 PDF，未接入 LibreOffice/Office 原文件转换，字体在 Office 中可能被替换。
+
+### 实时预览事件
+
+`preview` 事件为 `{type:'preview', preview:{id, toolCallId, format, status, title, content, slides, sheets}}`。`id` 对应执行步骤，`toolCallId` 对应 LangChain 工具调用；`status` 为 `generating`、`saving` 或 `failed`。客户端断开/取消时自行标记草稿 `cancelled`。生成中的内容来自 `AIMessageChunk.tool_call_chunks`，由官方 `parsePartialJson` 容错解码，约 120ms 发一次快照；不提前执行不完整工具参数。最终校验与执行仍由 LangGraph 的 tools 节点完成，结果写回 `ToolMessage`，成功 artifact 携带同一 `toolCallId`。
+
+`export_html` 参数 `{title, html}`，HTML 最大 200,000 字符，下载 MIME 为 `text/html; charset=utf-8`。前端通过下载接口读取原文并隔离渲染，不提供同源 HTML inline 执行接口。Excel 的 `previewFileId` 指向 JSON，PPT 的该字段指向 PDF；部署时同时保留原文件、预览文件及索引。

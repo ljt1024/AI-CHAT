@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import type { AgentArtifact } from '../types';
+import { DraftContent, HtmlPreview, SheetPreview } from './LiveArtifactContent';
+import { downloadAgentArtifact } from '../api';
+import type { AgentPreview, AgentArtifact } from '../types';
 import { getFileDownloadUrl } from '@/shared/utils/fileDownloads';
 import { useLanguage } from '@/app/providers/LanguageContext';
 import './ArtifactPreviewPanel.css';
@@ -20,6 +22,8 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const [rendering, setRendering] = useState(true);
+  const [fileContent, setFileContent] = useState<{ html?: string; sheets?: AgentPreview['sheets'] } | null>(null);
+  const [fileError, setFileError] = useState('');
   const [width, setWidth] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenFallback, setFullscreenFallback] = useState(false);
@@ -27,7 +31,27 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isSlides = artifact.format === 'pptx';
-  const previewId = isSlides ? artifact.previewFileId : artifact.format === 'pdf' ? artifact.fileId : undefined;
+  const draft = artifact.draft;
+  const isWebOrSheet = artifact.format === 'html' || artifact.format === 'xlsx';
+  const previewId = !draft ? (isSlides ? artifact.previewFileId : artifact.format === 'pdf' ? artifact.fileId : undefined) : undefined;
+
+  useEffect(() => {
+    setFileContent(null); setFileError('');
+    if (draft || !isWebOrSheet) return;
+    const controller = new AbortController();
+    const id = artifact.format === 'html' ? artifact.fileId : artifact.previewFileId;
+    if (!id) { setFileError(zh ? '旧文件没有保存预览数据，请下载查看。' : 'This older file has no preview data. Please download it.'); return; }
+    void downloadAgentArtifact(id, controller.signal).then(blob => blob.text()).then(content => {
+      if (controller.signal.aborted) return;
+      if (artifact.format === 'html') setFileContent({ html: content });
+      else {
+        const data = JSON.parse(content);
+        if (!Array.isArray(data.sheets)) throw new Error('Invalid spreadsheet preview');
+        setFileContent({ sheets: data.sheets });
+      }
+    }).catch(cause => { if (!controller.signal.aborted) setFileError(String(cause.message || cause)); });
+    return () => controller.abort();
+  }, [artifact.fileId, artifact.previewFileId, artifact.format, Boolean(draft), isWebOrSheet, retry, zh]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -129,7 +153,7 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
 
   return <aside ref={panelRef} className={`artifact-preview${isFullscreen || fullscreenFallback ? ' is-fullscreen' : ''}`} aria-label={zh ? '文件预览' : 'File preview'}>
     <header className="artifact-preview-head">
-      <div><span className="artifact-preview-label">{zh ? '文件预览' : 'FILE PREVIEW'} · {isSlides ? 'PPT' : 'PDF'}</span><strong>{artifact.fileName}</strong></div>
+      <div><span className="artifact-preview-label">{zh ? '文件预览' : 'FILE PREVIEW'} · {artifact.format === 'xlsx' ? 'Excel' : artifact.format.toUpperCase()}</span><strong>{artifact.fileName}</strong></div>
       <div className="artifact-preview-head-actions">
         <button type="button" onClick={() => void toggleFullscreen()} aria-label={isFullscreen || fullscreenFallback ? (zh ? '退出全屏' : 'Exit fullscreen') : (zh ? '全屏打开' : 'Open fullscreen')} title={isFullscreen || fullscreenFallback ? (zh ? '退出全屏' : 'Exit fullscreen') : (zh ? '全屏打开' : 'Open fullscreen')}>
           {isFullscreen || fullscreenFallback ? '↙' : '⛶'}
@@ -142,16 +166,24 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
         const selected = artifacts.find(file => file.fileId === event.target.value);
         if (selected) onSelect(selected);
       }}>{artifacts.map(file => <option key={file.fileId} value={file.fileId}>{file.fileName}</option>)}</select>
-      <a href={getFileDownloadUrl(artifact.fileId)} download={artifact.fileName}>{zh ? '下载原文件' : 'Download'}</a>
+      {!draft && <a href={getFileDownloadUrl(artifact.fileId)} download={artifact.fileName}>{zh ? '下载原文件' : 'Download'}</a>}
     </div>
-    <div className="artifact-preview-body" ref={hostRef} aria-busy={Boolean(previewId && rendering && !error)}>
-      {!previewId ? <p>{zh ? '此文件没有可用预览，请下载查看。' : 'Preview unavailable. Please download the file.'}</p> : error ?
+    {draft && <div className={`artifact-preview-status artifact-preview-status--${draft.status}`} role="status">
+      <span>{draft.status === 'generating' ? (zh ? '正在生成 · 实时预览' : 'Generating · Live preview') : draft.status === 'saving' ? (zh ? '正在生成文件…' : 'Saving file…') : draft.status === 'cancelled' ? (zh ? '已停止 · 保留草稿' : 'Stopped · Draft retained') : (zh ? '生成失败 · 保留草稿' : 'Failed · Draft retained')}</span>
+      <small>{zh ? '草稿尚未保存为文件' : 'Draft has not been saved as a file'}</small>
+    </div>}
+    <div className={`artifact-preview-body${artifact.format === 'html' ? ' artifact-preview-body--html' : ''}`} ref={hostRef} aria-busy={Boolean(previewId && rendering && !error)}>
+      {draft ? <DraftContent draft={draft} /> : isWebOrSheet ? (
+        fileError ? <div className="artifact-preview-error" role="alert"><p>{fileError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>{zh ? '重新加载' : 'Retry'}</button></div>
+        : !fileContent ? <p role="status">{zh ? '正在加载页面…' : 'Loading…'}</p>
+        : artifact.format === 'html' ? <HtmlPreview content={fileContent.html || ''} /> : <SheetPreview sheets={fileContent.sheets} />
+      ) : !previewId ? <p>{zh ? '此文件没有可用预览，请下载查看。' : 'Preview unavailable. Please download the file.'}</p> : error ?
         <div className="artifact-preview-error" role="alert"><p>{zh ? '预览加载失败，请确认后端服务和文件仍然可用。' : 'Preview failed. Check that the service and file are available.'}</p><small>{error}</small><button onClick={() => setRetry(value => value + 1)} type="button">{zh ? '重新加载' : 'Retry'}</button></div> : <>
           {rendering && <p className="artifact-preview-loading" role="status">{zh ? '正在加载页面…' : 'Loading page…'}</p>}
           <canvas ref={canvasRef} style={{ visibility: rendering ? 'hidden' : 'visible' }} role="img" aria-label={`${artifact.fileName} — ${zh ? '第' : 'Page'} ${page} ${zh ? '页' : ''}`} />
         </>}
     </div>
-    <footer className="artifact-preview-footer">
+    {!draft && !isWebOrSheet && <footer className="artifact-preview-footer">
       <div className="artifact-preview-zoom">
         <button type="button" aria-label={zh ? '缩小' : 'Zoom out'} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.25))}>−</button>
         <button type="button" onClick={() => setZoom(1)} aria-label={zh ? '适应宽度' : 'Fit width'}>{Math.round(zoom * 100)}%</button>
@@ -163,6 +195,7 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
         <button type="button" disabled={!document || page >= document.numPages} onClick={() => setPage(value => value + 1)} aria-label={zh ? '下一页' : 'Next page'}>›</button>
       </nav>
       <small>{isSlides ? (zh ? '幻灯片预览 · Office 中字体可能略有差异' : 'Slide preview · Fonts may vary in Office') : (zh ? '原始 PDF · 可逐页查看' : 'Original PDF · Browse pages')}</small>
-    </footer>
+    </footer>}
+    {artifact.format === 'html' && <div className="artifact-preview-html-note">{zh ? '隔离预览 · 展示 HTML / CSS，脚本交互请下载后打开' : 'Isolated HTML / CSS preview · Download for script interactions'}</div>}
   </aside>;
 }

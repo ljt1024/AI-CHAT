@@ -47,9 +47,11 @@ export interface AgentResult {
 }
 
 export interface AgentArtifact {
+  toolCallId?: string;
+  draft?: AgentPreview;
   fileId: string;
   fileName: string;
-  format: 'pdf' | 'xlsx' | 'pptx';
+  format: 'pdf' | 'xlsx' | 'pptx' | 'html';
   previewFileId?: string;
   pageCount?: number;
   mimeType: string;
@@ -62,9 +64,21 @@ export type AgentEvent =
   | { type: 'start'; sessionId: string; memoryMessages: number }
   | { type: 'memory'; summarizedMessages: number; recentMessages: number }
   | { type: 'artifact'; artifact: AgentArtifact }
+  | { type: 'preview'; preview: AgentPreview }
   | { type: 'step'; step: AgentStep }
   | { type: 'step_delta'; stepId: string; text: string; reset?: boolean }
   | { type: 'answer_start' }
   | { type: 'delta'; text: string }
   | { type: 'done'; result: AgentResult }
   | { type: 'error'; message: string; requestId?: string };
+
+export interface AgentPreview {
+  id: string;
+  toolCallId?: string;
+  format: 'html' | 'pdf' | 'xlsx' | 'pptx';
+  status: 'generating' | 'saving' | 'failed' | 'cancelled';
+  title?: string;
+  content?: string;
+  slides?: Array<{ title: string; body: string[] }>;
+  sheets?: Array<{ name?: string; columns?: string[]; rows?: Array<Array<string | number | boolean | null>> }>;
+}

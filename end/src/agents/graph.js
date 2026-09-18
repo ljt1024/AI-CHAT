@@ -4,6 +4,7 @@ const { messageText } = require('./tools');
 const { createHttpError } = require('../utils/http');
 const { randomUUID } = require('node:crypto');
 const { prepareContext } = require('./contextMemory');
+const { createLivePreviewEmitter } = require('./livePreview');
 
 const State = Annotation.Root({
   messages: Annotation(), history: Annotation(), steps: Annotation(), input: Annotation(),
@@ -16,10 +17,11 @@ const State = Annotation.Root({
 
 function createGraph({ model, tools, checkpointer, emit = () => {}, maxIterations = 12, memoryOptions }) {
   const boundModel = model.bindTools(tools);
+  const preview = createLivePreviewEmitter(emit);
   const instruction = new SystemMessage(
     '你是解决用户问题的主智能体。利用会话记忆理解原始目标。需要时调用计算工具或委派规划、分析、写作智能体，读取工具结果后再判断下一步，直到能回答或需要用户补充信息。' +
     '计算必须调用 calculate。工具失败时可修正参数重试。简单问题直接回答，不要机械调用所有工具。' +
-    '用户要求PDF、Excel或PPT下载时，必须调用export_pdf、export_excel或export_pptx实际生成文件；只使用工具返回的下载地址，不得虚构文件链接。正文或数据不足时先澄清，示例数据须明确标注。生成成功后简短告知用户点击下载卡片。' +
+    '用户要求HTML网页、PDF、Excel或PPT时，必须调用export_html、export_pdf、export_excel或export_pptx实际生成文件；工具参数生成过程中会实时预览，先填写title再填写正文。只使用工具返回的下载地址，不得虚构文件链接。正文或数据不足时先澄清，示例数据须明确标注。生成成功后简短告知用户点击下载卡片。' +
     '调用工具时，尽可能同时输出一句面向用户的执行说明，说明要做什么以及目的。输出简短决策说明、工具结果摘要和最终答案，不输出内部推理草稿。不要虚构联网、文件操作或不存在的工具。'
   );
   const step = (phase, output, extra = {}) => {
@@ -85,6 +87,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
             action.output += part.args;
             emit({ type: 'step_delta', stepId: action.id, text: part.args });
           }
+          preview(action);
         }
       }
       if (!message || (!messageText(message) && !message.tool_calls?.length)) throw createHttpError(502, '模型返回了空内容');
@@ -96,6 +99,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
       emit({ type: 'step', step: thinking });
       for (const action of preparing.values()) {
         if (!message.tool_calls?.some((call) => call.id === action.toolCallId)) throw createHttpError(502, '模型返回了不完整的工具参数，请重试。');
+        preview(action, 'generating', true);
       }
       return { messages: [...state.messages, message], steps: [...state.steps, thinking, ...preparing.values()], iteration: state.iteration + 1 };
     })
@@ -109,6 +113,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         const action = prepared || step('action', '', { agentId: call.name, status: 'running', toolCallId: call.id });
         action.output = JSON.stringify(call.args);
         action.stage = 'executing';
+        preview(action, 'saving', true, call.args);
         emit({ type: 'step', step: { ...action } });
         if (!prepared) steps.push(action);
         const observation = step('observation', '', { agentId: call.name, status: 'running', toolCallId: call.id });
@@ -121,8 +126,14 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
           output = await target.invoke(call.args, {
             signal: config.signal,
             configurable: { onArtifact: (artifact) => {
+              artifact.toolCallId = call.id;
               artifacts.push(artifact);
               emit({ type: 'artifact', artifact });
+            }, onPreview: (draft) => {
+              preview(action, draft.complete ? 'saving' : 'generating', true, {
+                title: draft.title,
+                html: draft.content,
+              });
             }, onToolDelta: (text) => {
               config.signal?.throwIfAborted();
               observation.output += text;
@@ -137,6 +148,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         }
         config.signal?.throwIfAborted();
         action.status = failed ? 'failed' : 'completed';
+        if (failed) preview(action, 'failed', true, call.args);
         emit({ type: 'step', step: action });
         observation.output = failed && observation.output ? `${observation.output}\n\n${output}` : output;
         observation.status = action.status;

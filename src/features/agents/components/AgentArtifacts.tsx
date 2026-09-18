@@ -28,9 +28,9 @@ function ArtifactCard({ artifact, onPreview }: { artifact: AgentArtifact; onPrev
   };
   const size = artifact.size < 1024 * 1024 ? `${Math.max(1, Math.ceil(artifact.size / 1024))} KB` : `${(artifact.size / 1024 / 1024).toFixed(1)} MB`;
   return <li className="agent-artifact">
-    <span className="agent-artifact-format">{artifact.format === 'xlsx' ? 'Excel' : artifact.format === 'pptx' ? 'PPT' : 'PDF'}</span>
+    <span className="agent-artifact-format">{artifact.format === 'xlsx' ? 'Excel' : artifact.format === 'pptx' ? 'PPT' : artifact.format.toUpperCase()}</span>
     <div className="agent-artifact-info"><strong>{artifact.fileName}</strong><small>{size} · {zh ? '已生成' : 'Ready'}</small></div>
-    {onPreview && (artifact.format === 'pdf' || artifact.format === 'pptx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${zh ? '预览' : 'Preview'} ${artifact.fileName}`}>{zh ? '预览' : 'Preview'}</button>}
+    {onPreview && (artifact.format === 'pdf' || artifact.format === 'pptx' || artifact.format === 'html' || artifact.format === 'xlsx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${zh ? '预览' : 'Preview'} ${artifact.fileName}`}>{zh ? '预览' : 'Preview'}</button>}
     <button type="button" onClick={download} disabled={downloading} aria-label={`${zh ? '下载' : 'Download'} ${artifact.fileName}`}>
       {downloading ? (zh ? '下载中…' : 'Downloading…') : (zh ? '下载文件' : 'Download')}
     </button>

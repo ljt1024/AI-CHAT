@@ -83,8 +83,10 @@ test('agent emits downloadable artifacts before done and retains links in next-t
   const events = [];
   const result = await service.runAgents({ input: '生成预算Excel', sessionId: 'files' }, { emit: (event) => events.push(structuredClone(event)) });
   assert.equal(result.artifacts.length, 1);
-  assert.equal(result.artifacts[0].fileId, saved[0]);
-  const downloadPath = `/api/files/${saved[0]}/download`;
+  assert.equal(saved.length, 2);
+  assert.equal(result.artifacts[0].fileId, saved[1]);
+  assert.equal(result.artifacts[0].previewFileId, saved[0]);
+  const downloadPath = `/api/files/${saved[1]}/download`;
   assert.equal(result.artifacts[0].downloadPath, downloadPath);
   assert.ok(events.findIndex((event) => event.type === 'artifact') < events.findIndex((event) => event.type === 'done'));
   create = false;

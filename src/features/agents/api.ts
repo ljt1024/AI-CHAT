@@ -17,9 +17,9 @@ export async function fetchAgents(signal?: AbortSignal): Promise<AgentDefinition
   return (await response.json()).data;
 }
 
-export async function downloadAgentArtifact(fileId: string): Promise<Blob> {
+export async function downloadAgentArtifact(fileId: string, signal?: AbortSignal): Promise<Blob> {
   if (!/^[a-f0-9-]{36}$/i.test(fileId)) throw new Error('文件标识无效');
-  const response = await fetch(getFileDownloadUrl(fileId));
+  const response = await fetch(getFileDownloadUrl(fileId), { signal });
   if (!response.ok) throw await readError(response);
   return response.blob();
 }

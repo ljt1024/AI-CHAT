@@ -31,6 +31,7 @@ const ChatAI: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAgentMode, setIsAgentMode] = useState(() => localStorage.getItem('chat.agentMode') === 'true');
+  const [liveFiles, setLiveFiles] = useState<{ sessionId: string; files: AgentArtifact[] }>({ sessionId: '', files: [] });
   const [previewSelection, setPreviewSelection] = useState<{ sessionId: string; artifact: AgentArtifact } | null>(null);
   const setPreviewArtifact = (artifact: AgentArtifact) => setPreviewSelection({ sessionId: getSelectId() || '', artifact });
   const [isShowScrollBtn, setIsShowScrollBtn] = useState(false)
@@ -44,7 +45,7 @@ const ChatAI: React.FC = () => {
   const { messages } = useChat()
   const dispatch = useChatDispatch()
   const previewArtifact = previewSelection?.sessionId === getSelectId() && messages.length ? previewSelection.artifact : null
-  const previewArtifacts = messages.flatMap(message => message.artifacts || []).filter(file => file.format === 'pdf' || file.format === 'pptx')
+  const previewArtifacts = [...messages.flatMap(message => message.artifacts || []), ...(liveFiles.sessionId === getSelectId() ? liveFiles.files : [])]
   if (previewArtifact && !previewArtifacts.some(file => file.fileId === previewArtifact.fileId)) previewArtifacts.push(previewArtifact)
   const isNewConversation = messages.length === 0 && localStorage.getItem('isNewCov') === 'true'
   const hasSelectedConversation = Boolean(getSelectId())
@@ -378,6 +379,8 @@ const ChatAI: React.FC = () => {
     const turnId = ensureAgentTurnId(userMessage)
     userMessage = { ...userMessage, agentTurnId: turnId }
     const model = { id: selectedModelId, name: selectedModelName }
+    const seenPreviews = new Set<string>();
+    setLiveFiles({ sessionId, files: [] });
     const requestController = new AbortController()
     controllerRef.current = requestController
     setIsLoading(true)
@@ -395,9 +398,21 @@ const ChatAI: React.FC = () => {
       await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId }, (event) => {
         if (event.type === 'start') assistant.memoryMessages = event.memoryMessages
         if (event.type === 'memory') assistant.summarizedMessages = event.summarizedMessages
+        if (event.type === 'preview') {
+          const draft = event.preview;
+          const first = !seenPreviews.has(draft.id);
+          seenPreviews.add(draft.id);
+          const file: AgentArtifact = {
+            fileId: `draft:${draft.id}`, toolCallId: draft.toolCallId, format: draft.format, draft,
+            fileName: `${draft.title || '正在生成'}.${draft.format}`, mimeType: '', size: 0, downloadPath: '', createdAt: '',
+          };
+          setLiveFiles(previous => ({ sessionId, files: [...(previous.sessionId === sessionId ? previous.files : []).filter(item => item.fileId !== file.fileId), file] }));
+          setPreviewSelection(previous => first || (previous?.sessionId === sessionId && previous.artifact.fileId === file.fileId) ? { sessionId, artifact: file } : previous);
+        }
         if (event.type === 'artifact') {
           assistant.artifacts = [...(assistant.artifacts || []).filter((file) => file.fileId !== event.artifact.fileId), event.artifact]
-          if (event.artifact.format === 'pdf' || event.artifact.format === 'pptx') setPreviewSelection({ sessionId, artifact: event.artifact })
+          setLiveFiles(previous => ({ ...previous, files: previous.files.filter(file => !event.artifact.toolCallId || file.toolCallId !== event.artifact.toolCallId) }));
+          setPreviewSelection(previous => (previous?.sessionId === sessionId && previous.artifact.toolCallId === event.artifact.toolCallId) || seenPreviews.size === 0 ? { sessionId, artifact: event.artifact } : previous);
         }
         if (event.type === 'answer_start') assistant.content = ''
         if (event.type === 'delta') assistant.content += event.text
@@ -427,6 +442,10 @@ const ChatAI: React.FC = () => {
       assistant.content += `\n\n${stopped ? '已停止，本轮未写入会话记忆。' : error instanceof Error ? error.message : '智能体执行失败'}`
       assistant.agentSteps = assistant.agentSteps?.map((step) => step.status === 'running' ? { ...step, status: stopped ? 'cancelled' : 'failed' } : step)
     } finally {
+      const finishDraft = (file: AgentArtifact): AgentArtifact => file.draft && ['generating', 'saving'].includes(file.draft.status)
+        ? { ...file, draft: { ...file.draft, status: requestController.signal.aborted ? 'cancelled' : 'failed' } } : file;
+      setLiveFiles(previous => previous.sessionId === sessionId ? { ...previous, files: previous.files.map(finishDraft) } : previous);
+      setPreviewSelection(previous => previous?.sessionId === sessionId ? { ...previous, artifact: finishDraft(previous.artifact) } : previous);
       assistant = { ...assistant, isLoading: false }
       cancelStreamRender()
       streamPendingMessageRef.current = null
@@ -630,7 +649,7 @@ const ChatAI: React.FC = () => {
                   <ArrowDownIcon className="chatScrollBottomIcon" />
                 </div>}
             </div>
-            {previewArtifact && <ArtifactPreviewPanel key={previewArtifact.fileId} artifact={previewArtifact} artifacts={previewArtifacts} onSelect={setPreviewArtifact} onClose={() => setPreviewSelection(null)} />}
+            {previewArtifact && <ArtifactPreviewPanel key={previewArtifact.toolCallId || previewArtifact.fileId} artifact={previewArtifact} artifacts={previewArtifacts} onSelect={setPreviewArtifact} onClose={() => setPreviewSelection(null)} />}
           </div>
         </div>
       </div>

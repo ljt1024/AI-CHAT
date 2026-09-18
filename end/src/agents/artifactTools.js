@@ -4,12 +4,21 @@ const { generateDocumentFile } = require('../services/documentService');
 const { generateSpreadsheetFile, spreadsheetSchema } = require('../services/spreadsheetService');
 const { saveLocalFile, buildFileAccessPayload } = require('../services/fileService');
 const { generatePresentationFile, presentationSchema } = require('../services/presentationService');
+const { generateHtmlFile, htmlSchema } = require('../services/htmlService');
 
 function createArtifactTools({ saveFile = saveLocalFile } = {}) {
   const exportFile = async (generate, args, config) => {
     config?.signal?.throwIfAborted();
     const file = await generate(args, { signal: config?.signal });
     config?.signal?.throwIfAborted();
+    if (file.previewContent && config?.configurable?.onPreview) {
+      config.configurable.onPreview({
+        kind: file.format,
+        title: file.title,
+        content: file.previewContent,
+        complete: true,
+      });
+    }
     const previewMeta = file.previewFile ? saveFile(file.previewFile) : null;
     const metadata = saveFile(file);
     const artifact = { ...buildFileAccessPayload(null, metadata), format: file.format, ...(previewMeta ? { previewFileId: previewMeta.fileId, pageCount: file.pageCount } : {}) };
@@ -17,6 +26,11 @@ function createArtifactTools({ saveFile = saveLocalFile } = {}) {
     return JSON.stringify({ message: '文件已生成，可通过下载卡片下载。', ...artifact });
   };
   return [
+    tool((args, config) => exportFile(generateHtmlFile, args, config), {
+      name: 'export_html',
+      description: '生成可下载并实时预览的独立HTML网页。title为文件标题，html为完整HTML（内联CSS，可含内联JavaScript交互）。不要使用外部脚本、网络请求、外部字体或资源；图片使用内联SVG或data URL。用户要求网页、HTML或可视化页面时调用此工具，内容会在生成参数期间实时渲染。',
+      schema: htmlSchema,
+    }),
     tool((args, config) => exportFile((body, options) => generateDocumentFile({ ...body, format: 'pdf' }, '', options), args, config), {
       name: 'export_pdf',
       description: '将完整文本生成可下载的中文PDF报告。传入标题和实际正文（支持段落、#标题、列表），不要只给大纲或声称已生成。生成后返回真实下载地址。',

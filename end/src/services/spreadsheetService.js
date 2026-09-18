@@ -68,7 +68,18 @@ async function generateSpreadsheetFile(body, { signal } = {}) {
   }
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   signal?.throwIfAborted();
-  return { format: 'xlsx', title, fileName: `${sanitizeFileName(title).replace(/\.xlsx$/i, '')}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer };
+  const previewSheets = workbook.worksheets.map((sheet, index) => {
+    const input = sheets[index];
+    const values = Array.from({ length: input.rows.length + 1 + (input.sumColumns.length ? 1 : 0) }, (_, row) =>
+      Array.from({ length: input.columns.length }, (_, column) => {
+        const cell = sheet.getCell(row + 1, column + 1);
+        return cell.formula ? cell.result : cell.value ?? null;
+      }));
+    return { name: sheet.name, columns: values[0], rows: values.slice(1) };
+  });
+  return { format: 'xlsx', title, fileName: `${sanitizeFileName(title).replace(/\.xlsx$/i, '')}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer,
+    previewFile: { fileName: 'spreadsheet-preview.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ title, sheets: previewSheets })) },
+  };
 }
 
 module.exports = { spreadsheetSchema, generateSpreadsheetFile };

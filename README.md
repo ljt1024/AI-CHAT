@@ -318,3 +318,11 @@ python3 scripts/verify_preview.py --url http://127.0.0.1:5175/ai
 ```
 
 覆盖 PDF / PPT 生成、自动预览、翻页、原文件下载、刷新重开和手机预览。需要本地前后端已启动、可用模型密钥及 Playwright Chromium。
+
+### 执行过程中实时渲染
+
+智能体调用文件工具时，工具参数的真实流式片段经 LangChain 部分 JSON 解析后，以 `preview` SSE 事件更新右侧草稿（最多约每 120ms 一次）。无需等工具运行完成：HTML 显示网页、PDF 显示 Markdown 正文、PPT 显示逐页内容、Excel 显示工作表。文件保存成功后，`artifact.toolCallId` 将草稿替换为真实文件，PDF/PPT 切到 PDF.js 成品预览。停止或失败保留带状态的临时草稿；草稿不落盘，刷新后仅保留成功文件。
+
+新增 `export_html({title, html})`，生成可下载的 UTF-8 HTML。HTML 预览在无脚本、无同源权限的 sandbox iframe 中渲染，经 DOMPurify 清理并用 CSP 阻止外部资源、网络连接和表单；目前在线展示 HTML/CSS，原文件的 JavaScript 交互需下载后打开。草稿以 250ms 间隔刷新，避免每个 token 都重载 iframe。
+
+Excel 新导出文件同时保存由实际工作簿值生成的 JSON 预览，包含合计缓存值，支持切换工作表和每页 100 行查看；旧文件没有预览数据时仍可下载。真实联调脚本：`python3 scripts/verify_live_preview.py`（可加 `--model qwen3.5-plus`），验证工具完成前出现多个不同的 HTML 帧，以及下载、刷新、全屏和手机端查看。
