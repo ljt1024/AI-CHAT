@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local conversations, uploads, checkpoints and secrets
+end/local_storage/

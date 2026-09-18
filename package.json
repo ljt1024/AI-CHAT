@@ -14,6 +14,7 @@
     "dompurify": "^3.2.6",
     "highlight.js": "^11.11.1",
     "html2canvas-pro": "^2.0.2",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
