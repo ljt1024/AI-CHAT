@@ -101,17 +101,23 @@
 
 ```bash
 npm install
+npm install --prefix end
 ```
 
 ### 2. 启动开发环境
 
 ```bash
-npm run dev
+npm run dev --prefix end  # 终端一：后端，自动重载代码
+npm run dev               # 终端二：前端
 ```
+
+后端需要 Node.js 22.13+，在 `end/.env` 配置 `DEEPSEEK_API_KEY` 或 `DASHSCOPE_API_KEY`。详见 [后端说明](./end/README.md)。
 
 启动后访问：
 
-- http://localhost:5173/ai
+- http://localhost:5174/ai
+- 端口被占用时使用 `npm run dev -- --host 127.0.0.1 --port 5175`，访问 http://127.0.0.1:5175/ai。
+- 修改后端时使用上述 `dev` 命令；`npm start --prefix end` 不会自动加载代码变更。
 
 ### 3. 生产构建
 
@@ -138,7 +144,7 @@ npm run preview
 写入：
 
 ```env
-VITE_CHAT_BASE_URL=http://your-api-host/api/chat
+VITE_CHAT_BASE_URL=http://localhost:3001/api/chat/completions
 ```
 
 说明：
@@ -150,14 +156,14 @@ VITE_CHAT_BASE_URL=http://your-api-host/api/chat
 也就是说，如果聊天接口配置为：
 
 ```env
-VITE_CHAT_BASE_URL=http://your-api-host/api/chat
+VITE_CHAT_BASE_URL=http://localhost:3001/api/chat/completions
 ```
 
 则前端会自动请求：
 
-- `http://your-api-host/api/chat`
-- `http://your-api-host/api/models`
-- `http://your-api-host/api/files/upload`
+- `http://localhost:3001/api/chat/completions`
+- `http://localhost:3001/api/models`
+- `http://localhost:3001/api/files/upload`
 
 ## 接口能力约定
 
@@ -192,15 +198,15 @@ VITE_CHAT_BASE_URL=http://your-api-host/api/chat
 
 ## 项目结构
 
+详细分层与多智能体扩展约定见 [ARCHITECTURE.md](./ARCHITECTURE.md)。
+
 ```text
 src/
-├── components/        # 通用 UI 组件
-├── context/           # Chat / Theme / Language 上下文
-├── hooks/             # 截图、复制等 hooks
-├── utils/             # 本地消息、导出等工具
-├── views/             # 页面级视图
-├── assets/            # 图标与静态资源
-└── types/             # 类型定义
+├── app/               # 应用装配与全局 Provider
+├── pages/             # 路由页面
+├── features/          # chat 与 agents 业务域
+├── shared/            # 通用组件、hooks、工具、类型、资源
+└── infrastructure/    # 外部服务适配
 ```
 
 ## 适用场景
@@ -232,14 +238,50 @@ src/
 
 如果你准备基于这个项目继续扩展，建议优先关注以下部分：
 
-- `src/views/Chat/index.tsx`
+- `src/features/chat/index.tsx`
   - 聊天主流程
   - 模型能力判断
   - 上传与会话请求拼装
-- `src/context/ChatContext.tsx`
+- `src/app/providers/ChatContext.tsx`
   - 会话列表与消息状态管理
-- `src/context/ThemeContext.tsx`
+- `src/app/providers/ThemeContext.tsx`
   - 主题切换与动画
-- `src/context/LanguageContext.tsx`
+- `src/app/providers/LanguageContext.tsx`
   - 中英文切换
 
+
+## 智能体模式
+
+输入框下方开启「智能体模式」后，请求进入 `/api/agents/run`，由后端 LangGraph 状态图执行 ReAct 循环，模型通过 LangChain 调用。可用工具包括四则运算、当前时间、规划/分析/写作智能体委派。模型按任务选择工具，没有联网搜索或文件执行能力。
+
+页面实时显示执行说明、工具参数和观察结果，完成后保留展开状态，也可以手动折叠。展示内容是面向用户的决策摘要和工具记录。答案通过 SSE 增量返回，停止按钮可中断执行。
+
+成功的对话轮次通过官方 LangGraph SQLite checkpoint 按 `sessionId` 保存到 `end/local_storage/agent-checkpoints.sqlite`，刷新页面或重启后端仍可继续。同一会话同时只允许一个运行；失败、截断或执行中取消的轮次不进入下一轮成功记忆。不设置应用层 `max_tokens`，仍受供应商模型输出和上下文窗口限制；ReAct 单轮最多 12 次模型调用（不含记忆摘要调用）、HTTP 执行超时 5 分钟。
+
+长对话采用 LangGraph `context` 节点整理记忆：待发送历史与摘要合计超过 24,000 字符时，保留最近 8 条消息原文，将较早历史按 12,000 字符分批合并为最多 6,000 字符的摘要。页面显示摘要覆盖的历史条数。摘要与本轮答案一起成功提交；整理失败、回答失败或取消不会覆盖原有成功记忆。完整成功问答仍保存在 SQLite，摘要用于减少后续模型输入，不会缩小磁盘历史。
+
+新发送的智能体消息保存独立 `turnId`。重新生成成功后替换最后一轮，失败则保留后端原答复；刷新后重试仍使用同一个 ID。升级前未记录轮次 ID 的历史无法自动关联旧答复。
+
+当前记忆不自动同步普通聊天或导入的浏览器历史。浏览器删除会话只删除本地记录，不删除服务端 checkpoint。摘要可能省略细节；阈值按字符估算，近期原文和当前任务仍受模型上下文窗口限制。
+
+## 智能体验证
+
+```bash
+npm test --prefix end
+npx tsc --noEmit
+npm run build
+```
+
+真实前后端联调（会调用配置的模型 API）使用：
+
+```bash
+python3 -m pip install playwright
+python3 -m playwright install chromium
+python3 scripts/verify_agents.py --url http://127.0.0.1:5175/ai
+python3 scripts/verify_step_stream.py --url http://127.0.0.1:5175/ai
+node end/scripts/verifyMemory.js
+```
+
+浏览器脚本验证新会话、工具轨迹、SSE、刷新后记忆与重新生成、停止和下一轮恢复，并检查浏览器异常。截图保存在 `/tmp/agent-browser-smoke.png`。`verifyMemory.js` 使用临时 SQLite 数据库和真实模型，验证长历史摘要、早期事实回忆、数据库重开和重试去重，不修改现有会话。
+
+`verify_step_stream.py` 额外观察浏览器 DOM，断言思考说明、行动参数、子智能体观察结果在执行期间多次增长，防止退化为整步完成后才显示。
