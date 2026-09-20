@@ -14,7 +14,7 @@ export function HtmlPreview({ content, streaming = false }: { content: string; s
     const timer = window.setInterval(() => setDisplay(latest.current), 250);
     return () => window.clearInterval(timer);
   }, [streaming]);
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const source = useMemo(() => {
     // A fresh opaque-origin, script-free document. CSS remains usable; remote resources are blocked.
     const clean = DOMPurify.sanitize(display, {
@@ -45,14 +45,13 @@ export function HtmlPreview({ content, streaming = false }: { content: string; s
     }
     return `<!doctype html>${parsed.documentElement.outerHTML}`;
   }, [display]);
-  return <iframe className="artifact-html-frame" title={language === 'zh' ? 'HTML 实时预览' : 'Live HTML preview'} sandbox="" referrerPolicy="no-referrer" srcDoc={source} />;
+  return <iframe className="artifact-html-frame" title={t('preview.liveHtml')} sandbox="" referrerPolicy="no-referrer" srcDoc={source} />;
 }
 
 const text = (value: unknown) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : '';
 
 export function SheetPreview({ sheets = [] }: Pick<AgentPreview, 'sheets'>) {
-  const { language } = useLanguage();
-  const zh = language === 'zh';
+  const { t } = useLanguage();
   const [selected, setSelected] = useState(0);
   const [page, setPage] = useState(0);
   const sheet = sheets[Math.min(selected, Math.max(0, sheets.length - 1))];
@@ -60,9 +59,9 @@ export function SheetPreview({ sheets = [] }: Pick<AgentPreview, 'sheets'>) {
   const columns = Array.isArray(sheet?.columns) ? sheet.columns : [];
   const currentPage = Math.min(page, Math.max(0, Math.ceil(rows.length / 100) - 1));
   return <div className="artifact-sheet">
-    <div className="artifact-sheet-tabs">{sheets.map((item, i) => <button type="button" key={i} aria-pressed={i === selected} onClick={() => { setSelected(i); setPage(0); }}>{text(item?.name) || `${zh ? '工作表' : 'Sheet'} ${i + 1}`}</button>)}</div>
+    <div className="artifact-sheet-tabs">{sheets.map((item, i) => <button type="button" key={i} aria-pressed={i === selected} onClick={() => { setSelected(i); setPage(0); }}>{text(item?.name) || `${t('preview.sheet')} ${i + 1}`}</button>)}</div>
     <div className="artifact-sheet-scroll"><table><thead><tr>{columns.map((column, i) => <th key={i}>{text(column)}</th>)}</tr></thead><tbody>{rows.slice(currentPage * 100, (currentPage + 1) * 100).map((row, i) => <tr key={i}>{(Array.isArray(row) ? row : []).map((cell, j) => <td key={j}>{text(cell)}</td>)}</tr>)}</tbody></table></div>
-    <div className="artifact-sheet-pages"><button disabled={currentPage === 0} type="button" onClick={() => setPage(currentPage - 1)}>{zh ? '上一页' : 'Previous'}</button><span>{rows.length} {zh ? '行' : 'rows'} · {currentPage + 1} / {Math.max(1, Math.ceil(rows.length / 100))}</span><button disabled={(currentPage + 1) * 100 >= rows.length} type="button" onClick={() => setPage(currentPage + 1)}>{zh ? '下一页' : 'Next'}</button></div>
+    <div className="artifact-sheet-pages"><button disabled={currentPage === 0} type="button" onClick={() => setPage(currentPage - 1)}>{t('preview.previous')}</button><span>{t('preview.rowCount', { count: rows.length })} · {currentPage + 1} / {Math.max(1, Math.ceil(rows.length / 100))}</span><button disabled={(currentPage + 1) * 100 >= rows.length} type="button" onClick={() => setPage(currentPage + 1)}>{t('table.next')}</button></div>
   </div>;
 }
 

@@ -1,3 +1,4 @@
+const { t, getLanguage } = require('../i18n');
 const { StateGraph, Annotation, START, END } = require('@langchain/langgraph');
 const { AIMessage, HumanMessage, SystemMessage, ToolMessage } = require('@langchain/core/messages');
 const { messageText } = require('./tools');
@@ -19,11 +20,12 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
   const boundModel = model.bindTools(tools);
   const preview = createLivePreviewEmitter(emit);
   const instruction = new SystemMessage(
-    '你是解决用户问题的主智能体。利用会话记忆理解原始目标。需要时调用计算工具或委派规划、分析、写作智能体，读取工具结果后再判断下一步，直到能回答或需要用户补充信息。' +
-    '计算必须调用 calculate。工具失败时可修正参数重试。简单问题直接回答，不要机械调用所有工具。' +
-    '用户要求HTML网页、PDF、Excel或PPT时，必须调用export_html、export_pdf、export_excel或export_pptx实际生成文件；工具参数生成过程中会实时预览，先填写title再填写正文。只使用工具返回的下载地址，不得虚构文件链接。正文或数据不足时先澄清，示例数据须明确标注。生成成功后简短告知用户点击下载卡片。' +
-    '调用工具时，尽可能同时输出一句面向用户的执行说明，说明要做什么以及目的。输出简短决策说明、工具结果摘要和最终答案，不输出内部推理草稿。不要虚构联网、文件操作或不存在的工具。'
+    t('agent.prompt') +
+    t('agent.calculationPrompt') +
+    t('agent.artifactPrompt') +
+    t('agent.explanationPrompt') + ` Default response language: ${getLanguage() === 'en' ? 'English' : 'Chinese'}. Follow any explicit language request from the user.`
   );
+  const localized = (key, params = {}) => ({ output: t(key, params), outputTranslation: { key: `server.${key}`, params } });
   const step = (phase, output, extra = {}) => {
     const value = { id: randomUUID(), phase, status: 'completed', output, ...extra };
     emit({ type: 'step', step: value });
@@ -36,9 +38,9 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         history: state.workingHistory, summary: state.summary,
         summarizedMessages: state.summarizedMessages, model, signal: config.signal, options: memoryOptions,
         onProgress: ({ status, count }) => {
-          if (!progress) progress = step('thought', `正在整理 ${count} 条较早会话记忆，保留近期原文。`, { status });
+          if (!progress) progress = step('thought', t('memory.preparing', { p0: count }), { status, ...localized('memory.preparing', { p0: count }) });
           else {
-            progress = { ...progress, status, output: `已整理 ${count} 条较早会话记忆。` };
+            progress = { ...progress, status, ...localized('memory.completed', { p0: count }) };
             emit({ type: 'step', step: progress });
           }
         },
@@ -51,10 +53,10 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
       };
     })
     .addNode('reason', async (state, config) => {
-      if (state.iteration >= maxIterations) throw createHttpError(422, '本轮达到执行步数上限，请缩小任务范围后重试。');
+      if (state.iteration >= maxIterations) throw createHttpError(422, t('agent.iterationLimit'));
       const thinking = step('thought', state.iteration
-        ? `正在检查第 ${state.iteration} 轮工具结果，决定下一步。`
-        : `正在结合 ${state.workingHistory.length} 条会话记忆分析任务。`, { status: 'running' });
+        ? t('agent.checking', { p0: state.iteration })
+        : t('agent.analyzing', { p0: state.workingHistory.length }), { status: 'running', ...localized(state.iteration ? 'agent.checking' : 'agent.analyzing', { p0: state.iteration || state.workingHistory.length }) });
       emit({ type: 'answer_start' });
       let message;
       let streamedText = false;
@@ -64,7 +66,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         message = message ? message.concat(chunk) : chunk;
         const text = messageText(chunk);
         if (text) {
-          if (!streamedText) thinking.output = '';
+          if (!streamedText) { thinking.output = ''; delete thinking.outputTranslation; }
           thinking.output += text;
           emit({ type: 'step_delta', stepId: thinking.id, text, reset: !streamedText });
           streamedText = true;
@@ -90,15 +92,18 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
           preview(action);
         }
       }
-      if (!message || (!messageText(message) && !message.tool_calls?.length)) throw createHttpError(502, '模型返回了空内容');
-      if (message.response_metadata?.finish_reason === 'length') throw createHttpError(502, '模型输出达到上游长度上限，本轮未完成，请拆分任务后重试。');
+      if (!message || (!messageText(message) && !message.tool_calls?.length)) throw createHttpError(502, t('agent.empty'));
+      if (message.response_metadata?.finish_reason === 'length') throw createHttpError(502, t('agent.truncated'));
       thinking.status = 'completed';
-      thinking.output = messageText(message) || (message.tool_calls?.length
-        ? `已选择调用：${message.tool_calls.map((call) => call.name).join('、')}，获取结果后继续处理。`
-        : '已结合当前任务与会话记忆整理答复。');
+      if (messageText(message)) {
+        thinking.output = messageText(message);
+        delete thinking.outputTranslation;
+      } else Object.assign(thinking, localized(message.tool_calls?.length ? 'agent.selectedTools' : 'agent.answerReady', {
+        p0: message.tool_calls?.map((call) => call.name).join(', ') || '',
+      }));
       emit({ type: 'step', step: thinking });
       for (const action of preparing.values()) {
-        if (!message.tool_calls?.some((call) => call.id === action.toolCallId)) throw createHttpError(502, '模型返回了不完整的工具参数，请重试。');
+        if (!message.tool_calls?.some((call) => call.id === action.toolCallId)) throw createHttpError(502, t('agent.invalidArguments'));
         preview(action, 'generating', true);
       }
       return { messages: [...state.messages, message], steps: [...state.steps, thinking, ...preparing.values()], iteration: state.iteration + 1 };
@@ -122,7 +127,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         let output;
         let failed = false;
         try {
-          if (!target) throw new Error(`工具不存在: ${call.name}`);
+          if (!target) throw new Error(t('agent.unknownTool', { p0: call.name }));
           output = await target.invoke(call.args, {
             signal: config.signal,
             configurable: { onArtifact: (artifact) => {
@@ -144,7 +149,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
         } catch (error) {
           config.signal?.throwIfAborted();
           failed = true;
-          output = `工具执行失败: ${error.message}`;
+          output = t('agent.toolFailed', { p0: error.message });
         }
         config.signal?.throwIfAborted();
         action.status = failed ? 'failed' : 'completed';
@@ -161,7 +166,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
       config.signal?.throwIfAborted();
       const answer = state.messages.at(-1);
       const files = state.artifacts || [];
-      const memoryAnswer = files.length ? new AIMessage(`${messageText(answer)}\n\n本轮已生成文件：\n${files.map((file) => `${file.fileName}: ${file.downloadPath}`).join('\n')}`) : answer;
+      const memoryAnswer = files.length ? new AIMessage(t('memory.files', { p0: messageText(answer), p1: files.map((file) => `${file.fileName}: ${file.downloadPath}`).join('\n') })) : answer;
       return {
         history: [...state.workingHistory, new HumanMessage({ content: state.input, id: state.turnId }), memoryAnswer],
         output: messageText(answer), summary: state.pendingSummary,

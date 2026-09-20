@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const axios = require('axios');
 const { env } = require('../config/env');
 const { MODEL_CATALOG, MODEL_INDEX, PROVIDER_CONFIG } = require('../config/models');
@@ -14,12 +15,12 @@ const { isImageLikeFile } = require('../utils/upload');
 
 function normalizeInlineFiles(files) {
   if (!Array.isArray(files)) {
-    throw createHttpError(400, 'files 必须为数组');
+    throw createHttpError(400, t('error.filesArray'));
   }
 
   return files.map((rawFile, index) => {
     if (!rawFile || typeof rawFile !== 'object') {
-      throw createHttpError(400, `files[${index}] 格式无效`);
+      throw createHttpError(400, t('error.fileFormat', { p0: index }));
     }
 
     const name = typeof rawFile.name === 'string' && rawFile.name.trim()
@@ -34,7 +35,7 @@ function normalizeInlineFiles(files) {
       : (typeof rawFile.text === 'string' ? rawFile.text : '');
 
     if (!url && !content) {
-      throw createHttpError(400, `files[${index}] 至少需要提供 url 或 content/text`);
+      throw createHttpError(400, t('error.fileContent', { p0: index }));
     }
 
     return {
@@ -115,28 +116,28 @@ function injectImageFilesIntoMessages(messages, imageFiles) {
 
 function buildNonImageFilePrompt(files) {
   const lines = [
-    `用户上传了 ${files.length} 个文件，请结合文件内容回答问题。`,
-    '如果文件信息不足，请明确说明。',
+    t('chat.uploaded', { p0: files.length }),
+    t('chat.insufficientFiles'),
   ];
 
   files.forEach((file, index) => {
-    lines.push(`文件 ${index + 1}: ${file.name}`);
-    lines.push(`类型: ${file.type}`);
+    lines.push(t('chat.fileName', { p0: index + 1, p1: file.name }));
+    lines.push(t('chat.fileType', { p0: file.type }));
     if (file.fileId) {
-      lines.push(`文件ID: ${file.fileId}`);
+      lines.push(t('chat.fileId', { p0: file.fileId }));
     }
     if (file.url) {
-      lines.push(`地址: ${file.url}`);
+      lines.push(t('chat.fileUrl', { p0: file.url }));
     }
     if (file.content) {
-      lines.push('文件内容:');
+      lines.push(t('chat.fileContent'));
       lines.push(file.content);
       if (file.content.length > env.maxFileContentLength) {
-        lines.push(`(内容已截断，原始长度 ${file.content.length} 字符)`);
+        lines.push(t('chat.fileTruncated', { p0: file.content.length }));
       }
     }
     if (file.note) {
-      lines.push(`备注: ${file.note}`);
+      lines.push(t('chat.fileNote', { p0: file.note }));
     }
   });
 
@@ -173,7 +174,7 @@ function normalizeThinkingValue(rawThinking, modelConfig) {
       }
     }
 
-    throw createHttpError(400, 'deepseek 的 thinking 参数格式无效，应为布尔值或 { type: "enabled|disabled" }');
+    throw createHttpError(400, t('error.thinking'));
   }
 
   return rawThinking;
@@ -186,10 +187,10 @@ async function processMessagesWithFiles(body, modelConfig) {
   const hasFileIds = fileIds !== undefined && fileIds !== null;
 
   if (hasInlineFiles && !Array.isArray(inlineFiles)) {
-    throw createHttpError(400, 'files 必须为数组');
+    throw createHttpError(400, t('error.filesArray'));
   }
   if (hasFileIds && !Array.isArray(fileIds)) {
-    throw createHttpError(400, 'fileIds 必须为数组');
+    throw createHttpError(400, t('error.fileIdsArray'));
   }
 
   const hasEffectiveFiles = (hasInlineFiles && inlineFiles.length > 0)
@@ -203,7 +204,7 @@ async function processMessagesWithFiles(body, modelConfig) {
   }
 
   if (!modelConfig.supportsFileUpload) {
-    throw createHttpError(400, `模型 ${modelConfig.id} 不支持文件上传`);
+    throw createHttpError(400, t('error.uploadUnsupported', { p0: modelConfig.id }));
   }
 
   const normalizedFiles = [];
@@ -219,7 +220,7 @@ async function processMessagesWithFiles(body, modelConfig) {
   }
 
   if (normalizedFiles.length > env.maxFileUploadCount) {
-    throw createHttpError(400, `单次最多上传 ${env.maxFileUploadCount} 个文件`);
+    throw createHttpError(400, t('error.uploadCount', { p0: env.maxFileUploadCount }));
   }
 
   const visionEnabled = supportsVisionMessages(modelConfig);
@@ -306,20 +307,20 @@ async function proxyChatCompletions(req, res, forceModel) {
   const stream = typeof requestBody.stream === 'boolean' ? requestBody.stream : true;
 
   if (!modelId) {
-    return res.status(400).json({ code: 400, msg: 'model 不能为空' });
+    return res.status(400).json({ code: 400, msg: t('error.modelRequired') });
   }
   if (!Array.isArray(requestBody.messages) || requestBody.messages.length === 0) {
-    return res.status(400).json({ code: 400, msg: 'messages 不能为空' });
+    return res.status(400).json({ code: 400, msg: t('error.messagesRequired') });
   }
   if (requestBody.document && stream) {
-    return res.status(400).json({ code: 400, msg: '生成文档时暂不支持 stream=true，请使用非流式请求' });
+    return res.status(400).json({ code: 400, msg: t('error.documentStream') });
   }
 
   const modelConfig = MODEL_INDEX.get(modelId);
   if (!modelConfig) {
     return res.status(400).json({
       code: 400,
-      msg: `不支持的模型: ${modelId}`,
+      msg: t('error.modelUnsupported', { p0: modelId }),
       data: MODEL_CATALOG.map((item) => item.id),
     });
   }
@@ -328,7 +329,7 @@ async function proxyChatCompletions(req, res, forceModel) {
   if (!provider || !provider.apiKey) {
     return res.status(500).json({
       code: 500,
-      msg: `${modelConfig.provider} API Key 未配置`,
+      msg: t('error.apiKey', { p0: modelConfig.provider }),
     });
   }
 
@@ -397,7 +398,7 @@ async function proxyChatCompletions(req, res, forceModel) {
     if (requestBody.document) {
       const assistantText = extractAssistantText(responseData);
       if (!assistantText) {
-        throw createHttpError(500, '模型响应中未找到可生成文档的正文内容');
+        throw createHttpError(500, t('error.documentEmpty'));
       }
 
       const generatedFile = await generateDocumentFile(requestBody.document, assistantText);

@@ -14,8 +14,7 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
   onSelect: (artifact: AgentArtifact) => void;
   onClose: () => void;
 }) {
-  const { language } = useLanguage();
-  const zh = language === 'zh';
+  const { t } = useLanguage();
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [page, setPage] = useState(1);
   const [zoom, setZoom] = useState(1);
@@ -40,18 +39,18 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
     if (draft || !isWebOrSheet) return;
     const controller = new AbortController();
     const id = artifact.format === 'html' ? artifact.fileId : artifact.previewFileId;
-    if (!id) { setFileError(zh ? '旧文件没有保存预览数据，请下载查看。' : 'This older file has no preview data. Please download it.'); return; }
+    if (!id) { setFileError(t('preview.legacyFile')); return; }
     void downloadAgentArtifact(id, controller.signal).then(blob => blob.text()).then(content => {
       if (controller.signal.aborted) return;
       if (artifact.format === 'html') setFileContent({ html: content });
       else {
         const data = JSON.parse(content);
-        if (!Array.isArray(data.sheets)) throw new Error('Invalid spreadsheet preview');
+        if (!Array.isArray(data.sheets)) throw new Error(t('preview.invalidSheet'));
         setFileContent({ sheets: data.sheets });
       }
     }).catch(cause => { if (!controller.signal.aborted) setFileError(String(cause.message || cause)); });
     return () => controller.abort();
-  }, [artifact.fileId, artifact.previewFileId, artifact.format, Boolean(draft), isWebOrSheet, retry, zh]);
+  }, [artifact.fileId, artifact.previewFileId, artifact.format, Boolean(draft), isWebOrSheet, retry, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -151,51 +150,51 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
     return () => { cancelled = true; task?.cancel(); };
   }, [document, page, width, zoom]);
 
-  return <aside ref={panelRef} className={`artifact-preview${isFullscreen || fullscreenFallback ? ' is-fullscreen' : ''}`} aria-label={zh ? '文件预览' : 'File preview'}>
+  return <aside ref={panelRef} className={`artifact-preview${isFullscreen || fullscreenFallback ? ' is-fullscreen' : ''}`} aria-label={t('preview.title')}>
     <header className="artifact-preview-head">
-      <div><span className="artifact-preview-label">{zh ? '文件预览' : 'FILE PREVIEW'} · {artifact.format === 'xlsx' ? 'Excel' : artifact.format.toUpperCase()}</span><strong>{artifact.fileName}</strong></div>
+      <div><span className="artifact-preview-label">{t('preview.title')} · {artifact.format === 'xlsx' ? 'Excel' : artifact.format.toUpperCase()}</span><strong>{artifact.fileName}</strong></div>
       <div className="artifact-preview-head-actions">
-        <button type="button" onClick={() => void toggleFullscreen()} aria-label={isFullscreen || fullscreenFallback ? (zh ? '退出全屏' : 'Exit fullscreen') : (zh ? '全屏打开' : 'Open fullscreen')} title={isFullscreen || fullscreenFallback ? (zh ? '退出全屏' : 'Exit fullscreen') : (zh ? '全屏打开' : 'Open fullscreen')}>
+        <button type="button" onClick={() => void toggleFullscreen()} aria-label={isFullscreen || fullscreenFallback ? t('preview.exitFullscreen') : t('preview.openFullscreen')} title={isFullscreen || fullscreenFallback ? t('preview.exitFullscreen') : t('preview.openFullscreen')}>
           {isFullscreen || fullscreenFallback ? '↙' : '⛶'}
         </button>
-        <button type="button" onClick={onClose} aria-label={zh ? '关闭预览' : 'Close preview'}>×</button>
+        <button type="button" onClick={onClose} aria-label={t('preview.close')}>×</button>
       </div>
     </header>
     <div className="artifact-preview-toolbar">
-      <select aria-label={zh ? '选择预览文件' : 'Select a file'} value={artifact.fileId} onChange={event => {
+      <select aria-label={t('preview.selectFile')} value={artifact.fileId} onChange={event => {
         const selected = artifacts.find(file => file.fileId === event.target.value);
         if (selected) onSelect(selected);
       }}>{artifacts.map(file => <option key={file.fileId} value={file.fileId}>{file.fileName}</option>)}</select>
-      {!draft && <a href={getFileDownloadUrl(artifact.fileId)} download={artifact.fileName}>{zh ? '下载原文件' : 'Download'}</a>}
+      {!draft && <a href={getFileDownloadUrl(artifact.fileId)} download={artifact.fileName}>{t('preview.download')}</a>}
     </div>
     {draft && <div className={`artifact-preview-status artifact-preview-status--${draft.status}`} role="status">
-      <span>{draft.status === 'generating' ? (zh ? '正在生成 · 实时预览' : 'Generating · Live preview') : draft.status === 'saving' ? (zh ? '正在生成文件…' : 'Saving file…') : draft.status === 'cancelled' ? (zh ? '已停止 · 保留草稿' : 'Stopped · Draft retained') : (zh ? '生成失败 · 保留草稿' : 'Failed · Draft retained')}</span>
-      <small>{zh ? '草稿尚未保存为文件' : 'Draft has not been saved as a file'}</small>
+      <span>{draft.status === 'generating' ? t('preview.generating') : draft.status === 'saving' ? t('preview.saving') : draft.status === 'cancelled' ? t('preview.cancelled') : t('preview.failed')}</span>
+      <small>{t('preview.unsaved')}</small>
     </div>}
     <div className={`artifact-preview-body${artifact.format === 'html' ? ' artifact-preview-body--html' : ''}`} ref={hostRef} aria-busy={Boolean(previewId && rendering && !error)}>
       {draft ? <DraftContent draft={draft} /> : isWebOrSheet ? (
-        fileError ? <div className="artifact-preview-error" role="alert"><p>{fileError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>{zh ? '重新加载' : 'Retry'}</button></div>
-        : !fileContent ? <p role="status">{zh ? '正在加载页面…' : 'Loading…'}</p>
+        fileError ? <div className="artifact-preview-error" role="alert"><p>{fileError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>{t('preview.retry')}</button></div>
+        : !fileContent ? <p role="status">{t('preview.loading')}</p>
         : artifact.format === 'html' ? <HtmlPreview content={fileContent.html || ''} /> : <SheetPreview sheets={fileContent.sheets} />
-      ) : !previewId ? <p>{zh ? '此文件没有可用预览，请下载查看。' : 'Preview unavailable. Please download the file.'}</p> : error ?
-        <div className="artifact-preview-error" role="alert"><p>{zh ? '预览加载失败，请确认后端服务和文件仍然可用。' : 'Preview failed. Check that the service and file are available.'}</p><small>{error}</small><button onClick={() => setRetry(value => value + 1)} type="button">{zh ? '重新加载' : 'Retry'}</button></div> : <>
-          {rendering && <p className="artifact-preview-loading" role="status">{zh ? '正在加载页面…' : 'Loading page…'}</p>}
-          <canvas ref={canvasRef} style={{ visibility: rendering ? 'hidden' : 'visible' }} role="img" aria-label={`${artifact.fileName} — ${zh ? '第' : 'Page'} ${page} ${zh ? '页' : ''}`} />
+      ) : !previewId ? <p>{t('preview.unavailable')}</p> : error ?
+        <div className="artifact-preview-error" role="alert"><p>{t('preview.loadError')}</p><small>{error}</small><button onClick={() => setRetry(value => value + 1)} type="button">{t('preview.retry')}</button></div> : <>
+          {rendering && <p className="artifact-preview-loading" role="status">{t('preview.loadingPage')}</p>}
+          <canvas ref={canvasRef} style={{ visibility: rendering ? 'hidden' : 'visible' }} role="img" aria-label={t('preview.pageLabel', { name: artifact.fileName, page })} />
         </>}
     </div>
     {!draft && !isWebOrSheet && <footer className="artifact-preview-footer">
       <div className="artifact-preview-zoom">
-        <button type="button" aria-label={zh ? '缩小' : 'Zoom out'} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.25))}>−</button>
-        <button type="button" onClick={() => setZoom(1)} aria-label={zh ? '适应宽度' : 'Fit width'}>{Math.round(zoom * 100)}%</button>
-        <button type="button" aria-label={zh ? '放大' : 'Zoom in'} disabled={zoom >= 2.5} onClick={() => setZoom(value => Math.min(2.5, value + 0.25))}>+</button>
+        <button type="button" aria-label={t('preview.zoomOut')} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.25))}>−</button>
+        <button type="button" onClick={() => setZoom(1)} aria-label={t('preview.fitWidth')}>{Math.round(zoom * 100)}%</button>
+        <button type="button" aria-label={t('preview.zoomIn')} disabled={zoom >= 2.5} onClick={() => setZoom(value => Math.min(2.5, value + 0.25))}>+</button>
       </div>
-      <nav aria-label={zh ? '页面导航' : 'Page navigation'}>
-        <button type="button" disabled={!document || page <= 1} onClick={() => setPage(value => value - 1)} aria-label={zh ? '上一页' : 'Previous page'}>‹</button>
+      <nav aria-label={t('preview.navigation')}>
+        <button type="button" disabled={!document || page <= 1} onClick={() => setPage(value => value - 1)} aria-label={t('preview.previousPage')}>‹</button>
         <span aria-live="polite">{document ? `${page} / ${document.numPages}` : '—'}</span>
-        <button type="button" disabled={!document || page >= document.numPages} onClick={() => setPage(value => value + 1)} aria-label={zh ? '下一页' : 'Next page'}>›</button>
+        <button type="button" disabled={!document || page >= document.numPages} onClick={() => setPage(value => value + 1)} aria-label={t('preview.nextPage')}>›</button>
       </nav>
-      <small>{isSlides ? (zh ? '幻灯片预览 · Office 中字体可能略有差异' : 'Slide preview · Fonts may vary in Office') : (zh ? '原始 PDF · 可逐页查看' : 'Original PDF · Browse pages')}</small>
+      <small>{isSlides ? t('preview.slideNote') : t('preview.pdfNote')}</small>
     </footer>}
-    {artifact.format === 'html' && <div className="artifact-preview-html-note">{zh ? '隔离预览 · 展示 HTML / CSS，脚本交互请下载后打开' : 'Isolated HTML / CSS preview · Download for script interactions'}</div>}
+    {artifact.format === 'html' && <div className="artifact-preview-html-note">{t('preview.htmlNote')}</div>}
   </aside>;
 }

@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const pptxgen = require('pptxgenjs');
 const PDFDocument = require('pdfkit');
 const path = require('node:path');
@@ -68,12 +69,12 @@ async function generatePresentationFile(input, { signal } = {}) {
       rect(47, 40, 32, 32, dark ? '315E88' : 'DFEBF8');
       text(String(index + 1).padStart(2, '0'), 52, 45, 14, ink, 28);
       const titleLines = wrapText(pdf, item.title, 26, 565);
-      if (titleLines.length > 2) throw new Error('幻灯片标题过长，请减少换行或缩短标题');
+      if (titleLines.length > 2) throw new Error(t('error.slideTitle'));
       titleLines.forEach((line, i) => text(line, 98, 36 + i * 34, 26, ink, 575));
       let y = 125;
       const rows = item.body.map(value => wrapText(pdf, value, 16, 580));
       const needed = rows.reduce((sum, lines) => sum + lines.length * 23 + 10, 0);
-      if (needed > 235) throw new Error('幻灯片正文过长，请拆分为更多页或缩短每条内容');
+      if (needed > 235) throw new Error(t('error.slideBody'));
       rows.forEach((lines, i) => {
         text(String(i + 1).padStart(2, '0'), 49, y + 2, 10, dark ? 'A4CAE9' : '55738D', 25);
         lines.forEach((line, j) => text(line, 84, y + j * 23, 16, dark ? 'E8F2FF' : '253047', 590));

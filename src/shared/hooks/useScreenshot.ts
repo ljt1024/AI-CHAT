@@ -23,7 +23,7 @@ export const useScreenshot = (
 
     const takeScreenshot = async (target: HTMLElement | null) => {
         if (!target) {
-            setError('No target element found');
+            setError(t('screenshot.noTarget'));
             return null;
         }
 
@@ -49,7 +49,7 @@ export const useScreenshot = (
             return sanitized;
         } catch (err) {
             console.log(err)
-            setError(err instanceof Error ? err.message : 'Failed to capture screenshot');
+            setError(err instanceof Error ? err.message : t('screenshot.error'));
             messagePop.error(t('screenshot.error'))
             return null;
         } finally {

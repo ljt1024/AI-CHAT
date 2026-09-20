@@ -15,7 +15,7 @@ output = Path(tempfile.mkdtemp(prefix='live-preview-qa-'))
 print(f'Evidence: {output}', flush=True)
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    page = browser.new_page(viewport={'width':1600,'height':1000}, accept_downloads=True)
+    page = browser.new_page(locale='zh-CN', viewport={'width':1600,'height':1000}, accept_downloads=True)
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(args.url)

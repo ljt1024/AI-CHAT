@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const { Router } = require('express');
 const { sendJsonError } = require('../utils/http');
 const { generateDocumentFile } = require('../services/documentService');
@@ -24,7 +25,7 @@ router.post('/files/upload', uploadBodyParser, async (req, res) => {
       data: buildFileAccessPayload(req, fileMeta),
     });
   } catch (error) {
-    return sendJsonError(res, error, '文件上传失败');
+    return sendJsonError(res, error, t('error.upload'));
   }
 });
 
@@ -43,7 +44,7 @@ router.post('/files/document', async (req, res) => {
       },
     });
   } catch (error) {
-    return sendJsonError(res, error, '文档生成失败');
+    return sendJsonError(res, error, t('error.document'));
   }
 });
 
@@ -61,7 +62,7 @@ router.get('/files/:fileId/download', async (req, res) => {
 
     return res.send(buffer);
   } catch (error) {
-    return sendJsonError(res, error, '文件下载失败');
+    return sendJsonError(res, error, t('error.download'));
   }
 });
 

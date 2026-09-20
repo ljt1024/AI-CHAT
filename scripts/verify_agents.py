@@ -16,7 +16,7 @@ args = parser.parse_args()
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     try:
-        page = browser.new_page()
+        page = browser.new_page(locale='zh-CN')
         errors = []
         streams = []
         requests = []

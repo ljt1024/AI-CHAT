@@ -5,7 +5,9 @@ const apiRoutes = require('./routes');
 const { getHttpStatusCode } = require('./utils/http');
 const { createRequestId, logError, logInfo } = require('./utils/logger');
 
+const { languageMiddleware } = require('./i18n');
 const app = express();
+app.use(languageMiddleware);
 
 app.use(cors());
 app.use((req, res, next) => {

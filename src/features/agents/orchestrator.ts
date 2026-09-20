@@ -1,3 +1,4 @@
+import { t } from '@/app/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import type { AgentDefinition, AgentExecutor, AgentRun, AgentTask, OrchestrationStrategy } from './types';
 
@@ -7,7 +8,7 @@ export async function orchestrate(
   executor: AgentExecutor,
   options: { strategy?: OrchestrationStrategy; signal?: AbortSignal } = {},
 ): Promise<AgentRun> {
-  if (!agents.length) throw new Error('At least one agent is required');
+  if (!agents.length) throw new Error(t('error.noAgents'));
   const task: AgentTask = { id: uuidv4(), input, agentId: agents[0].id, status: 'running' };
   const strategy = options.strategy ?? 'sequential';
   const steps = strategy === 'parallel'
@@ -31,5 +32,5 @@ async function runSequential(agents: AgentDefinition[], input: string, executor:
 
 async function runStep(agent: AgentDefinition, input: string, executor: AgentExecutor, signal?: AbortSignal): Promise<AgentRun['steps'][number]> {
   try { return { agentId: agent.id, output: await executor(agent, input, signal), status: 'completed' }; }
-  catch (error) { return { agentId: agent.id, output: error instanceof Error ? error.message : 'Agent failed', status: 'failed' }; }
+  catch (error) { return { agentId: agent.id, output: error instanceof Error ? error.message : t('error.agent'), status: 'failed' }; }
 }

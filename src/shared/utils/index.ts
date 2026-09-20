@@ -1,3 +1,4 @@
+import { t } from '@/app/i18n';
 export const debounce = (
   func: (...args: any[]) => void,
   delay: number,
@@ -58,7 +59,7 @@ export function exportJson(data: any, filename: string): Promise<void> {
 // 合并两个数组, 数组中有相同的id, b数组覆盖a数组中相同id的项
 export function mergeArrays(a: any[], b: any[]): any[] {
   if (!Array.isArray(b)) {
-    throw new Error('非法的导入格式')
+    throw new Error(t('error.import'))
   }
   const result = [...a]
 

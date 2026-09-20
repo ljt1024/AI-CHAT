@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const express = require('express');
 const AliOSS = require('ali-oss');
 const fs = require('fs');
@@ -43,13 +44,13 @@ function saveUploadedFileIndex() {
 
 function validateFileBuffer(buffer) {
   if (!Buffer.isBuffer(buffer)) {
-    throw createHttpError(400, '上传文件内容无效');
+    throw createHttpError(400, t('error.uploadBuffer'));
   }
   if (buffer.length === 0) {
-    throw createHttpError(400, '上传文件为空');
+    throw createHttpError(400, t('error.uploadEmpty'));
   }
   if (buffer.length > env.maxUploadFileSizeBytes) {
-    throw createHttpError(400, `文件大小不能超过 ${env.maxUploadFileSizeBytes} 字节`);
+    throw createHttpError(400, t('error.uploadSize', { p0: env.maxUploadFileSizeBytes }));
   }
 }
 
@@ -87,7 +88,7 @@ function getOssClient() {
   }
 
   if (missingConfig.length > 0) {
-    throw createHttpError(500, `OSS 配置缺失: ${missingConfig.join(', ')}`);
+    throw createHttpError(500, t('error.ossConfig', { p0: missingConfig.join(', ') }));
   }
 
   const clientOptions = {
@@ -111,10 +112,10 @@ function getOssClient() {
 
 function buildOssErrorMessage(error, fallbackMessage) {
   if (error?.code === 'ENOTFOUND') {
-    return 'OSS 域名解析失败，请检查 OSS_REGION 或 OSS_ENDPOINT 配置';
+    return t('error.ossDns');
   }
   if (error?.status === 403 || error?.code === 'AccessDenied') {
-    return 'OSS 认证失败，请检查 OSS_ACCESS_KEY_ID、OSS_ACCESS_KEY_SECRET 和 Bucket 权限';
+    return t('error.ossAuth');
   }
   return error?.message || fallbackMessage;
 }
@@ -127,19 +128,19 @@ async function uploadBufferToOss(objectKey, buffer, mimeType) {
       },
     });
   } catch (error) {
-    throw createHttpError(502, buildOssErrorMessage(error, '文件上传到 OSS 失败'));
+    throw createHttpError(502, buildOssErrorMessage(error, t('error.ossUpload')));
   }
 }
 
 function getStoredFileMetadata(fileId) {
   const normalizedFileId = typeof fileId === 'string' ? fileId.trim() : '';
   if (!normalizedFileId) {
-    throw createHttpError(400, 'fileId 必须为非空字符串');
+    throw createHttpError(400, t('error.fileIdRequired'));
   }
 
   const metadata = uploadedFileIndex[normalizedFileId];
   if (!metadata) {
-    throw createHttpError(400, `fileId 不存在: ${normalizedFileId}`);
+    throw createHttpError(400, t('error.fileMissing', { p0: normalizedFileId }));
   }
 
   return {
@@ -150,7 +151,7 @@ function getStoredFileMetadata(fileId) {
 
 function getStoredFileUrl(metadata) {
   if (resolveFileStorageMode(metadata) !== 'oss') {
-    throw createHttpError(400, `fileId 对应图片未存储在 OSS: ${metadata.fileId}`);
+    throw createHttpError(400, t('error.fileNotOss', { p0: metadata.fileId }));
   }
 
   const objectKey = metadata.objectKey || buildOssObjectKey(metadata.storageName);
@@ -160,7 +161,7 @@ function getStoredFileUrl(metadata) {
       expires: env.ossSignedUrlExpiresSeconds,
     });
   } catch (error) {
-    throw createHttpError(502, buildOssErrorMessage(error, '生成 OSS 文件地址失败'));
+    throw createHttpError(502, buildOssErrorMessage(error, t('error.ossUrl')));
   }
 }
 
@@ -179,10 +180,10 @@ async function readStoredFileBuffer(metadata) {
       if (typeof result.content === 'string') {
         return Buffer.from(result.content);
       }
-      throw createHttpError(500, `fileId 对应文件内容读取失败: ${metadata.fileId}`);
+      throw createHttpError(500, t('error.fileRead', { p0: metadata.fileId }));
     } catch (error) {
       if (error.code === 'NoSuchKey' || error.status === 404) {
-        throw createHttpError(400, `fileId 对应文件不存在: ${metadata.fileId}`);
+        throw createHttpError(400, t('error.fileUnavailable', { p0: metadata.fileId }));
       }
       throw error;
     }
@@ -190,7 +191,7 @@ async function readStoredFileBuffer(metadata) {
 
   const storagePath = path.join(env.paths.localUploadDir, metadata.storageName);
   if (!fs.existsSync(storagePath)) {
-    throw createHttpError(400, `fileId 对应文件不存在: ${metadata.fileId}`);
+    throw createHttpError(400, t('error.fileUnavailable', { p0: metadata.fileId }));
   }
 
   return fs.readFileSync(storagePath);
@@ -306,12 +307,12 @@ async function deleteUploadedFilesByIds(fileIds) {
 
 async function normalizeFilesFromIds(fileIds) {
   if (!Array.isArray(fileIds)) {
-    throw createHttpError(400, 'fileIds 必须为数组');
+    throw createHttpError(400, t('error.fileIdsArray'));
   }
 
   return Promise.all(fileIds.map(async (rawId, index) => {
     if (typeof rawId !== 'string' || !rawId.trim()) {
-      throw createHttpError(400, `fileIds[${index}] 必须为非空字符串`);
+      throw createHttpError(400, t('error.fileIdIndex', { p0: index }));
     }
 
     const metadata = getStoredFileMetadata(rawId);
@@ -343,10 +344,10 @@ async function normalizeFilesFromIds(fileIds) {
       const text = buffer.toString('utf8');
       content = text.slice(0, env.maxFileContentLength);
       if (text.length > env.maxFileContentLength) {
-        note = `文件内容已截断，原始长度 ${text.length} 字符`;
+        note = t('file.truncated', { p0: text.length });
       }
     } else {
-      note = '该文件为二进制文件，当前仅传递文件元信息，未提取正文。';
+      note = t('file.binary');
     }
 
     return {

@@ -30,8 +30,7 @@ const timestamp = (item: CovIdListItem) => {
 }
 
 export default function Sidebar({ isLoading }: { isLoading: boolean }) {
-  const { t, language } = useLanguage()
-  const zh = language === 'zh'
+  const { t, dateLocale } = useLanguage()
   const { covList } = useChat()
   const dispatch = useChatDispatch()
   const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
@@ -74,16 +73,16 @@ export default function Sidebar({ isLoading }: { isLoading: boolean }) {
     for (const item of sorted) {
       const time = timestamp(item)
       const date = new Date(time)
-      const group = item.isTop ? (zh ? '置顶' : 'Pinned')
-        : !time ? (zh ? '更早' : 'Earlier')
-        : date.toDateString() === now.toDateString() ? (zh ? '今天' : 'Today')
-        : date.toDateString() === yesterday.toDateString() ? (zh ? '昨天' : 'Yesterday')
-        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const group = item.isTop ? t('record.top')
+        : !time ? t('sidebar.earlier')
+        : date.toDateString() === now.toDateString() ? t('sidebar.today')
+        : date.toDateString() === yesterday.toDateString() ? t('sidebar.yesterday')
+        : new Intl.DateTimeFormat(dateLocale, { year: 'numeric', month: 'long' }).format(date)
       if (!result.has(group)) result.set(group, [])
       result.get(group)!.push(item)
     }
     return [...result.entries()]
-  }, [covList, query, today, zh])
+  }, [covList, query, today, dateLocale, t])
 
   const select = (id?: string) => {
     if (isLoading) return
@@ -95,7 +94,7 @@ export default function Sidebar({ isLoading }: { isLoading: boolean }) {
   }
 
   return <>
-    {mobile && open && <button type="button" className="sidebar-backdrop" aria-label={zh ? '关闭侧栏' : 'Close sidebar'} onClick={() => setOpen(false)} />}
+    {mobile && open && <button type="button" className="sidebar-backdrop" aria-label={t('sidebar.close')} onClick={() => setOpen(false)} />}
     <aside className={`sidebar${open ? '' : ' sidebar--collapsed'}`} aria-label={t('sidebar.history')} onKeyDown={event => {
       if (event.key === 'Escape') {
         if (searching) { setQuery(''); setSearching(false) }
@@ -105,37 +104,37 @@ export default function Sidebar({ isLoading }: { isLoading: boolean }) {
       {open ? <>
         <header className="sidebar-header">
           <div className="sidebar-brand"><SidebarIcon name="chat" /><span>AI Chat</span></div>
-          <button type="button" className="sidebar-icon-button" aria-label={zh ? '搜索对话' : 'Search chats'} aria-expanded={searching} onClick={() => { setSearching(value => !value); setQuery('') }}><SidebarIcon name="search" /></button>
+          <button type="button" className="sidebar-icon-button" aria-label={t('sidebar.search')} aria-expanded={searching} onClick={() => { setSearching(value => !value); setQuery('') }}><SidebarIcon name="search" /></button>
           <button ref={collapseRef} type="button" className="sidebar-icon-button" aria-label={t('sidebar.collapse')} onClick={() => setOpen(false)}><SidebarIcon name="panel" /></button>
         </header>
-        <button type="button" className="newCov" disabled={isLoading} onClick={() => select()}><SidebarIcon name="new" /><span>{zh ? '开启新对话' : 'New chat'}</span></button>
-        {searching && <div className="sidebar-search"><SidebarIcon name="search" /><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={zh ? '搜索对话标题' : 'Search chat titles'} aria-label={zh ? '搜索对话标题' : 'Search chat titles'} /></div>}
-        <nav className="covList" aria-label={zh ? '历史对话' : 'Chat history'}>
-          <div className="sidebar-history-tools"><button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={zh ? '管理对话记录' : 'Manage chat history'} title={zh ? '管理对话记录' : 'Manage chat history'} onClick={() => setRecords(true)}><SidebarIcon name="records" /></button></div>
+        <button type="button" className="newCov" disabled={isLoading} onClick={() => select()}><SidebarIcon name="new" /><span>{t('sidebar.newChat')}</span></button>
+        {searching && <div className="sidebar-search"><SidebarIcon name="search" /><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={t('sidebar.searchPlaceholder')} aria-label={t('sidebar.searchPlaceholder')} /></div>}
+        <nav className="covList" aria-label={t('sidebar.chatHistory')}>
+          <div className="sidebar-history-tools"><button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={t('sidebar.manage')} title={t('sidebar.manage')} onClick={() => setRecords(true)}><SidebarIcon name="records" /></button></div>
           {groups.map(([label, items]) => <section className="sidebar-group" key={label} aria-label={label}>
             <h2>{label}</h2>
             {items.map(item => {
               const selected = item.id === getSelectId() && localStorage.getItem('isNewCov') !== 'true'
               return <div className={`covItem${selected ? ' curCov' : ''}`} key={item.id}>
-                <button type="button" className="covName" disabled={isLoading} aria-current={selected ? 'page' : undefined} title={item.title} onClick={() => select(item.id)}>{item.title || (zh ? '未命名对话' : 'Untitled chat')}</button>
+                <button type="button" className="covName" disabled={isLoading} aria-current={selected ? 'page' : undefined} title={item.title} onClick={() => select(item.id)}>{item.title || t('sidebar.untitled')}</button>
                 <Popover placement="bottom-end" trigger="click" content={<div className="sidebar-operations">
                   <button type="button" disabled={isLoading} onClick={() => setEditing(item)}>{t('sidebar.rename')}</button>
                   <button type="button" disabled={isLoading} onClick={() => dispatch({ type: 'top', id: item.id })}>{item.isTop ? t('sidebar.unpin') : t('sidebar.pin')}</button>
                   <button type="button" disabled={isLoading} className="sidebar-delete" onClick={() => setDeleting(item)}>{t('sidebar.delete')}</button>
                 </div>}>
-                  <button type="button" className="covOperation sidebar-icon-button" disabled={isLoading} aria-label={`${zh ? '更多操作' : 'More actions'} · ${item.title}`}><SidebarIcon name="more" /></button>
+                  <button type="button" className="covOperation sidebar-icon-button" disabled={isLoading} aria-label={`${t('sidebar.more')} · ${item.title}`}><SidebarIcon name="more" /></button>
                 </Popover>
               </div>
             })}
           </section>)}
-          {!groups.length && <p className="sidebar-empty">{query ? (zh ? '没有找到匹配的对话' : 'No matching chats') : (zh ? '还没有对话，开始聊聊吧' : 'Start a conversation')}</p>}
+          {!groups.length && <p className="sidebar-empty">{query ? t('sidebar.noMatches') : t('sidebar.empty')}</p>}
         </nav>
-        <button type="button" className="sidebar-footer" disabled={isLoading} onClick={() => setRecords(true)} aria-label={zh ? '打开会话管理' : 'Open chat management'}>
-          <span className="sidebar-avatar">AI</span><span className="sidebar-footer-label">{zh ? '我的对话' : 'My chats'}<small>{zh ? `${covList.length} 个对话` : `${covList.length} conversations`}</small></span><SidebarIcon name="more" />
+        <button type="button" className="sidebar-footer" disabled={isLoading} onClick={() => setRecords(true)} aria-label={t('sidebar.openManager')}>
+          <span className="sidebar-avatar">AI</span><span className="sidebar-footer-label">{t('sidebar.myChats')}<small>{t('sidebar.count', { count: covList.length })}</small></span><SidebarIcon name="more" />
         </button>
       </> : <div className="sidebar-rail">
         <button ref={expandRef} type="button" className="sidebar-icon-button" aria-label={t('sidebar.expand')} onClick={() => setOpen(true)}><SidebarIcon name="panel" /></button>
-        {!mobile && <button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={zh ? '开启新对话' : 'New chat'} onClick={() => select()}><SidebarIcon name="new" /></button>}
+        {!mobile && <button type="button" className="sidebar-icon-button" disabled={isLoading} aria-label={t('sidebar.newChat')} onClick={() => select()}><SidebarIcon name="new" /></button>}
       </div>}
     </aside>
     {editing && <EditTitDialog isConfirmDialogOpen setIsConfirmDialogOpen={value => { if (!value) setEditing(null) }} covItem={editing} />}

@@ -393,3 +393,9 @@ LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并
 `preview` 事件为 `{type:'preview', preview:{id, toolCallId, format, status, title, content, slides, sheets}}`。`id` 对应执行步骤，`toolCallId` 对应 LangChain 工具调用；`status` 为 `generating`、`saving` 或 `failed`。客户端断开/取消时自行标记草稿 `cancelled`。生成中的内容来自 `AIMessageChunk.tool_call_chunks`，由官方 `parsePartialJson` 容错解码，约 120ms 发一次快照；不提前执行不完整工具参数。最终校验与执行仍由 LangGraph 的 tools 节点完成，结果写回 `ToolMessage`，成功 artifact 携带同一 `toolCallId`。
 
 `export_html` 参数 `{title, html}`，HTML 最大 200,000 字符，下载 MIME 为 `text/html; charset=utf-8`。前端通过下载接口读取原文并隔离渲染，不提供同源 HTML inline 执行接口。Excel 的 `previewFileId` 指向 JSON，PPT 的该字段指向 PDF；部署时同时保留原文件、预览文件及索引。
+
+### 请求语言
+
+通过 `Accept-Language: en-US` 或 `zh-CN` 选择语言，默认中文。后端 i18next 资源位于 `src/i18n/locales`，`src/i18n/index.js` 使用 AsyncLocalStorage 隔离并发请求的语言，不修改全局当前语言。响应设置 `Content-Language` 和 `Vary: Accept-Language`。
+
+错误、模型目录、智能体系统说明和工具提示、文件默认标签均使用请求语言。SSE `step.outputTranslation` 提供 `{key, params}`，供前端在切换界面语言时重绘系统进度；模型输出开始后删除该字段，保证实际生成内容不被翻译替换。旧客户端仍可以使用 `step.output`。

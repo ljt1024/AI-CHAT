@@ -326,3 +326,12 @@ python3 scripts/verify_preview.py --url http://127.0.0.1:5175/ai
 新增 `export_html({title, html})`，生成可下载的 UTF-8 HTML。HTML 预览在无脚本、无同源权限的 sandbox iframe 中渲染，经 DOMPurify 清理并用 CSP 阻止外部资源、网络连接和表单；目前在线展示 HTML/CSS，原文件的 JavaScript 交互需下载后打开。草稿以 250ms 间隔刷新，避免每个 token 都重载 iframe。
 
 Excel 新导出文件同时保存由实际工作簿值生成的 JSON 预览，包含合计缓存值，支持切换工作表和每页 100 行查看；旧文件没有预览数据时仍可下载。真实联调脚本：`python3 scripts/verify_live_preview.py`（可加 `--model qwen3.5-plus`），验证工具完成前出现多个不同的 HTML 帧，以及下载、刷新、全屏和手机端查看。
+
+### 国际化（i18n）
+
+前端使用 `i18next + react-i18next`，支持简体中文和英文。首次访问跟随浏览器语言（不支持的语言回退中文）；用户选择保存到 `appLanguage`，刷新和同源标签页保持同步。现有 `useLanguage()` 由 i18next 驱动，继续提供类型检查的 `t()`、`language`、`setLanguage()` 和 `dateLocale`。
+
+- 前端资源：`src/app/i18n/locales/{zh,en}.json`，使用语义化键、单花括号插值（例如 `{name}`）及 i18next 的 `_one` / `_other` 复数规则。
+- 后端资源：`end/src/i18n/locales/{zh,en}.json`。请求携带 `Accept-Language`；后端按权重协商语言，使用 AsyncLocalStorage 隔离请求上下文，并返回 `Content-Language` 和 `Vary: Accept-Language`。
+- 覆盖聊天界面、历史管理、智能体状态、代码与文件预览、上传提示、模型说明、服务端校验、导出工具提示及默认文件标签。智能体的应用生成步骤携带 `outputTranslation`，切换语言即可重新渲染；模型流式正文和用户原文、文件内容不做翻译。旧记录没有翻译键时保留原文，上游服务原始错误也保留诊断信息。
+- 新增语言或文案后运行 `npm run check:i18n`，检查资源键、插值参数及代码引用。`npm test --prefix end` 包含请求并发语言隔离与 SSE 国际化测试；启动前后端后可运行 `python3 scripts/verify_i18n.py` 验证切换、持久化、复数、预览、移动端与真实接口校验；加 `--live` 可额外验证真实模型工具调用。

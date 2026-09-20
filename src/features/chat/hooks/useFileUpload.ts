@@ -1,3 +1,5 @@
+import { languageHeaders, t } from '@/app/i18n';
+import { useMessagePop } from '@/shared/components/MessagePop';
 import { useEffect, useState } from 'react'
 import { UploadedFileItem } from '@/shared/components/ChatInputControl'
 import { FileUploadResponse } from '../types'
@@ -18,6 +20,7 @@ export const useFileUpload = ({
   supportsImageUnderstanding,
   isLoading
 }: UseFileUploadOptions) => {
+  const messagePop = useMessagePop();
   const [isUploadingFile, setIsUploadingFile] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileItem[]>([])
 
@@ -37,7 +40,7 @@ export const useFileUpload = ({
       formData.append('model', selectedModelId)
 
       const response = await fetch(getFileUploadApiUrl(chatApiUrl), {
-        method: 'POST',
+        method: 'POST', headers: languageHeaders(),
         body: formData
       })
       if (!response.ok) {
@@ -55,7 +58,7 @@ export const useFileUpload = ({
       }
       setUploadedFiles([uploadedFile])
     } catch (error) {
-      console.log(error)
+      messagePop.error(t('input.uploadError'))
     } finally {
       setIsUploadingFile(false)
     }

@@ -88,7 +88,7 @@ const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog,
 
     const exportChat = () => {
         const data = getLoclMessages()
-        const fileName = new Date().toLocaleString().replace(/\//g, '-').replace(/:/g, '.')
+        const fileName = new Date().toLocaleString(dateLocale).replace(/\//g, '-').replace(/:/g, '.')
         exportJson(data, `chat_storage_data_${fileName}.json`).finally(() => {
             console.log('导出结束')
         })

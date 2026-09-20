@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const { z } = require('zod');
 const { sanitizeFileName } = require('../utils/upload');
 
@@ -10,7 +11,7 @@ const htmlSchema = z.object({
 function normalizeHtml(value) {
   const html = value.trim();
   if (/<html[\s>]/i.test(html) || /<!doctype\s+html/i.test(html)) return html;
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>预览</title></head><body>${html}</body></html>`;
+  return t('html.document', { p0: html });
 }
 
 async function generateHtmlFile(input, { signal } = {}) {

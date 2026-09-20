@@ -1,3 +1,4 @@
+import { languageHeaders } from '@/app/i18n';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ChatHeaderOperate from '@/shared/components/ChatHeaderOperate';
 import MessageItem from '@/shared/components/MessageItem';
@@ -5,7 +6,6 @@ import Sidebar from '@/shared/components/Sidebar';
 import Share from '@/shared/components/Share';
 import ChatInputControl from '@/shared/components/ChatInputControl';
 import ArrowDownIcon from '@/shared/assets/arrowDown.svg?react';
-import { MessagePopProvider } from '@/shared/components/MessagePop'
 import { useChat, useChatDispatch } from '@/app/providers/ChatContext';
 import { useLanguage } from '@/app/providers/LanguageContext';
 import { newChat, storageMessages, ensureAgentTurnId, removeLastAssistantMessage, Message, getSelectId, getMessageByCovId } from '@/shared/utils/localMessages'
@@ -247,12 +247,13 @@ const ChatAI: React.FC = () => {
       const response = await fetch(chatApiUrl, {
         signal: requestController.signal,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
+        headers: { ...languageHeaders(), 'Content-Type': 'application/json', Accept: "text/event-stream", Authentication: 'bearer' },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`chat request failed, status: ${response.status}`)
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.msg || payload.error?.message || t('error.status', { status: response.status }))
       }
 
       const reader = response.body.getReader();
@@ -355,7 +356,7 @@ const ChatAI: React.FC = () => {
         dispatch({
           type: 'addMessages',
           messages: {
-            content: `${t('chat.serverBusy')}\n\n${error instanceof Error ? error.message : '请求失败，请检查后端服务是否启动'}`,
+            content: `${t('chat.serverBusy')}\n\n${error instanceof Error ? error.message : t('error.request')}`,
             isBot: true,
             isError: true
           }
@@ -404,7 +405,7 @@ const ChatAI: React.FC = () => {
           seenPreviews.add(draft.id);
           const file: AgentArtifact = {
             fileId: `draft:${draft.id}`, toolCallId: draft.toolCallId, format: draft.format, draft,
-            fileName: `${draft.title || '正在生成'}.${draft.format}`, mimeType: '', size: 0, downloadPath: '', createdAt: '',
+            fileName: `${draft.title || t('preview.generatingName')}.${draft.format}`, mimeType: '', size: 0, downloadPath: '', createdAt: '',
           };
           setLiveFiles(previous => ({ sessionId, files: [...(previous.sessionId === sessionId ? previous.files : []).filter(item => item.fileId !== file.fileId), file] }));
           setPreviewSelection(previous => first || (previous?.sessionId === sessionId && previous.artifact.fileId === file.fileId) ? { sessionId, artifact: file } : previous);
@@ -418,7 +419,7 @@ const ChatAI: React.FC = () => {
         if (event.type === 'delta') assistant.content += event.text
         if (event.type === 'step_delta') {
           assistant.agentSteps = assistant.agentSteps?.map((step) => step.id === event.stepId
-            ? { ...step, output: (event.reset ? '' : step.output) + event.text }
+            ? { ...step, outputTranslation: event.reset ? undefined : step.outputTranslation, output: (event.reset ? '' : step.output) + event.text }
             : step)
         }
         if (event.type === 'step') {
@@ -439,7 +440,7 @@ const ChatAI: React.FC = () => {
       const stopped = requestController.signal.aborted
       assistant.agentStatus = stopped ? 'cancelled' : 'failed'
       assistant.isError = !stopped
-      assistant.content += `\n\n${stopped ? '已停止，本轮未写入会话记忆。' : error instanceof Error ? error.message : '智能体执行失败'}`
+      assistant.content += `\n\n${stopped ? t('agent.stopped') : error instanceof Error ? error.message : t('error.agent')}`
       assistant.agentSteps = assistant.agentSteps?.map((step) => step.status === 'running' ? { ...step, status: stopped ? 'cancelled' : 'failed' } : step)
     } finally {
       const finishDraft = (file: AgentArtifact): AgentArtifact => file.draft && ['generating', 'saving'].includes(file.draft.status)
@@ -549,7 +550,7 @@ const ChatAI: React.FC = () => {
 
 
   return (
-    <MessagePopProvider>
+    <>
       <div className={`chat-container${previewArtifact ? ' chat-container--preview' : ''}`}>
         <Sidebar
           isLoading={isLoading}
@@ -653,7 +654,7 @@ const ChatAI: React.FC = () => {
           </div>
         </div>
       </div>
-    </MessagePopProvider>
+    </>
   );
 };
 

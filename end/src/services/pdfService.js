@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const path = require('node:path');
 const PDFDocument = require('pdfkit');
 
@@ -6,9 +7,9 @@ const fontPath = path.join(__dirname, '../../assets/fonts/NotoSansCJKsc-Regular.
 function generatePdfBuffer({ title, paragraphs }, { signal } = {}) {
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 52, info: { Title: title || '文档', Author: 'AI Chat' } });
+    const doc = new PDFDocument({ size: 'A4', margin: 52, info: { Title: title || t('file.document'), Author: 'AI Chat' } });
     const chunks = [];
-    const onAbort = () => doc.destroy(signal.reason instanceof Error ? signal.reason : new Error('已停止生成'));
+    const onAbort = () => doc.destroy(signal.reason instanceof Error ? signal.reason : new Error(t('file.stopped')));
     signal?.addEventListener('abort', onAbort, { once: true });
     const cleanup = () => signal?.removeEventListener('abort', onAbort);
     doc.on('data', (chunk) => chunks.push(chunk));

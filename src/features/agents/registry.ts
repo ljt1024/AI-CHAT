@@ -1,3 +1,4 @@
+import { t } from '@/app/i18n';
 import type { AgentDefinition, AgentId } from './types';
 
 export class AgentRegistry {
@@ -8,7 +9,7 @@ export class AgentRegistry {
   }
 
   register(agent: AgentDefinition): void {
-    if (!agent.id.trim()) throw new Error('Agent id is required');
+    if (!agent.id.trim()) throw new Error(t('error.agentId'));
     this.agents.set(agent.id, agent);
   }
 
@@ -18,7 +19,7 @@ export class AgentRegistry {
 }
 
 export const defaultAgents: AgentDefinition[] = [
-  { id: 'planner', name: '规划智能体', description: '拆解复杂任务并制定执行步骤', modelId: '' },
-  { id: 'researcher', name: '研究智能体', description: '收集信息并分析事实', modelId: '' },
-  { id: 'writer', name: '写作智能体', description: '整合结果并生成最终答复', modelId: '' },
+  { id: 'planner', get name() { return t('agent.planner.name'); }, get description() { return t('agent.planner.description'); }, modelId: '' },
+  { id: 'researcher', get name() { return t('agent.researcher.name'); }, get description() { return t('agent.researcher.description'); }, modelId: '' },
+  { id: 'writer', get name() { return t('agent.writer.name'); }, get description() { return t('agent.writer.description'); }, modelId: '' },
 ];

@@ -1,3 +1,4 @@
+import { t, languageHeaders } from '@/app/i18n';
 import type { AgentDefinition, AgentEvent, AgentResult } from './types';
 import { getFileDownloadUrl } from '@/shared/utils/fileDownloads';
 
@@ -8,18 +9,18 @@ const apiUrl = (path: string) => {
 
 async function readError(response: Response): Promise<Error> {
   const payload = await response.json().catch(() => ({}));
-  return new Error(payload.msg || payload.error?.message || `请求失败 (${response.status})`);
+  return new Error(payload.msg || payload.error?.message || t('error.status', { status: response.status }));
 }
 
 export async function fetchAgents(signal?: AbortSignal): Promise<AgentDefinition[]> {
-  const response = await fetch(apiUrl('/agents'), { signal });
+  const response = await fetch(apiUrl('/agents'), { signal, headers: languageHeaders() });
   if (!response.ok) throw await readError(response);
   return (await response.json()).data;
 }
 
 export async function downloadAgentArtifact(fileId: string, signal?: AbortSignal): Promise<Blob> {
-  if (!/^[a-f0-9-]{36}$/i.test(fileId)) throw new Error('文件标识无效');
-  const response = await fetch(getFileDownloadUrl(fileId), { signal });
+  if (!/^[a-f0-9-]{36}$/i.test(fileId)) throw new Error(t('error.invalidFile'));
+  const response = await fetch(getFileDownloadUrl(fileId), { signal, headers: languageHeaders() });
   if (!response.ok) throw await readError(response);
   return response.blob();
 }
@@ -34,7 +35,7 @@ export interface AgentRequest {
 
 export async function runAgents(request: AgentRequest, signal?: AbortSignal): Promise<AgentResult> {
   const response = await fetch(apiUrl('/agents/run'), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { ...languageHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(request), signal,
   });
   if (!response.ok) throw await readError(response);
@@ -44,11 +45,11 @@ export async function runAgents(request: AgentRequest, signal?: AbortSignal): Pr
 export async function streamAgents(request: AgentRequest, onEvent: (event: AgentEvent) => void, signal?: AbortSignal): Promise<void> {
   const response = await fetch(apiUrl('/agents/run'), {
     method: 'POST', signal,
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    headers: { ...languageHeaders(), 'Content-Type': 'application/json', Accept: 'text/event-stream' },
     body: JSON.stringify({ ...request, stream: true }),
   });
   if (!response.ok) throw await readError(response);
-  if (!response.body || !response.headers.get('content-type')?.includes('text/event-stream')) throw new Error('服务未返回智能体事件流');
+  if (!response.body || !response.headers.get('content-type')?.includes('text/event-stream')) throw new Error(t('error.noStream'));
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -74,7 +75,7 @@ export async function streamAgents(request: AgentRequest, onEvent: (event: Agent
       if (done) break;
     }
     if (buffer.trim()) parse(buffer);
-    if (!completed) throw new Error('连接提前中断，本轮未完成，请重试');
+    if (!completed) throw new Error(t('error.incompleteStream'));
   } finally {
     await reader.cancel().catch(() => {});
     reader.releaseLock();

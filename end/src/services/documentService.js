@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -19,7 +20,7 @@ function normalizeDocumentFormat(rawFormat) {
     return format;
   }
 
-  throw createHttpError(400, 'format 仅支持 pdf、docx 或 word');
+  throw createHttpError(400, t('error.documentFormat'));
 }
 
 function trimString(value) {
@@ -67,7 +68,7 @@ function buildFileName({ fileName, title, format }) {
 
 function normalizeDocumentRequest(body, contentFallback = '') {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw createHttpError(400, 'document 参数无效');
+    throw createHttpError(400, t('error.documentBody'));
   }
 
   const format = normalizeDocumentFormat(body.format);
@@ -84,7 +85,7 @@ function normalizeDocumentRequest(body, contentFallback = '') {
   const finalParagraphs = resolvedParagraphs.length > 0 ? resolvedParagraphs : fallbackParagraphs;
 
   if (finalParagraphs.length === 0) {
-    throw createHttpError(400, '生成文档时必须提供 content、text、paragraphs、lines，或让模型先产出正文');
+    throw createHttpError(400, t('error.documentContent'));
   }
 
   return {
@@ -197,7 +198,7 @@ function runCommand(command, args, errorMessage) {
 
 async function generateDocxBuffer(documentData) {
   if (!fs.existsSync('/usr/bin/textutil')) {
-    throw createHttpError(500, '当前环境缺少 textutil，无法生成 Word 文档');
+    throw createHttpError(500, t('error.textutil'));
   }
 
   const tempDir = createTempDir();
@@ -206,7 +207,7 @@ async function generateDocxBuffer(documentData) {
 
   try {
     fs.writeFileSync(inputPath, buildRtf(documentData), 'utf8');
-    await runCommand('/usr/bin/textutil', ['-convert', 'docx', inputPath, '-output', outputPath], 'Word 文档生成失败');
+    await runCommand('/usr/bin/textutil', ['-convert', 'docx', inputPath, '-output', outputPath], t('error.word'));
     return fs.readFileSync(outputPath);
   } finally {
     cleanupTempDir(tempDir);

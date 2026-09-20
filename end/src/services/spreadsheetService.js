@@ -1,13 +1,14 @@
+const { t } = require('../i18n');
 const ExcelJS = require('exceljs');
 const { z } = require('zod');
 const { sanitizeFileName } = require('../utils/upload');
 
 const cellSchema = z.union([z.string().max(4000), z.number().finite(), z.boolean(), z.null()]);
 const sheetSchema = z.object({
-  name: z.string().trim().min(1).max(31).regex(/^[^\\/*?:\[\]]+$/).refine((value) => !value.startsWith("'") && !value.endsWith("'"), '工作表名称不能以单引号开头或结尾'),
+  name: z.string().trim().min(1).max(31).regex(/^[^\\/*?:\[\]]+$/).refine((value) => !value.startsWith("'") && !value.endsWith("'"), { error: () => t('error.sheetName') }),
   columns: z.array(z.string().trim().min(1).max(100)).min(1).max(50),
   rows: z.array(z.array(cellSchema).min(1).max(50)).min(1).max(2000),
-  sumColumns: z.array(z.number().int().min(1).max(50)).max(50).default([]).describe('需要合计的列，使用从1开始的列序号。服务端生成SUM公式，仅用于数值列；无需合计时传空数组。'),
+  sumColumns: z.array(z.number().int().min(1).max(50)).max(50).default([]).describe(t('tool.sumColumns')),
 });
 const spreadsheetSchema = z.object({
   title: z.string().trim().min(1).max(100),
@@ -17,17 +18,17 @@ const spreadsheetSchema = z.object({
   let cells = 0;
   sheets.forEach((sheet, i) => {
     const name = sheet.name.toLowerCase();
-    if (names.has(name)) ctx.addIssue({ code: 'custom', path: ['sheets', i, 'name'], message: '工作表名称不能重复' });
+    if (names.has(name)) ctx.addIssue({ code: 'custom', path: ['sheets', i, 'name'], message: t('error.sheetDuplicate') });
     names.add(name);
     cells += sheet.rows.length * sheet.columns.length;
-    if (sheet.rows.some((row) => row.length !== sheet.columns.length)) ctx.addIssue({ code: 'custom', path: ['sheets', i, 'rows'], message: '每行单元格数量必须与列数一致' });
+    if (sheet.rows.some((row) => row.length !== sheet.columns.length)) ctx.addIssue({ code: 'custom', path: ['sheets', i, 'rows'], message: t('error.sheetColumns') });
     for (const column of sheet.sumColumns) {
       if (column > sheet.columns.length || sheet.rows.some((row) => row[column - 1] !== null && typeof row[column - 1] !== 'number')) {
-        ctx.addIssue({ code: 'custom', path: ['sheets', i, 'sumColumns'], message: '合计列必须存在，且只包含数字或空值' });
+        ctx.addIssue({ code: 'custom', path: ['sheets', i, 'sumColumns'], message: t('error.sheetTotals') });
       }
     }
   });
-  if (cells > 20000) ctx.addIssue({ code: 'custom', message: '单个工作簿最多包含20000个数据单元格，请拆分导出' });
+  if (cells > 20000) ctx.addIssue({ code: 'custom', message: t('error.sheetSize') });
 });
 
 async function generateSpreadsheetFile(body, { signal } = {}) {
@@ -54,11 +55,11 @@ async function generateSpreadsheetFile(body, { signal } = {}) {
     });
     if (data.sumColumns.length) {
       const total = sheet.addRow([]);
-      if (!data.sumColumns.includes(1)) total.getCell(1).value = '合计';
+      if (!data.sumColumns.includes(1)) total.getCell(1).value = t('file.total');
       for (const index of new Set(data.sumColumns)) {
         const cell = total.getCell(index);
         const result = data.rows.reduce((sum, row) => sum + (row[index - 1] ?? 0), 0);
-        if (!Number.isFinite(result)) throw new Error('合计超出数值范围，请调整数据');
+        if (!Number.isFinite(result)) throw new Error(t('error.sumOverflow'));
         const letter = sheet.getColumn(index).letter;
         cell.value = { formula: `SUM(${letter}2:${letter}${data.rows.length + 1})`, result };
       }

@@ -1,3 +1,4 @@
+import { useLanguage } from '@/app/providers/LanguageContext';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
@@ -65,6 +66,7 @@ const isHtmlLikeCode = (language: string, source: string) => {
 
 // 自定义代码块渲染
 const codeBlockRenderer = React.memo(({ node, inline, className, children, ...props }: CodeBlockProps) => {
+    const { t } = useLanguage();
     const [isCopy, setIsCopy] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false);
@@ -223,10 +225,10 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
                             className='copy-text'
                             onClick={() => setIsPreviewOpen(true)}
                         >
-                            预览
+                            {t('share.previewAlt')}
                         </span>
                     )}
-                    <span className='copy-text' onClick={handleCopy}>{isCopy ? '已复制' : '复制代码'}</span>
+                    <span className='copy-text' onClick={handleCopy}>{isCopy ? t('message.copySuccess') : t('message.copyCode')}</span>
                 </div>
             </div>
             <div className='codeWrap'>
@@ -252,28 +254,28 @@ const codeBlockRenderer = React.memo(({ node, inline, className, children, ...pr
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className='htmlPreviewHeader'>
-                                <span>HTML 预览</span>
+                                <span>{t('preview.html')}</span>
                                 <div className='htmlPreviewActions'>
                                     <button
                                         type="button"
                                         className='htmlPreviewBtn'
                                         onClick={togglePreviewFullscreen}
                                     >
-                                        {isPreviewFullscreen ? '退出全屏' : '全屏'}
+                                        {isPreviewFullscreen ? t('preview.exitFullscreen') : t('preview.fullscreen')}
                                     </button>
                                     <button
                                         type="button"
                                         className='htmlPreviewBtn'
                                         onClick={closePreview}
                                     >
-                                        关闭
+                                        {t('share.close')}
                                     </button>
                                 </div>
                             </div>
                             <div className='htmlPreviewBody'>
                                 <iframe
                                     className='htmlPreviewFrame'
-                                    title="HTML预览"
+                                    title={t('preview.html')}
                                     srcDoc={previewDoc}
                                     sandbox="allow-scripts allow-forms"
                                 />

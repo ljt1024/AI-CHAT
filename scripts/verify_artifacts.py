@@ -20,7 +20,7 @@ output_dir = Path(tempfile.mkdtemp(prefix='agent-export-qa-'))
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     try:
-        page = browser.new_page(accept_downloads=True)
+        page = browser.new_page(locale='zh-CN', accept_downloads=True)
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(args.url)

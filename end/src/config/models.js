@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const { env } = require('./env');
 
 const MODEL_CATALOG = [
@@ -5,7 +6,7 @@ const MODEL_CATALOG = [
     id: 'deepseek-chat',
     name: 'DeepSeek Chat',
     provider: 'deepseek',
-    description: 'DeepSeek 通用对话模型',
+    get description() { return t('model.deepseekChat'); },
     supportsStream: true,
     supportsFileUpload: false,
     supportsVision: false,
@@ -15,7 +16,7 @@ const MODEL_CATALOG = [
     id: 'deepseek-reasoner',
     name: 'DeepSeek Reasoner',
     provider: 'deepseek',
-    description: 'DeepSeek 推理模型',
+    get description() { return t('model.deepseekReasoner'); },
     supportsStream: true,
     supportsFileUpload: false,
     supportsVision: false,
@@ -25,7 +26,7 @@ const MODEL_CATALOG = [
     id: 'qwen-turbo',
     name: 'Qwen Turbo',
     provider: 'qwen',
-    description: '千问 Turbo',
+    get description() { return t('model.qwenTurbo'); },
     supportsStream: true,
     supportsFileUpload: false,
     supportsVision: false,
@@ -35,7 +36,7 @@ const MODEL_CATALOG = [
     id: 'qwen3.5-plus',
     name: 'Qwen3.5 Plus',
     provider: 'qwen',
-    description: '千问 Plus',
+    get description() { return t('model.qwenPlus'); },
     supportsStream: true,
     supportsFileUpload: true,
     supportsVision: true,
@@ -45,7 +46,7 @@ const MODEL_CATALOG = [
     id: 'qwen-max',
     name: 'Qwen Max',
     provider: 'qwen',
-    description: '千问 Max',
+    get description() { return t('model.qwenMax'); },
     supportsStream: true,
     supportsFileUpload: false,
     supportsVision: false,

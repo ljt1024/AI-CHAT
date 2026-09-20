@@ -1,3 +1,4 @@
+import { t } from '@/app/i18n';
 import { useState } from "react";
 
 export const useCopy = () => {
@@ -5,7 +6,7 @@ export const useCopy = () => {
 
     const handleCopy = (children: string, callback: () => void) => {
         if (!children) {
-            throw new Error('没有复制内容')
+            throw new Error(t('message.copyEmpty'))
         }
         if (isCopy) return;
         // https 和 本地支持

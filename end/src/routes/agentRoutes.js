@@ -1,3 +1,4 @@
+const { t, languageMiddleware } = require('../i18n');
 const { Router } = require('express');
 const { listAgents } = require('../agents/registry');
 const { runAgents } = require('../services/agentService');
@@ -6,11 +7,12 @@ const { logError } = require('../utils/logger');
 
 function createAgentRouter(run = runAgents) {
   const router = Router();
+  router.use(languageMiddleware);
   router.get('/agents', (req, res) => res.json({ code: 200, data: listAgents(), msg: 'ok' }));
   router.post('/agents/run', async (req, res) => {
     const stream = req.body?.stream === true;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(new Error('执行超时，请缩小任务范围后重试')), 300000);
+    const timeout = setTimeout(() => controller.abort(new Error(t('error.timeout'))), 300000);
     const onClose = () => { if (!res.writableEnded) controller.abort(); };
     res.on('close', onClose);
     let heartbeat;
@@ -31,7 +33,7 @@ function createAgentRouter(run = runAgents) {
     } catch (error) {
       if (res.destroyed) return;
       const status = controller.signal.aborted ? 504 : getHttpStatusCode(error, 502);
-      const msg = controller.signal.aborted ? '执行已停止或超时，请重试' : error.message || '智能体执行失败';
+      const msg = controller.signal.aborted ? t('error.stopped') : error.message || t('error.agent');
       logError('agents.run.failed', { requestId: req.requestId, status, message: msg });
       if (res.headersSent) { send({ type: 'error', message: msg, requestId: req.requestId }); res.end(); }
       else res.status(status).json({ code: status, msg, requestId: req.requestId });

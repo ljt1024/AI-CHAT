@@ -1,3 +1,4 @@
+import { languageHeaders } from '@/app/i18n';
 import { useEffect, useMemo, useState } from 'react'
 import { ModelListResponse, ModelOption, supportsDeepThinking, supportsImageUnderstanding as modelSupportsImageUnderstanding } from '@/shared/types/model'
 import { Conversation } from '@/shared/utils/localMessages'
@@ -25,12 +26,13 @@ export const useChatModels = ({
   )
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchModels = async () => {
       setIsModelsLoading(true)
       try {
         const response = await fetch(getModelsApiUrl(chatApiUrl), {
-          method: 'GET',
-          headers: {
+          method: 'GET', signal: controller.signal,
+          headers: { ...languageHeaders(),
             Accept: 'application/json'
           }
         })
@@ -38,6 +40,7 @@ export const useChatModels = ({
           throw new Error(`failed to fetch models, status: ${response.status}`)
         }
         const result: ModelListResponse = await response.json()
+        if (controller.signal.aborted) return;
         const modelList = Array.isArray(result.data) ? result.data : []
         setModels(modelList)
 
@@ -54,6 +57,7 @@ export const useChatModels = ({
           }
         }
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.log(error)
         setModels([
           {
@@ -70,11 +74,12 @@ export const useChatModels = ({
         setSelectedModelId(DEFAULT_MODEL_ID)
         localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_MODEL_ID)
       } finally {
-        setIsModelsLoading(false)
+        if (!controller.signal.aborted) setIsModelsLoading(false)
       }
     }
 
-    fetchModels()
+    void fetchModels()
+    return () => controller.abort();
   }, [chatApiUrl, defaultDescription])
 
   useEffect(() => {

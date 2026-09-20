@@ -21,7 +21,7 @@ print(f'Evidence: {output_dir}', flush=True)
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     try:
-        page = browser.new_page(viewport={"width": 1600, "height": 1000}, accept_downloads=True)
+        page = browser.new_page(locale='zh-CN', viewport={"width": 1600, "height": 1000}, accept_downloads=True)
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(args.url)

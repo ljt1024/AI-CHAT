@@ -52,7 +52,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   const hasInput = inputText.trim().length > 0
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
   const messagePop = useMessagePop()
 
   const isImageFile = (file: File) => {
@@ -179,8 +179,8 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
               </button>
             )}
             {onToggleAgentMode && (
-              <button type="button" className={`input-thinking ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={language === 'zh' ? '智能体模式：规划、调用工具并记忆当前会话' : 'Agent mode: plan, use tools and remember this conversation'}>
-                <span className="input-thinking-label">{language === 'zh' ? '智能体模式' : 'Agent mode'}</span>
+              <button type="button" className={`input-thinking ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={t('input.agentHint')}>
+                <span className="input-thinking-label">{t('input.agentMode')}</span>
               </button>
             )}
           </div>
@@ -189,6 +189,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
               !isLoading ?
                 <button
                   type="submit"
+                  aria-label={t('input.send')}
                   disabled={!hasInput}
                   className={`input-send ${hasInput ? 'input-send--active' : 'input-send--idle'}`.trim()}
                 >
@@ -198,7 +199,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   </svg>
                 </button>
                 :
-                <button type="button" className='stop-btn input-send' aria-label={language === 'zh' ? '停止生成' : 'Stop generating'} onClick={onStopSSE}>
+                <button type="button" className='stop-btn input-send' aria-label={t('input.stop')} onClick={onStopSSE}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="6" y="4" width="4" height="16"></rect>
                     <rect x="14" y="4" width="4" height="16"></rect>

@@ -27,6 +27,7 @@ export type AgentExecutor = (agent: AgentDefinition, input: string, signal?: Abo
 export type OrchestrationStrategy = 'sequential' | 'parallel';
 
 export interface AgentStep {
+  outputTranslation?: { key: string; params?: Record<string, string | number> };
   stage?: 'preparing' | 'executing';
   id: string;
   phase: 'thought' | 'action' | 'observation';

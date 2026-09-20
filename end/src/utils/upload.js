@@ -1,3 +1,4 @@
+const { t } = require('../i18n');
 const path = require('path');
 const { createHttpError } = require('./http');
 
@@ -67,7 +68,7 @@ function splitBuffer(buffer, separator) {
 function parseMultipartUpload(buffer, contentType) {
   const boundary = parseBoundary(contentType);
   if (!boundary) {
-    throw createHttpError(400, 'multipart/form-data 缺少 boundary');
+    throw createHttpError(400, t('error.multipartBoundary'));
   }
 
   const boundaryBuffer = Buffer.from(`--${boundary}`);
@@ -116,12 +117,12 @@ function parseMultipartUpload(buffer, contentType) {
     };
   }
 
-  throw createHttpError(400, 'multipart/form-data 中未找到文件字段');
+  throw createHttpError(400, t('error.multipartField'));
 }
 
 function parseJsonUploadPayload(payload) {
   if (!payload || typeof payload !== 'object') {
-    throw createHttpError(400, 'JSON 上传参数无效');
+    throw createHttpError(400, t('error.uploadJson'));
   }
 
   const fileName = sanitizeFileName(payload.fileName || payload.filename || payload.name);
@@ -135,7 +136,7 @@ function parseJsonUploadPayload(payload) {
   } else if (typeof payload.content === 'string') {
     buffer = Buffer.from(payload.content, encoding === 'base64' ? 'base64' : 'utf8');
   } else {
-    throw createHttpError(400, 'JSON 上传需要 content 或 contentBase64');
+    throw createHttpError(400, t('error.uploadJsonContent'));
   }
 
   return {
@@ -159,13 +160,13 @@ function extractUploadFileFromRequest(req) {
         const payload = JSON.parse(req.body.toString('utf8') || '{}');
         return parseJsonUploadPayload(payload);
       } catch (error) {
-        throw createHttpError(400, 'JSON 上传参数无效');
+        throw createHttpError(400, t('error.uploadJson'));
       }
     }
 
     const fileNameHeader = req.headers['x-file-name'] || req.headers['x-filename'];
     if (typeof fileNameHeader !== 'string' || !fileNameHeader.trim()) {
-      throw createHttpError(400, '二进制上传请通过 x-file-name 传入文件名');
+      throw createHttpError(400, t('error.uploadFileName'));
     }
 
     return {
@@ -179,7 +180,7 @@ function extractUploadFileFromRequest(req) {
     return parseJsonUploadPayload(req.body);
   }
 
-  throw createHttpError(400, '未接收到上传文件');
+  throw createHttpError(400, t('error.uploadMissing'));
 }
 
 function isTextLikeFile(fileName, mimeType) {

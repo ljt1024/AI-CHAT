@@ -22,6 +22,7 @@
     "dotenv": "^17.3.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
+    "i18next": "^26.4.2",
     "langchain": "^1.5.11",
     "pdfkit": "^0.20.2",
     "pptxgenjs": "^4.0.1",

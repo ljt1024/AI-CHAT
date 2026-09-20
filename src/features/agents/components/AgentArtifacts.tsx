@@ -5,8 +5,7 @@ import type { AgentArtifact } from '../types';
 import './AgentArtifacts.css';
 
 function ArtifactCard({ artifact, onPreview }: { artifact: AgentArtifact; onPreview?: (artifact: AgentArtifact) => void }) {
-  const { language } = useLanguage();
-  const zh = language === 'zh';
+  const { t } = useLanguage();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const download = async () => {
@@ -23,25 +22,25 @@ function ArtifactCard({ artifact, onPreview }: { artifact: AgentArtifact; onPrev
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : (zh ? '下载失败，请重试' : 'Download failed. Please retry.'));
+      setError(cause instanceof Error ? cause.message : t('artifact.downloadError'));
     } finally { setDownloading(false); }
   };
   const size = artifact.size < 1024 * 1024 ? `${Math.max(1, Math.ceil(artifact.size / 1024))} KB` : `${(artifact.size / 1024 / 1024).toFixed(1)} MB`;
   return <li className="agent-artifact">
     <span className="agent-artifact-format">{artifact.format === 'xlsx' ? 'Excel' : artifact.format === 'pptx' ? 'PPT' : artifact.format.toUpperCase()}</span>
-    <div className="agent-artifact-info"><strong>{artifact.fileName}</strong><small>{size} · {zh ? '已生成' : 'Ready'}</small></div>
-    {onPreview && (artifact.format === 'pdf' || artifact.format === 'pptx' || artifact.format === 'html' || artifact.format === 'xlsx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${zh ? '预览' : 'Preview'} ${artifact.fileName}`}>{zh ? '预览' : 'Preview'}</button>}
-    <button type="button" onClick={download} disabled={downloading} aria-label={`${zh ? '下载' : 'Download'} ${artifact.fileName}`}>
-      {downloading ? (zh ? '下载中…' : 'Downloading…') : (zh ? '下载文件' : 'Download')}
+    <div className="agent-artifact-info"><strong>{artifact.fileName}</strong><small>{size} · {t('artifact.ready')}</small></div>
+    {onPreview && (artifact.format === 'pdf' || artifact.format === 'pptx' || artifact.format === 'html' || artifact.format === 'xlsx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${t('share.previewAlt')} ${artifact.fileName}`}>{t('share.previewAlt')}</button>}
+    <button type="button" onClick={download} disabled={downloading} aria-label={`${t('artifact.downloadLabel')} ${artifact.fileName}`}>
+      {downloading ? t('artifact.downloading') : t('artifact.download')}
     </button>
     {error && <p className="agent-artifact-error" role="alert">{error}</p>}
   </li>;
 }
 
 export function AgentArtifacts({ artifacts, onPreview }: { artifacts: AgentArtifact[]; onPreview?: (artifact: AgentArtifact) => void }) {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   if (!artifacts.length) return null;
-  return <ul className="agent-artifacts" aria-label={language === 'zh' ? '生成的文件' : 'Generated files'}>
+  return <ul className="agent-artifacts" aria-label={t('artifact.files')}>
     {artifacts.map((artifact) => <ArtifactCard key={artifact.fileId} artifact={artifact} onPreview={onPreview} />)}
   </ul>;
 }

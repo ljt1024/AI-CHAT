@@ -11,7 +11,7 @@ artifacts = json.loads(artifact_path.read_text())
 output_dir = artifact_path.parent
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
-    page = browser.new_page(viewport={"width": 1600, "height": 1000})
+    page = browser.new_page(locale='zh-CN', viewport={"width": 1600, "height": 1000})
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto('http://127.0.0.1:5175/ai')

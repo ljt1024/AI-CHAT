@@ -100,7 +100,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {msg.isBot ? (
           <img src={BotIcon} alt="AI" className="bot-avatar" />
         ) : (
-          <img src={UserIcon} alt="用户" className="bot-avatar" />
+          <img src={UserIcon} alt={t('message.user')} className="bot-avatar" />
         )}
       </div> */}
       <div className="bubble-wrap">
