@@ -1,0 +1,105 @@
+.sidebar {
+  --sidebar-bg: #f8f9fb;
+  --sidebar-ink: #202124;
+  --sidebar-muted: #858890;
+  --sidebar-blue: #4965ff;
+  --sidebar-selected: #e7edff;
+  --sidebar-hover: #eef0f5;
+  flex: 0 0 288px;
+  width: 288px;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px 12px;
+  position: relative;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-ink);
+  border-right: 1px solid #e8eaed;
+}
+[data-theme='dark'] .sidebar { --sidebar-bg: #171b24; --sidebar-ink: #e4e7ee; --sidebar-muted: #9ca3b3; --sidebar-blue: #91a5ff; --sidebar-selected: #293657; --sidebar-hover: #232936; border-color: #2b3240; }
+.sidebar button { font-family: inherit; cursor: pointer; }
+.sidebar button:disabled { opacity: .45; cursor: not-allowed; }
+.sidebar :is(button, input):focus-visible { outline: 2px solid var(--sidebar-blue); outline-offset: -2px; }
+.sidebar svg { width: 21px; height: 21px; flex-shrink: 0; }
+.sidebar-header { display: flex; align-items: center; gap: 3px; margin-bottom: 24px; }
+.sidebar-brand { display: flex; align-items: center; gap: 8px; flex: 1; white-space: nowrap; color: var(--sidebar-blue); font-size: 22px; font-weight: 750; letter-spacing: -0.7px; line-height: 1; padding-left: 6px; }
+.sidebar-brand svg { width: 27px; height: 27px; }
+.sidebar-icon-button { display: inline-flex; justify-content: center; align-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 9px; background: transparent; color: var(--sidebar-muted); flex-shrink: 0; }
+.sidebar-icon-button:hover { background: var(--sidebar-hover); color: var(--sidebar-ink); }
+.sidebar .newCov { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; margin: 0 0 20px; flex-shrink: 0; border: 1px solid #eef0f5; border-radius: 999px; background: #fff; color: var(--sidebar-ink); font-size: 14px; font-weight: 500; box-shadow: 0 2px 4px #1c294012; }
+.sidebar .newCov:hover { background: var(--sidebar-hover); }
+[data-theme='dark'] .sidebar .newCov { background: #232936; border-color: #30384a; }
+.sidebar-search { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--sidebar-bg); padding: 6px 10px; margin: -10px 0 12px; color: var(--sidebar-muted); }
+.sidebar-search input { min-width: 0; width: 100%; height: 30px; border: 0; background: transparent; color: var(--sidebar-ink); font: inherit; font-size: 13px; }
+.covList { position: relative; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.covList:hover { scrollbar-color: #b9bfca55 transparent; }
+.sidebar-history-tools { position: absolute; right: 6px; top: 0; }
+.sidebar-group { margin-bottom: 15px; }
+.sidebar-group h2 { margin: 0; padding: 4px 12px 5px; line-height: 22px; font-size: 12px; color: var(--sidebar-muted); font-weight: 400; }
+.sidebar .covItem { display: flex; align-items: center; min-height: 40px; border-radius: 12px; padding-right: 5px; margin: 1px 0; }
+.sidebar .covItem:hover { background: var(--sidebar-hover); }
+.sidebar .covItem.curCov { background: var(--sidebar-selected); }
+.sidebar .covName { flex: 1; min-width: 0; padding: 9px 12px; border: 0; background: transparent; color: var(--sidebar-ink); font-size: 14px; line-height: 20px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 12px; }
+.sidebar .curCov .covName { color: var(--sidebar-blue); }
+.sidebar .covOperation { opacity: 0; width: 30px; height: 34px; }
+.sidebar .covItem:is(:hover, :focus-within, .curCov) .covOperation { opacity: 1; }
+.sidebar-operations { display: grid; gap: 3px; min-width: 130px; }
+.sidebar-operations button { text-align: left; padding: 9px 13px; border: 0; border-radius: 7px; background: transparent; color: var(--text-color); font: inherit; font-size: 13px; cursor: pointer; }
+.sidebar-operations button:hover { background: var(--surface-hover); }
+.sidebar-operations .sidebar-delete { color: var(--danger-color); }
+.sidebar-empty { padding: 48px 12px; font-size: 13px; color: var(--sidebar-muted); text-align: center; }
+.sidebar-footer { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; flex-shrink: 0; padding: 12px 6px 0; border: 0; background: transparent; color: var(--sidebar-muted); text-align: left; }
+.sidebar-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--sidebar-selected); color: var(--sidebar-blue); font-size: 13px; font-weight: 600; }
+.sidebar-footer-label { display: grid; flex: 1; font-size: 13px; }
+.sidebar-footer small { font-size: 11px; }
+.sidebar-footer:hover .sidebar-footer-label { color: var(--sidebar-ink); }
+.sidebar--collapsed { flex-basis: 64px; width: 64px; padding: 20px 12px; }
+.sidebar-rail { display: grid; gap: 18px; justify-content: center; }
+.sidebar-backdrop { display: none; }
+@media (hover: none) { .sidebar .covOperation { opacity: 1; } }
+@media (max-width: 768px) {
+  .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 110; height: 100dvh; width: min(310px, 85vw); box-shadow: 8px 0 32px #00000012; }
+  .sidebar--collapsed { position: absolute; inset: 12px auto auto 8px; padding: 0; width: 36px; height: 36px; background: transparent; border: 0; box-shadow: none; }
+  .sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 109; border: 0; background: #10182850; }
+  .sidebar-header { margin-bottom: 22px; }
+  .sidebar-icon-button { min-height: 36px; }
+  .sidebar .covItem { min-height: 48px; }
+}
+.editContent {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+}
+
+.forceWrap {
+    border: 1px solid var(--primary-color) !important;
+}
+
+.editInput {
+    border: none;
+    flex: 1;
+    color: var(--text-color);
+    background: transparent;
+}
+
+.editInput:focus {
+    border: 0;
+    outline: none;
+}
+
+.inputControl {
+    color: var(--text-muted-color);
+    font-size: 14px;
+    margin-left: 12px;
+}
+
+.deleteTip {
+    color: var(--text-color);
+    font-size: 14px;
+}

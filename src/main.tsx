@@ -1,8 +1,9 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { ChatProvider } from './context/ChatContext.tsx'
-import { ThemeProvider, applyTheme, getPreferredTheme } from './context/ThemeContext.tsx'
+import { ChatProvider } from './app/providers/ChatContext.tsx'
+import { LanguageProvider } from './app/providers/LanguageContext.tsx'
+import { ThemeProvider, applyTheme, getPreferredTheme } from './app/providers/ThemeContext.tsx'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
@@ -12,9 +13,11 @@ if (!rootElement) {
 applyTheme(getPreferredTheme())
 
 createRoot(rootElement).render(
-  <ThemeProvider>
-    <ChatProvider>
-      <App />
-    </ChatProvider>
-  </ThemeProvider>
+  <LanguageProvider>
+    <ThemeProvider>
+      <ChatProvider>
+        <App />
+      </ChatProvider>
+    </ThemeProvider>
+  </LanguageProvider>
 )

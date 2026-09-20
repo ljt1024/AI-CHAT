@@ -1,0 +1,59 @@
+.artifact-preview { flex: 0 0 min(44vw, 680px); min-width: 0; display: flex; flex-direction: column; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 26px; overflow: hidden; box-shadow: var(--panel-shadow); }
+.artifact-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px; border-bottom: 1px solid var(--border-color); }
+.artifact-preview-head div { min-width: 0; display: grid; gap: 7px; }
+.artifact-preview-head strong { overflow-wrap: anywhere; font-size: 15px; line-height: 1.5; }
+.artifact-preview-label { color: var(--text-muted-color); font-size: 11px; letter-spacing: .06em; }
+.artifact-preview button { min-width: 40px; min-height: 40px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--surface-color); color: var(--text-color); cursor: pointer; }
+.artifact-preview-head button { font-size: 24px; flex-shrink: 0; }
+.artifact-preview-head .artifact-preview-head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.artifact-preview-head-actions button { font-size: 18px; }
+.artifact-preview button:disabled { opacity: .4; cursor: default; }
+.artifact-preview :is(button, a, select):focus-visible { outline: 2px solid var(--secondary-color); outline-offset: 2px; }
+.artifact-preview-toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+.artifact-preview-toolbar select { flex: 1; min-width: 0; min-height: 40px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--surface-color); color: var(--text-color); }
+.artifact-preview-toolbar a { font-size: 12px; color: var(--secondary-color); white-space: nowrap; padding: 10px 0; }
+.artifact-preview-body { flex: 1; min-height: 0; position: relative; overflow: auto; padding: 16px; background: color-mix(in srgb, var(--bg-color) 85%, var(--border-color)); }
+.artifact-preview-body canvas { display: block; background: white; box-shadow: 0 3px 14px #17365d15; }
+.artifact-preview-body p { font-size: 13px; line-height: 1.8; color: var(--text-muted-color); }
+.artifact-preview-loading { position: absolute; top: 24px; left: 24px; }
+.artifact-preview-error { display: grid; gap: 12px; padding: 8px; }
+.artifact-preview-error small { overflow-wrap: anywhere; color: var(--text-muted-color); }
+.artifact-preview-footer { padding: 12px 16px; border-top: 1px solid var(--border-color); text-align: center; }
+.artifact-preview-footer nav { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 8px; font-size: 13px; }
+.artifact-preview-footer button { font-size: 24px; }
+.artifact-preview-footer small { font-size: 11px; color: var(--text-muted-color); }
+.artifact-preview-zoom { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
+.artifact-preview-zoom button { font-size: 13px; }
+.artifact-preview.is-fullscreen { position: fixed; z-index: 220; inset: 0; width: 100vw; height: 100vh; max-height: 100vh; border: 0; border-radius: 0; background: var(--bg-color); }
+.artifact-preview.is-fullscreen .artifact-preview-body { padding: 28px; }
+.artifact-preview:fullscreen { width: 100vw; height: 100vh; max-height: 100vh; border: 0; border-radius: 0; background: var(--bg-color); }
+.chat-container--preview .messages-wrap { padding-inline: 20px; }
+@media (min-width: 1101px) and (max-width: 1400px) { .artifact-preview { flex-basis: 40vw; } }
+@media (max-width: 768px) { .artifact-preview { inset: 0; border-radius: 0; } .artifact-preview-head { padding: 14px 16px; } }
+.artifact-preview-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 16px; border-bottom: 1px solid var(--border-color); color: var(--secondary-color); font-size: 12px; }
+.artifact-preview-status small { color: var(--text-muted-color); }
+.artifact-preview-status--failed, .artifact-preview-status--cancelled { color: var(--text-muted-color); }
+.artifact-preview-body--html { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+.artifact-html-frame { display: block; flex: 1 1 auto; width: 100%; min-width: 0; min-height: 0; height: 100%; border: 0; background: white; }
+.artifact-preview-html-note { padding: 10px 16px; font-size: 11px; color: var(--text-muted-color); border-top: 1px solid var(--border-color); }
+.artifact-draft-document { padding: 24px; background: var(--surface-color); color: var(--text-color); min-height: 100%; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.artifact-draft-document h1 { font-size: 23px; margin: 0 0 20px; }
+.artifact-draft-document h2 { font-size: 19px; }
+.artifact-draft-document table { display: block; max-width: 100%; overflow: auto; }
+.artifact-draft-document pre { overflow: auto; }
+.artifact-draft-slides { display: grid; gap: 16px; }
+.artifact-draft-slide { padding: 28px; min-height: 210px; color: #17365d; background: #f5f9ff; border: 1px solid #dfe9f6; }
+.artifact-draft-slide:first-child { background: #17365d; color: #f5f9ff; }
+.artifact-draft-slide h2 { font-size: 22px; margin: 12px 0 20px; }
+.artifact-draft-slide li { margin: 10px 0; font-size: 14px; overflow-wrap: anywhere; }
+.artifact-sheet { min-width: 0; }
+.artifact-sheet-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.artifact-sheet-tabs button { padding: 6px 12px; font-size: 12px; }
+.artifact-sheet-tabs button[aria-pressed='true'] { color: var(--secondary-color); border-color: var(--secondary-color); }
+.artifact-sheet-scroll { overflow: auto; }
+.artifact-sheet table { border-collapse: collapse; min-width: 100%; font-size: 13px; background: var(--surface-color); }
+.artifact-sheet th, .artifact-sheet td { min-width: 90px; max-width: 300px; padding: 10px; border: 1px solid var(--border-color); text-align: left; overflow-wrap: anywhere; }
+.artifact-sheet th { background: var(--primary-color); }
+.artifact-sheet-pages { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; }
+.artifact-sheet-pages button { padding: 4px 10px; }
+.artifact-preview.is-fullscreen .artifact-preview-body--html { padding: 0; }

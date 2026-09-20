@@ -1,0 +1,15 @@
+.agent-trace { border: 1px solid var(--border-color); border-radius: 12px; margin: 0 0 16px; background: var(--surface-color); color: var(--text-color); overflow: hidden; }
+.agent-trace summary { display: flex; align-items: center; gap: 9px; padding: 12px 14px; cursor: pointer; font-size: 13px; min-height: 44px; }
+.agent-trace summary:focus-visible { outline: 2px solid var(--secondary-color); outline-offset: -3px; }
+.agent-trace summary small { margin-left: auto; }
+.agent-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--secondary-color); flex-shrink: 0; }
+.agent-trace--failed .agent-status-dot { background: #cc573f; }
+.agent-trace--cancelled .agent-status-dot { background: #927746; }
+.agent-trace-note { font-size: 12px; margin: 0 14px 12px; opacity: .75; }
+.agent-trace ol { list-style: none; padding: 0 14px 12px 22px; margin: 0; }
+.agent-trace li { border-left: 2px solid var(--border-color); padding: 4px 0 12px 12px; }
+.agent-trace li > div { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+.agent-trace li pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 12px; line-height: 1.6; max-height: 190px; overflow: auto; margin: 7px 0 0; }
+.agent-trace li[data-status="running"] { border-color: var(--secondary-color); }
+.agent-trace li[data-status="failed"] { border-color: #cc573f; }
+.send-button-left { flex-wrap: wrap; min-width: 0; }
