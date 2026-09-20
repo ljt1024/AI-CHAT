@@ -21,7 +21,7 @@ test('language negotiation and concurrent async contexts remain isolated', async
     await gate;
     assert.equal(t('error.inputRequired'), 'input is required');
     assert.equal(listAgents()[0].name, 'Planner');
-    assert.equal(getEnabledModels()[0].description, 'DeepSeek general conversation model');
+    assert.equal(getEnabledModels().find(model => model.id === 'deepseek-chat').description, 'DeepSeek general conversation model');
   });
   await withLanguage('zh', async () => {
     release();

@@ -1,3 +1,5 @@
+const { MODEL_INDEX } = require('../config/models');
+const { runImageGeneration } = require('./imageRunService');
 const { t } = require('../i18n');
 const { randomUUID } = require('node:crypto');
 const { createGraph } = require('../agents/graph');
@@ -26,9 +28,10 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
   async function runAgents(body, { emit = () => {}, signal } = {}) {
     const request = validateRequest(body);
     if (active.has(request.sessionId)) throw createHttpError(409, t('error.concurrent'));
-    const model = modelFactory(request.model);
     active.add(request.sessionId);
     try {
+      if (MODEL_INDEX.get(request.model)?.supportsImageGeneration) return await runImageGeneration(request, { emit, signal });
+      const model = modelFactory(request.model);
       const tools = toolsFactory(model, request.agentIds);
       const graph = createGraph({ model, tools, checkpointer, emit, memoryOptions });
       const config = { configurable: { thread_id: request.sessionId }, signal, recursionLimit: 32 };

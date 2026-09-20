@@ -3,6 +3,12 @@ const { env } = require('./env');
 
 const MODEL_CATALOG = [
   {
+    id: 'qwen-image-2.0', name: 'Qwen-Image-2.0', provider: 'qwen',
+    get description() { return t('model.qwenImage'); },
+    supportsImageGeneration: true, supportsStream: false,
+    supportsFileUpload: false, supportsVision: false, supportsThinking: false,
+  },
+  {
     id: 'deepseek-chat',
     name: 'DeepSeek Chat',
     provider: 'deepseek',
@@ -69,6 +75,7 @@ const PROVIDER_CONFIG = {
 
 function getEnabledModels() {
   return MODEL_CATALOG.map((item) => ({
+    supportsImageGeneration: false,
     ...item,
     enabled: Boolean(PROVIDER_CONFIG[item.provider] && PROVIDER_CONFIG[item.provider].apiKey),
   }));

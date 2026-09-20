@@ -26,7 +26,7 @@ function createAgentTools(model, agentIds) {
     tool(() => new Date().toISOString(), {
       name: 'current_time', description: t('tool.time'), schema: z.object({}),
     }),
-    ...createArtifactTools(),
+    ...createArtifactTools().filter(item => item.name !== 'generate_image'),
     ...agentIds.map((id) => {
       const agent = getAgent(id);
       return tool(async ({ task }, config) => {

@@ -368,3 +368,8 @@
     display: none;
   }
 }
+
+@media (max-width: 768px) {
+  .input-image-action .input-thinking-label, .input-agent-action .input-thinking-label { display: inline; font-size: 12px; }
+  .send-button-left { flex-wrap: wrap; }
+}

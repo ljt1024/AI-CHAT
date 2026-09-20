@@ -6,6 +6,7 @@ const { createHttpError } = require('../utils/http');
 function createChatModel(modelId) {
   const model = MODEL_INDEX.get(modelId);
   if (!model) throw createHttpError(400, t('error.modelUnsupported', { p0: modelId }));
+  if (model.supportsImageGeneration) throw createHttpError(400, t('error.imageNotChat'));
   const provider = PROVIDER_CONFIG[model.provider];
   if (!provider?.apiKey) throw createHttpError(503, t('error.apiKey', { p0: model.provider }));
   return new ChatOpenAI({

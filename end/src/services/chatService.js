@@ -325,6 +325,7 @@ async function proxyChatCompletions(req, res, forceModel) {
     });
   }
 
+  if (modelConfig.supportsImageGeneration) return res.status(400).json({ code: 400, msg: t('error.imageNotChat') });
   const provider = PROVIDER_CONFIG[modelConfig.provider];
   if (!provider || !provider.apiKey) {
     return res.status(500).json({

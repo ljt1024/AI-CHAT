@@ -202,5 +202,9 @@
   "server.agent.analyzing": "正在结合 {p0} 条会话记忆分析任务。",
   "server.agent.selectedTools": "已选择调用：{p0}，获取结果后继续处理。",
   "server.agent.answerReady": "已结合当前任务与会话记忆整理答复。",
-  "screenshot.noTarget": "未找到截图目标"
+  "screenshot.noTarget": "未找到截图目标",
+  "input.imageGeneration": "文生图",
+  "input.imageHint": "使用 Qwen-Image-2.0 生成图片",
+  "input.imagePrompt": "请使用 Qwen-Image-2.0 生成一张图片：",
+  "preview.imageGenerating": "Qwen-Image-2.0 正在生成图片，完成后会自动展示。"
 }

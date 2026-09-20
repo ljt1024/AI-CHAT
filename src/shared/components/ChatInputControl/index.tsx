@@ -29,6 +29,7 @@ interface ChatInputControlProps {
   onToggleThinking?: () => void;
   isAgentMode?: boolean;
   onToggleAgentMode?: () => void;
+  onCreateImage?: () => void;
   variant?: 'bottom' | 'welcome';
 }
 
@@ -47,7 +48,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onUploadFile,
   onRemoveUploadedFile,
   onToggleThinking,
-  variant = 'bottom', isAgentMode = false, onToggleAgentMode
+  variant = 'bottom', isAgentMode = false, onToggleAgentMode, onCreateImage
 }) => {
   const hasInput = inputText.trim().length > 0
   const formRef = useRef<HTMLFormElement>(null)
@@ -178,8 +179,9 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                 <span className="input-thinking-label">{t('input.thinkingLabel')}</span>
               </button>
             )}
+            {onCreateImage && <button type="button" className="input-thinking input-image-action is-inactive" aria-label={t('input.imageGeneration')} onClick={onCreateImage} disabled={isLoading} title={t('input.imageHint')}><span className="input-thinking-label">{t('input.imageGeneration')}</span></button>}
             {onToggleAgentMode && (
-              <button type="button" className={`input-thinking ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={t('input.agentHint')}>
+              <button type="button" className={`input-thinking input-agent-action ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={t('input.agentHint')}>
                 <span className="input-thinking-label">{t('input.agentMode')}</span>
               </button>
             )}

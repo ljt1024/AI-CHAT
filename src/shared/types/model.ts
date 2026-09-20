@@ -4,6 +4,7 @@ export interface ModelOption {
   provider: string;
   description?: string;
   supportsStream?: boolean;
+  supportsImageGeneration?: boolean;
   supportsFileUpload?: boolean;
   supportsThinking?: boolean;
   supportsVision?: boolean;

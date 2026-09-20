@@ -74,6 +74,7 @@ const ChatAI: React.FC = () => {
     isLoading,
     defaultDescription: t('chat.defaultDescription')
   })
+  const isImageModel = selectedModel?.supportsImageGeneration === true;
   const {
     uploadedFiles,
     isUploadingFile,
@@ -499,7 +500,7 @@ const ChatAI: React.FC = () => {
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
 
-    if (isAgentMode) {
+    if (isImageModel || isAgentMode) {
       await requestAgentReply(newMessage, true)
       return
     }
@@ -585,7 +586,8 @@ const ChatAI: React.FC = () => {
                       onRemoveUploadedFile={onRemoveUploadedFile}
                       onToggleThinking={onToggleThinking}
                       isAgentMode={isAgentMode}
-                      onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                      onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
+                      onToggleAgentMode={isImageModel ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                       onInputChange={handleInputChange}
                       onSubmit={handleSubmit}
                       onStopSSE={onStopSSE}
@@ -635,7 +637,8 @@ const ChatAI: React.FC = () => {
                   onRemoveUploadedFile={onRemoveUploadedFile}
                   onToggleThinking={onToggleThinking}
                   isAgentMode={isAgentMode}
-                  onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                      onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
+                  onToggleAgentMode={isImageModel ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}

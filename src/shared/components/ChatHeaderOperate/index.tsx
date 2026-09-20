@@ -49,6 +49,7 @@ const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
                             <div className="modelCardMeta">
                                 <span className="modelCardProvider">{model.provider}</span>
                                 {model.supportsStream ? <span className="modelCardTag">{t('header.tag.stream')}</span> : <span className="modelCardTag">{t('header.tag.nonStream')}</span>}
+                                {model.supportsImageGeneration && <span className="modelCardTag">{t('input.imageGeneration')}</span>}
                                 {isVisionModel && <span className="modelCardTag modelCardTagVision">{t('header.tag.vision')}</span>}
                                 {isThinkingModel && <span className="modelCardTag modelCardTagThinking">{t('header.tag.thinking')}</span>}
                                 {!model.enabled && <span className="modelCardTag modelCardTagDisabled">{t('header.tag.disabled')}</span>}

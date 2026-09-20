@@ -66,6 +66,8 @@ export function SheetPreview({ sheets = [] }: Pick<AgentPreview, 'sheets'>) {
 }
 
 export function DraftContent({ draft }: { draft: AgentPreview }) {
+  const { t } = useLanguage();
+  if (draft.format === 'png') return <article className="artifact-draft-document"><h1>{draft.title}</h1><p role="status">{draft.status === 'failed' ? t('preview.failed') : draft.status === 'cancelled' ? t('preview.cancelled') : t('preview.imageGenerating')}</p><p>{draft.content}</p></article>;
   if (draft.format === 'html') return <HtmlPreview content={draft.content || ''} streaming={draft.status === 'generating'} />;
   if (draft.format === 'xlsx') return <SheetPreview sheets={draft.sheets} />;
   if (draft.format === 'pptx') return <div className="artifact-draft-slides">{draft.slides?.map((slide, i) => <section className="artifact-draft-slide" key={i}><small>{String(i + 1).padStart(2, '0')}</small><h2>{text(slide?.title)}</h2><ul>{(Array.isArray(slide?.body) ? slide.body : []).map((line, j) => <li key={j}>{text(line)}</li>)}</ul></section>)}</div>;
