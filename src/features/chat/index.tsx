@@ -23,6 +23,7 @@ import {
   toRequestMessage
 } from './utils';
 
+import { WelcomeMascot } from './components/WelcomeMascot';
 import './chat.css';
 
 const ChatAI: React.FC = () => {
@@ -570,7 +571,7 @@ const ChatAI: React.FC = () => {
               <div className='messages-scollWrap' ref={messagesRef}>
                 {isWelcomeConversation ? (
                   <div className="new-conversation-panel">
-                    <h1 className="new-conversation-title">AICHAT</h1>
+                    <div className="new-conversation-heading"><WelcomeMascot /><h1 className="new-conversation-title">AICHAT</h1></div>
                     <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
                     <ChatInputControl
                       variant="welcome"
