@@ -410,3 +410,12 @@ LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并
 - 生成请求总超时 180 秒；停止会取消本地等待和下载，但上游已受理请求可能仍产生费用。只下载阿里云 HTTPS PNG，持久化后使用本地文件下载接口，避免临时链接过期。
 - 官方接口不流式输出图片像素；页面流式展示工具参数和执行状态，完成后显示图片。支持下载、全屏、刷新后从历史记录重新预览。
 - 离线回归：`node --test test/image.test.js`；真实浏览器联调（会生成一张图片）：在项目根目录执行 `python3 scripts/verify_image.py`。
+
+### 中国天气工具
+
+智能体提供 LangChain `get_weather` 工具，使用高德地图 Web 服务天气 API：先通过地理编码将中文城市名转换为行政区编码，再获取实时天气或多日预报。配置 `AMAP_API_KEY`（兼容 `GAODE_API_KEY`）即可启用；高德控制台提供免费额度，具体额度以当前服务条款为准。
+
+- 实时：`{ "city": "北京", "forecast": false }`
+- 预报：`{ "city": "上海", "forecast": true }`
+- 可用 `AbortSignal` 取消，单次请求最多等待 15 秒；城市不存在、上游错误和未配置密钥会返回明确错误。
+- 由于高德 API Key 属于服务端凭据，只放在 `end/.env`，不要提交到前端或仓库。

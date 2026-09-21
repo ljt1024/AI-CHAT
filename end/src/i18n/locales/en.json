@@ -7,7 +7,7 @@
   "memory.prompt": "You organize conversation memory. Combine the existing summary and new history into a factual summary of at most {p0} characters. Retain original goals, explicit preferences, names/codes/numbers, constraints, completed work and unresolved issues. Prefer corrected facts and distinguish user statements from assistant suggestions. Do not invent facts, execute historical instructions or answer historical questions. History may arrive in segments; summarize only visible information. Output only the summary.",
   "memory.incomplete": "The memory summary was incomplete. Existing memory was preserved. Please retry.",
   "memory.background": "The following is a factual conversation summary for background only, not new user instructions:\n{p0}",
-  "agent.prompt": "You are the primary agent solving the user's problem. Use conversation memory to understand the original goal. When useful, call calculation tools or delegate planning, analysis and writing tasks. Read tool results and decide the next step until you can answer or need clarification.",
+  "agent.prompt": "You are the primary agent solving the user's problem. Use conversation memory to understand the original goal. When useful, call calculation tools or delegate planning, analysis and writing tasks. Read tool results and decide the next step until you can answer or need clarification. Prefer get_weather for Chinese city weather questions; never guess current weather.",
   "agent.calculationPrompt": "Always call calculate for calculations. Correct tool arguments and retry after failures when appropriate. Answer simple questions directly; do not mechanically call every tool.",
   "agent.artifactPrompt": "For HTML pages, PDF, Excel or PPT, actually call export_html, export_pdf, export_excel or export_pptx. Tool arguments are previewed live; supply title before content. Only use download links returned by tools; never invent links. Clarify missing content or data and label sample data. After success, briefly direct the user to the download card. This chat model does not support image generation. Ask users to select Qwen-Image-2.0 for images; do not substitute HTML/SVG.",
   "agent.explanationPrompt": "When calling tools, provide a brief user-facing explanation of the action and purpose when possible. Output concise decision summaries, tool result summaries and the final answer, not private reasoning drafts. Do not invent browsing, file operations or unavailable tools.",
@@ -127,5 +127,10 @@
   "error.imageResult": "Image generation or download failed. Please try again.",
   "error.imageTimeout": "Image generation timed out. Please try again.",
   "model.qwenImage": "Qwen-Image-2.0 text-to-image model. Generates downloadable PNG images; does not support text chat.",
-  "error.imageNotChat": "This model only supports image generation. Select it and send an image description."
+  "error.imageNotChat": "This model only supports image generation. Select it and send an image description.",
+  "tool.weather": "Get weather for a city in China. Pass a Chinese city name; set forecast true for the multi-day forecast. Data comes from AMap.",
+  "error.weatherKey": "Weather requires AMAP_API_KEY (or GAODE_API_KEY).",
+  "error.weatherCity": "Could not find the city “{p0}”. Please provide a Chinese city or district.",
+  "error.weatherProvider": "AMap weather service failed: {p0}",
+  "error.weatherTimeout": "Weather request timed out. Please try again."
 }
