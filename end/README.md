@@ -427,3 +427,14 @@ LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并
 管理操作需要后端环境变量 `MODEL_CONFIG_TOKEN` 对应的口令，未配置时管理接口禁用。浏览器仅在本次表单内存中保留口令和待提交密钥；模型目录不返回 API Key。编辑时密钥留空表示保留。配置以权限 `0600` 保存到 `end/local_storage/custom-models.json`，备份时需按密钥文件保护。模型配置由服务器共享，并非用户私有账户配置。管理界面应通过 HTTPS 或本机访问。
 
 模型目录按文本、多模态（图片理解）、文生图、自定义筛选；是否支持图片输入与是否支持生成图片是独立能力。工具调用未开启的模型仅用于普通聊天。
+
+### DeepSeek 图片理解与 Files API
+
+根据官方 [Files API](https://api-docs.deepseek.com/zh-cn/guides/files_api) 与[图像理解](https://api-docs.deepseek.com/zh-cn/guides/vision)文档，新增 `deepseek-flash` 多模态模型，使用现有 `DEEPSEEK_API_KEY`。不将旧 `deepseek-chat` / `deepseek-reasoner` 自动标记为图片模型。
+
+- 前端上传时通过 `x-model-id: deepseek-flash` 选择专用上传路径。后端向 `https://api.deepseek.com/files` 发送 multipart `file` 和 `purpose=user_data`，不依赖 OSS。
+- 后端按文件头校验 JPEG、PNG、GIF、WebP；当前项目默认限制 20 MB，DeepSeek Files API 官方单文件上限为 64 MiB，实际取两者较小值。此接口不支持 PDF、Word 等文档。
+- 本地保留图片、文件索引和上游文件 ID，普通聊天使用官方 `{type: 'file', file_id: 'file-api-...'}` 内容块。智能体接收本地 `fileIds`，后端解析为同样的内容块，由 LangChain 调用并通过 LangGraph SQLite checkpoint 保存，以支持重试和后续追问。
+- 不在一轮完成后删除这些图片引用。上传未设置 `expires_after`，按官方默认永久存储；移除输入框附件不等于删除 DeepSeek 云端文件，长期使用需在账户侧管理文件额度。
+- 超时、上游权限错误会明确返回；上传中不能发送，切换模型会取消前端上传，防止旧模型上传结果覆盖新会话。
+- 验证：`node --test test/deepseekFiles.test.js`。真实浏览器联调（产生模型调用费用）：项目根目录运行 `python3 scripts/verify_deepseek_vision.py`。

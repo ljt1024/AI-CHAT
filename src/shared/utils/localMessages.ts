@@ -5,6 +5,7 @@ import { mergeArrays } from '@/shared/utils'
 // 类型定义
 export interface MessageAttachment {
     fileId?: string;
+    providerFileId?: string;
     url?: string;
     name: string;
     mimeType?: string;

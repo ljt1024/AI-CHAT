@@ -4,6 +4,13 @@ const { env } = require('./env');
 
 const MODEL_CATALOG = [
   {
+    id: 'deepseek-flash', name: 'DeepSeek Flash', provider: 'deepseek',
+    get description() { return t('model.deepseekFlash'); },
+    supportsStream: true, supportsFileUpload: true, supportsVision: true,
+    supportsThinking: true, supportsProviderFiles: true,
+    imageAccept: 'image/jpeg,image/png,image/gif,image/webp',
+  },
+  {
     id: 'qwen-image-2.0', name: 'Qwen-Image-2.0', provider: 'qwen',
     get description() { return t('model.qwenImage'); },
     supportsImageGeneration: true, supportsStream: false,

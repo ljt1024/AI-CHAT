@@ -8,7 +8,7 @@ const { prepareContext } = require('./contextMemory');
 const { createLivePreviewEmitter } = require('./livePreview');
 
 const State = Annotation.Root({
-  messages: Annotation(), history: Annotation(), steps: Annotation(), input: Annotation(),
+  messages: Annotation(), history: Annotation(), steps: Annotation(), input: Annotation(), inputContent: Annotation(),
   output: Annotation(), iteration: Annotation(),
   summary: Annotation(), summarizedMessages: Annotation(),
   workingHistory: Annotation(), pendingSummary: Annotation(), pendingSummarizedMessages: Annotation(),
@@ -47,7 +47,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
       });
       emit({ type: 'memory', summarizedMessages: context.summarizedMessages, recentMessages: state.workingHistory.length - context.summarizedMessages });
       return {
-        messages: [...context.messages, new HumanMessage(state.input)],
+        messages: [...context.messages, new HumanMessage(state.inputContent || state.input)],
         pendingSummary: context.summary, pendingSummarizedMessages: context.summarizedMessages,
         steps: progress ? [progress] : [],
       };
@@ -168,7 +168,7 @@ function createGraph({ model, tools, checkpointer, emit = () => {}, maxIteration
       const files = state.artifacts || [];
       const memoryAnswer = files.length ? new AIMessage(t('memory.files', { p0: messageText(answer), p1: files.map((file) => `${file.fileName}: ${file.downloadPath}`).join('\n') })) : answer;
       return {
-        history: [...state.workingHistory, new HumanMessage({ content: state.input, id: state.turnId }), memoryAnswer],
+        history: [...state.workingHistory, new HumanMessage({ content: state.inputContent || state.input, id: state.turnId }), memoryAnswer],
         output: messageText(answer), summary: state.pendingSummary,
         summarizedMessages: state.pendingSummarizedMessages, lastTurnId: state.turnId,
       };

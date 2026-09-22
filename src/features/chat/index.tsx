@@ -398,7 +398,7 @@ const ChatAI: React.FC = () => {
       scheduleStreamRender()
     }
     try {
-      await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId }, (event) => {
+      await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId, fileIds: userMessage.attachments?.map(file => file.fileId).filter((id): id is string => Boolean(id)) }, (event) => {
         if (event.type === 'start') assistant.memoryMessages = event.memoryMessages
         if (event.type === 'memory') assistant.summarizedMessages = event.summarizedMessages
         if (event.type === 'preview') {
@@ -463,7 +463,7 @@ const ChatAI: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || isUploadingFile) return;
     // TODO 增加message id取代key
     const newMessage: Message = {
       content: inputText,
@@ -473,6 +473,7 @@ const ChatAI: React.FC = () => {
       attachments: uploadedFiles.length > 0
         ? uploadedFiles.map((file) => ({
           fileId: file.serverFileId,
+          providerFileId: file.providerFileId,
           url: file.url,
           name: file.name,
           mimeType: file.mimeType,
@@ -577,8 +578,9 @@ const ChatAI: React.FC = () => {
                       variant="welcome"
                       inputText={inputText}
                       isLoading={isLoading}
-                      supportsFileUpload={supportsFileUpload && !(isAgentMode && selectedModel?.supportsTools !== false)}
+                      supportsFileUpload={supportsFileUpload && (selectedModel?.supportsProviderFiles || !(isAgentMode && selectedModel?.supportsTools !== false))}
                       imageOnlyUpload={supportsImageUnderstanding}
+                      imageAccept={selectedModel?.imageAccept}
                       supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                       isThinkingEnabled={isThinkingEnabled}
                       uploadedFiles={uploadedFiles}
@@ -628,8 +630,9 @@ const ChatAI: React.FC = () => {
                 <ChatInputControl
                   inputText={inputText}
                   isLoading={isLoading}
-                  supportsFileUpload={supportsFileUpload && !(isAgentMode && selectedModel?.supportsTools !== false)}
+                  supportsFileUpload={supportsFileUpload && (selectedModel?.supportsProviderFiles || !(isAgentMode && selectedModel?.supportsTools !== false))}
                   imageOnlyUpload={supportsImageUnderstanding}
+                      imageAccept={selectedModel?.imageAccept}
                   supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                   isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}

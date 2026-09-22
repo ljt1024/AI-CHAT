@@ -136,5 +136,8 @@
   "error.modelTools": "此模型未启用工具调用能力，请使用普通对话。",
   "error.modelConfigDisabled": "请先在后端配置 MODEL_CONFIG_TOKEN 管理口令。",
   "error.modelConfigAuth": "管理口令不正确。",
-  "error.modelConfigInvalid": "模型配置参数无效，请检查名称、模型 ID 和接口地址。"
+  "error.modelConfigInvalid": "模型配置参数无效，请检查名称、模型 ID 和接口地址。",
+  "model.deepseekFlash": "DeepSeek Flash 多模态模型，支持图片理解和 Files API。",
+  "error.deepseekImageFormat": "DeepSeek Files API 仅支持 JPEG、PNG、GIF、WebP 图片。",
+  "error.deepseekFileUpload": "DeepSeek 图片上传失败（{code}），请检查账户权限或稍后重试。"
 }

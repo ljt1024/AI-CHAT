@@ -343,3 +343,7 @@ Excel 新导出文件同时保存由实际工作簿值生成的 JSON 预览，�
 ### 中国天气查询
 
 智能体可以使用高德天气工具查询中国城市的实时天气和预报。后端配置 `AMAP_API_KEY`（或 `GAODE_API_KEY`）后，直接询问“北京今天天气如何”即可触发工具。
+
+### DeepSeek 图片理解
+
+在模型选择的「多模态」分类中选择 **DeepSeek Flash**，上传 JPEG、PNG、GIF 或 WebP 图片即可识图。普通聊天与智能体模式均支持，图片经 DeepSeek 官方 Files API 上传，支持在同一会话中刷新后追问。使用后端已有的 `DEEPSEEK_API_KEY`，无需 OSS；当前默认单图上限 20 MB，Files API 不用于 PDF/Word 文档。

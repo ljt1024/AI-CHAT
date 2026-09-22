@@ -15,6 +15,7 @@ export interface FileUploadResponse {
   code?: number;
   data?: {
     fileId?: string;
+    providerFileId?: string;
     fileName?: string;
     mimeType?: string;
     size?: number;
@@ -29,6 +30,7 @@ export interface FileUploadResponse {
 export type RequestMessageContent =
   | string
   | Array<
+    | { type: 'file'; file_id: string }
     | {
       type: 'image_url';
       image_url: {

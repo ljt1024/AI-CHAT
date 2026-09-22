@@ -12,6 +12,8 @@ export interface ModelOption {
   supportsFileUpload?: boolean;
   supportsThinking?: boolean;
   supportsVision?: boolean;
+  supportsProviderFiles?: boolean;
+  imageAccept?: string;
   supportsImageUnderstanding?: boolean;
   supportsImageUrl?: boolean;
   modalities?: string[];

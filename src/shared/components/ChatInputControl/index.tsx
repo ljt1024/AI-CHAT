@@ -6,6 +6,7 @@ import './index.css';
 export interface UploadedFileItem {
   fileId: string;
   serverFileId?: string;
+    providerFileId?: string;
   url?: string;
   name: string;
   mimeType?: string;
@@ -20,6 +21,7 @@ interface ChatInputControlProps {
   onStopSSE: () => void;
   supportsFileUpload?: boolean;
   imageOnlyUpload?: boolean;
+  imageAccept?: string;
   supportsThinking?: boolean;
   isThinkingEnabled?: boolean;
   uploadedFiles?: UploadedFileItem[];
@@ -41,6 +43,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onStopSSE,
   supportsFileUpload = false,
   imageOnlyUpload = false,
+  imageAccept,
   supportsThinking = false,
   isThinkingEnabled = false,
   uploadedFiles = [],
@@ -155,7 +158,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   ref={fileInputRef}
                   type="file"
                   className="file-input-hidden"
-                  accept={imageOnlyUpload ? 'image/*' : undefined}
+                  accept={imageOnlyUpload ? imageAccept || 'image/*' : undefined}
                   onChange={onFileChange}
                 />
               </>
@@ -192,7 +195,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                 <button
                   type="submit"
                   aria-label={t('input.send')}
-                  disabled={!hasInput}
+                  disabled={!hasInput || isUploadingFile}
                   className={`input-send ${hasInput ? 'input-send--active' : 'input-send--idle'}`.trim()}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

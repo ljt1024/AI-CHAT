@@ -136,5 +136,8 @@
   "error.modelTools": "Tool calling is disabled for this model. Use normal chat.",
   "error.modelConfigDisabled": "Configure MODEL_CONFIG_TOKEN on the server first.",
   "error.modelConfigAuth": "Invalid management token.",
-  "error.modelConfigInvalid": "Invalid model configuration. Check the name, model ID and endpoint."
+  "error.modelConfigInvalid": "Invalid model configuration. Check the name, model ID and endpoint.",
+  "model.deepseekFlash": "DeepSeek Flash multimodal model with image understanding and Files API.",
+  "error.deepseekImageFormat": "DeepSeek Files API supports only JPEG, PNG, GIF and WebP images.",
+  "error.deepseekFileUpload": "DeepSeek image upload failed ({code}). Check account access or retry later."
 }

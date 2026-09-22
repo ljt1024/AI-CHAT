@@ -1,4 +1,5 @@
 const { t } = require('../i18n');
+const { resolveDeepseekFiles } = require('./deepseekFileService');
 const axios = require('axios');
 const { env } = require('../config/env');
 const { MODEL_CATALOG, MODEL_INDEX, getProvider } = require('../config/models');
@@ -207,6 +208,14 @@ async function processMessagesWithFiles(body, modelConfig) {
     throw createHttpError(400, t('error.uploadUnsupported', { p0: modelConfig.id }));
   }
 
+  if (modelConfig.supportsProviderFiles && hasFileIds && fileIds.length) {
+    const parts = resolveDeepseekFiles(fileIds, modelConfig);
+    const messages = body.messages.map(message => ({ ...message }));
+    const index = messages.findLastIndex(message => message.role === 'user');
+    if (index < 0) throw createHttpError(400, t('error.messagesRequired'));
+    messages[index].content = [...normalizeMessageContentParts(messages[index].content), ...parts];
+    return { messages, consumedFileIds: [] };
+  }
   const normalizedFiles = [];
   const consumedFileIds = [];
 
