@@ -172,7 +172,7 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
       <small>{t('preview.unsaved')}</small>
     </div>}
     <div className={`artifact-preview-body${artifact.format === 'html' ? ' artifact-preview-body--html' : ''}`} ref={hostRef} aria-busy={Boolean(previewId && rendering && !error)}>
-      {draft ? <DraftContent draft={draft} /> : isWebOrSheet ? (
+      {draft ? <DraftContent draft={draft} /> : artifact.format === 'png' ? <ImagePreview key={`${artifact.fileId}:${retry}`} artifact={artifact} /> : isWebOrSheet ? (
         fileError ? <div className="artifact-preview-error" role="alert"><p>{fileError}</p><button type="button" onClick={() => setRetry(value => value + 1)}>{t('preview.retry')}</button></div>
         : !fileContent ? <p role="status">{t('preview.loading')}</p>
         : artifact.format === 'html' ? <HtmlPreview content={fileContent.html || ''} /> : <SheetPreview sheets={fileContent.sheets} />
@@ -182,7 +182,7 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
           <canvas ref={canvasRef} style={{ visibility: rendering ? 'hidden' : 'visible' }} role="img" aria-label={t('preview.pageLabel', { name: artifact.fileName, page })} />
         </>}
     </div>
-    {!draft && !isWebOrSheet && <footer className="artifact-preview-footer">
+    {!draft && !isWebOrSheet && artifact.format !== 'png' && <footer className="artifact-preview-footer">
       <div className="artifact-preview-zoom">
         <button type="button" aria-label={t('preview.zoomOut')} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.25))}>−</button>
         <button type="button" onClick={() => setZoom(1)} aria-label={t('preview.fitWidth')}>{Math.round(zoom * 100)}%</button>
@@ -197,4 +197,23 @@ export function ArtifactPreviewPanel({ artifact, artifacts, onSelect, onClose }:
     </footer>}
     {artifact.format === 'html' && <div className="artifact-preview-html-note">{t('preview.htmlNote')}</div>}
   </aside>;
+}
+
+function ImagePreview({ artifact }: { artifact: AgentArtifact }) {
+  const { t } = useLanguage();
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    let objectUrl = '';
+    setUrl(''); setError(false);
+    void downloadAgentArtifact(artifact.fileId, controller.signal).then(blob => {
+      if (controller.signal.aborted) return;
+      objectUrl = URL.createObjectURL(blob); setUrl(objectUrl);
+    }).catch(() => { if (!controller.signal.aborted) setError(true); });
+    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [artifact.fileId, retry]);
+  if (error) return <div role="alert"><p>{t('preview.loadError')}</p><button type="button" onClick={() => setRetry(value => value + 1)}>{t('preview.retry')}</button></div>;
+  return url ? <img className="artifact-generated-image" src={url} alt={artifact.fileName} onError={() => setError(true)} /> : <p role="status">{t('preview.loading')}</p>;
 }

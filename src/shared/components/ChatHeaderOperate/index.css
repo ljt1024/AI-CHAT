@@ -256,3 +256,13 @@
         width: calc(100vw - 20px);
     }
 }
+.model-categories { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.model-categories button, .model-config-open, .model-config-actions button { padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); background: var(--surface-color); cursor: pointer; }
+.model-categories button[aria-pressed='true'] { color: var(--secondary-color); border-color: var(--secondary-color); }
+.custom-model-form { max-height: 60vh; overflow: auto; padding: 4px; font-size: 12px; }
+.custom-model-form p { line-height: 1.6; color: var(--text-muted-color); }
+.custom-model-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.custom-model-form label { display: grid; gap: 5px; margin: 10px 0; }
+.custom-model-form input:not([type='checkbox']), .custom-model-form select { width: 100%; min-width: 0; box-sizing: border-box; padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--surface-color); color: var(--text-color); }
+.custom-model-form .model-check { display: flex; align-items: center; }
+.model-config-actions { display: flex; flex-wrap: wrap; gap: 8px; }

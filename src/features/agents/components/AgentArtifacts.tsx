@@ -29,7 +29,7 @@ function ArtifactCard({ artifact, onPreview }: { artifact: AgentArtifact; onPrev
   return <li className="agent-artifact">
     <span className="agent-artifact-format">{artifact.format === 'xlsx' ? 'Excel' : artifact.format === 'pptx' ? 'PPT' : artifact.format.toUpperCase()}</span>
     <div className="agent-artifact-info"><strong>{artifact.fileName}</strong><small>{size} · {t('artifact.ready')}</small></div>
-    {onPreview && (artifact.format === 'pdf' || artifact.format === 'pptx' || artifact.format === 'html' || artifact.format === 'xlsx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${t('share.previewAlt')} ${artifact.fileName}`}>{t('share.previewAlt')}</button>}
+    {onPreview && (artifact.format === 'png' || artifact.format === 'pdf' || artifact.format === 'pptx' || artifact.format === 'html' || artifact.format === 'xlsx') && <button type="button" onClick={() => onPreview(artifact)} aria-label={`${t('share.previewAlt')} ${artifact.fileName}`}>{t('share.previewAlt')}</button>}
     <button type="button" onClick={download} disabled={downloading} aria-label={`${t('artifact.downloadLabel')} ${artifact.fileName}`}>
       {downloading ? t('artifact.downloading') : t('artifact.download')}
     </button>

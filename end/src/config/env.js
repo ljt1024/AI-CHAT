@@ -72,6 +72,8 @@ const env = {
   ossSignedUrlExpiresSeconds: readPositiveNumberEnv(['OSS_SIGNED_URL_EXPIRES_SECONDS'], 1800),
   deepseekApiKey: readEnvValue('DEEPSEEK_API_KEY'),
   qwenApiKey: readEnvValue('DASHSCOPE_API_KEY', 'QWEN_API_KEY'),
+  amapApiKey: readEnvValue('AMAP_API_KEY', 'GAODE_API_KEY'),
+  qwenImageEndpoint: readEnvValue('QWEN_IMAGE_ENDPOINT') || 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',
   oss: {
     region: normalizeOssRegion(readEnvValue('OSS_REGION', 'ALI_OSS_REGION')),
     bucket: readEnvValue('OSS_BUCKET', 'ALI_OSS_BUCKET'),

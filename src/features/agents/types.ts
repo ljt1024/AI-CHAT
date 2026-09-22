@@ -52,7 +52,7 @@ export interface AgentArtifact {
   draft?: AgentPreview;
   fileId: string;
   fileName: string;
-  format: 'pdf' | 'xlsx' | 'pptx' | 'html';
+  format: 'pdf' | 'xlsx' | 'pptx' | 'html' | 'png';
   previewFileId?: string;
   pageCount?: number;
   mimeType: string;
@@ -76,7 +76,7 @@ export type AgentEvent =
 export interface AgentPreview {
   id: string;
   toolCallId?: string;
-  format: 'html' | 'pdf' | 'xlsx' | 'pptx';
+  format: 'html' | 'pdf' | 'xlsx' | 'pptx' | 'png';
   status: 'generating' | 'saving' | 'failed' | 'cancelled';
   title?: string;
   content?: string;

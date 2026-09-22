@@ -1,5 +1,5 @@
 const { parsePartialJson } = require('@langchain/core/output_parsers');
-const formats = { export_html: 'html', export_pdf: 'pdf', export_pptx: 'pptx', export_excel: 'xlsx' };
+const formats = { generate_image: 'png', export_html: 'html', export_pdf: 'pdf', export_pptx: 'pptx', export_excel: 'xlsx' };
 
 // Snapshots are ephemeral UI drafts. They never invoke tools or become downloadable files.
 function createLivePreviewEmitter(emit) {
@@ -15,10 +15,11 @@ function createLivePreviewEmitter(emit) {
       try { data = parsePartialJson(action.output || '{}'); } catch { return; }
     }
     if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+    if (format === 'png' && status === 'saving') status = 'generating';
     const preview = {
       id: action.id, toolCallId: action.toolCallId, format, status,
       title: typeof data.title === 'string' ? data.title : '',
-      content: typeof data.html === 'string' ? data.html : typeof data.content === 'string' ? data.content : '',
+      content: format === 'png' ? (typeof data.prompt === 'string' ? data.prompt : '') : typeof data.html === 'string' ? data.html : typeof data.content === 'string' ? data.content : '',
       slides: Array.isArray(data.slides) ? data.slides : [],
       sheets: Array.isArray(data.sheets) ? data.sheets : [],
     };

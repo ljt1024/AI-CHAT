@@ -335,3 +335,15 @@ Excel 新导出文件同时保存由实际工作簿值生成的 JSON 预览，�
 - 后端资源：`end/src/i18n/locales/{zh,en}.json`。请求携带 `Accept-Language`；后端按权重协商语言，使用 AsyncLocalStorage 隔离请求上下文，并返回 `Content-Language` 和 `Vary: Accept-Language`。
 - 覆盖聊天界面、历史管理、智能体状态、代码与文件预览、上传提示、模型说明、服务端校验、导出工具提示及默认文件标签。智能体的应用生成步骤携带 `outputTranslation`，切换语言即可重新渲染；模型流式正文和用户原文、文件内容不做翻译。旧记录没有翻译键时保留原文，上游服务原始错误也保留诊断信息。
 - 新增语言或文案后运行 `npm run check:i18n`，检查资源键、插值参数及代码引用。`npm test --prefix end` 包含请求并发语言隔离与 SSE 国际化测试；启动前后端后可运行 `python3 scripts/verify_i18n.py` 验证切换、持久化、复数、预览、移动端与真实接口校验；加 `--live` 可额外验证真实模型工具调用。
+
+### 文生图
+
+在顶部模型列表选择 **Qwen-Image-2.0**，输入图片描述并发送，即可生成图片。仅该模型显示「文生图」入口，普通聊天模型不支持此功能。右侧显示生成状态，完成后支持 PNG 预览、全屏和下载；支持方形、横向、纵向及 2K 尺寸。后端配置与验证方式见 `end/README.md` 的文生图说明。
+
+### 中国天气查询
+
+智能体可以使用高德天气工具查询中国城市的实时天气和预报。后端配置 `AMAP_API_KEY`（或 `GAODE_API_KEY`）后，直接询问“北京今天天气如何”即可触发工具。
+
+### DeepSeek 图片理解
+
+在模型选择的「多模态」分类中选择 **DeepSeek Flash**，上传 JPEG、PNG、GIF 或 WebP 图片即可识图。普通聊天与智能体模式均支持，图片经 DeepSeek 官方 Files API 上传，支持在同一会话中刷新后追问。使用后端已有的 `DEEPSEEK_API_KEY`，无需 OSS；当前默认单图上限 20 MB，Files API 不用于 PDF/Word 文档。

@@ -22,7 +22,7 @@ export const getUploadedFileUrl = (fileData?: FileUploadResponse['data']): strin
 }
 
 export const isImageAttachment = (attachment?: MessageAttachment): boolean => Boolean(
-  attachment?.url && attachment.mimeType?.startsWith('image/')
+  (attachment?.url || attachment?.providerFileId) && attachment.mimeType?.startsWith('image/')
 )
 
 export const isImageFile = (file: File): boolean => {
@@ -55,10 +55,10 @@ export const toRequestMessage = (
   const contentText = options.truncateContent === false
     ? (message.content || '').trim()
     : trimContentForContext(message.content || '')
-  const imageParts = options.includeImageAttachments
+  const imageParts = message.role === 'user' && options.includeImageAttachments
     ? (message.attachments || [])
       .filter(isImageAttachment)
-      .map((attachment) => ({
+      .map((attachment) => attachment.providerFileId ? { type: 'file' as const, file_id: attachment.providerFileId } : ({
         type: 'image_url' as const,
         image_url: {
           url: attachment.url as string

@@ -246,7 +246,7 @@ async function saveUploadedFile({ fileName, mimeType, buffer }) {
   return metadata;
 }
 
-function saveLocalFile({ fileName, mimeType, buffer }) {
+function saveLocalFile({ fileName, mimeType, buffer, providerFileId, provider }) {
   validateFileBuffer(buffer);
 
   const safeName = sanitizeFileName(fileName);
@@ -265,6 +265,7 @@ function saveLocalFile({ fileName, mimeType, buffer }) {
     size: buffer.length,
     storageName,
     storageProvider: 'local',
+    ...(providerFileId ? { providerFileId, provider } : {}),
     createdAt: now,
   };
 

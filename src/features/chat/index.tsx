@@ -23,6 +23,7 @@ import {
   toRequestMessage
 } from './utils';
 
+import { WelcomeMascot } from './components/WelcomeMascot';
 import './chat.css';
 
 const ChatAI: React.FC = () => {
@@ -74,6 +75,7 @@ const ChatAI: React.FC = () => {
     isLoading,
     defaultDescription: t('chat.defaultDescription')
   })
+  const isImageModel = selectedModel?.supportsImageGeneration === true;
   const {
     uploadedFiles,
     isUploadingFile,
@@ -165,8 +167,9 @@ const ChatAI: React.FC = () => {
 
 
   const getLoadingMessage = (): Message => ({
-    content: t('chat.loading'),
+    content: isThinkingEnabled ? '' : t('chat.loading'),
     reasoning_content: '',
+    reasoningPending: isThinkingEnabled,
     isBot: true,
     timestamp: new Date().toISOString(),
     isLoading: true,
@@ -198,6 +201,14 @@ const ChatAI: React.FC = () => {
     }
 
     setIsLoading(true);
+    let reasoningStarted: number | undefined;
+    const finishReasoning = () => {
+      assistantMessage.reasoningPending = false;
+      if (reasoningStarted !== undefined) {
+        assistantMessage.reasoningDurationMs = (assistantMessage.reasoningDurationMs || 0) + Math.max(0, performance.now() - reasoningStarted);
+        reasoningStarted = undefined;
+      }
+    };
     const requestController = new AbortController();
     controllerRef.current = requestController;
 
@@ -261,6 +272,7 @@ const ChatAI: React.FC = () => {
       assistantMessage = {
         content: '',
         reasoning_content: '',
+    reasoningPending: isThinkingEnabled,
         isBot: true,
         timestamp: new Date().toISOString(),
         usage: undefined,
@@ -268,7 +280,6 @@ const ChatAI: React.FC = () => {
         role: 'assistant'
       }
 
-      let flag = false
       let streamBuffer = ''
       const scheduleAssistantRender = () => {
         streamPendingMessageRef.current = assistantMessage
@@ -288,6 +299,7 @@ const ChatAI: React.FC = () => {
         try {
           // sse最终以'data: [DONE]'结束
           if (lines === '[DONE]') {
+            finishReasoning();
             assistantMessage.isLoading = false
             flushAssistantRender()
             return
@@ -297,20 +309,16 @@ const ChatAI: React.FC = () => {
             assistantMessage.usage = data.usage
           }
 
-          // 正式回复内容
-          if (data.choices[0].delta.content !== null && data.choices[0].delta.content !== undefined) {
-            if (flag) {
-              assistantMessage.content += '\n\n'
-            }
-            assistantMessage.content += data.choices[0].delta.content || ''
-            scheduleAssistantRender()
-            flag = false
-            // 思考内容
-          } else {
-            flag = true
-            assistantMessage.reasoning_content += data.choices[0].delta.reasoning_content || ''
-            scheduleAssistantRender()
+          const delta = data.choices?.[0]?.delta;
+          if (delta?.reasoning_content) {
+            reasoningStarted ??= performance.now();
+            assistantMessage.reasoning_content += delta.reasoning_content;
           }
+          if (delta?.content) {
+            finishReasoning();
+            assistantMessage.content += delta.content;
+          }
+          scheduleAssistantRender();
         } catch (error) {
           console.log(error)
         }
@@ -336,32 +344,24 @@ const ChatAI: React.FC = () => {
       if (streamBuffer.trim()) {
         parseSSEEvent(streamBuffer)
       }
+      finishReasoning();
       assistantMessage.isLoading = false
       flushAssistantRender()
       reader.releaseLock();
       storageMessages(cloneMessage(assistantMessage), currentConversationModel)
     } catch (error: any) {
       console.log(error)
-      if (error.name === "AbortError") {
-        if (streamPendingMessageRef.current) {
-          assistantMessage.isLoading = false
-          flushStreamRender()
-        } else {
-          cancelStreamRender()
-        }
-        console.log('请求被中断')
-      } else {
-        cancelStreamRender()
-        streamPendingMessageRef.current = null
-        dispatch({
-          type: 'addMessages',
-          messages: {
-            content: `${t('chat.serverBusy')}\n\n${error instanceof Error ? error.message : t('error.request')}`,
-            isBot: true,
-            isError: true
-          }
-        } as any)
+      finishReasoning();
+      assistantMessage.isLoading = false;
+      assistantMessage.reasoningInterrupted = true;
+      if (error.name !== 'AbortError') {
+        assistantMessage.isError = true;
+        assistantMessage.content += `\n\n${error instanceof Error ? error.message : t('error.request')}`;
       }
+      cancelStreamRender();
+      streamPendingMessageRef.current = null;
+      dispatch({ type: 'addMessages', messages: cloneMessage(assistantMessage) });
+      storageMessages(cloneMessage(assistantMessage), currentConversationModel);
     } finally {
       scrollToBottom()
       setIsLoading(false);
@@ -396,7 +396,7 @@ const ChatAI: React.FC = () => {
       scheduleStreamRender()
     }
     try {
-      await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId }, (event) => {
+      await streamAgents({ input: userMessage.content, model: selectedModelId, sessionId, turnId, fileIds: userMessage.attachments?.map(file => file.fileId).filter((id): id is string => Boolean(id)) }, (event) => {
         if (event.type === 'start') assistant.memoryMessages = event.memoryMessages
         if (event.type === 'memory') assistant.summarizedMessages = event.summarizedMessages
         if (event.type === 'preview') {
@@ -461,7 +461,7 @@ const ChatAI: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || isUploadingFile) return;
     // TODO 增加message id取代key
     const newMessage: Message = {
       content: inputText,
@@ -471,6 +471,7 @@ const ChatAI: React.FC = () => {
       attachments: uploadedFiles.length > 0
         ? uploadedFiles.map((file) => ({
           fileId: file.serverFileId,
+          providerFileId: file.providerFileId,
           url: file.url,
           name: file.name,
           mimeType: file.mimeType,
@@ -499,7 +500,7 @@ const ChatAI: React.FC = () => {
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
 
-    if (isAgentMode) {
+    if (isImageModel || (isAgentMode && selectedModel?.supportsTools !== false)) {
       await requestAgentReply(newMessage, true)
       return
     }
@@ -569,23 +570,25 @@ const ChatAI: React.FC = () => {
               <div className='messages-scollWrap' ref={messagesRef}>
                 {isWelcomeConversation ? (
                   <div className="new-conversation-panel">
-                    <h1 className="new-conversation-title">AICHAT</h1>
+                    <div className="new-conversation-heading"><WelcomeMascot /><h1 className="new-conversation-title">AICHAT</h1></div>
                     <p className="new-conversation-subtitle">{t('chat.subtitle')}</p>
                     <ChatInputControl
                       variant="welcome"
                       inputText={inputText}
                       isLoading={isLoading}
-                      supportsFileUpload={supportsFileUpload && !isAgentMode}
+                      supportsFileUpload={supportsFileUpload && (selectedModel?.supportsProviderFiles || !(isAgentMode && selectedModel?.supportsTools !== false))}
                       imageOnlyUpload={supportsImageUnderstanding}
-                      supportsThinking={modelSupportsThinking && !isAgentMode}
+                      imageAccept={selectedModel?.imageAccept}
+                      supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                       isThinkingEnabled={isThinkingEnabled}
                       uploadedFiles={uploadedFiles}
                       isUploadingFile={isUploadingFile}
                       onUploadFile={onUploadFile}
                       onRemoveUploadedFile={onRemoveUploadedFile}
                       onToggleThinking={onToggleThinking}
-                      isAgentMode={isAgentMode}
-                      onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                      isAgentMode={isAgentMode && selectedModel?.supportsTools !== false}
+                      onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
+                      onToggleAgentMode={isImageModel || selectedModel?.supportsTools === false ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                       onInputChange={handleInputChange}
                       onSubmit={handleSubmit}
                       onStopSSE={onStopSSE}
@@ -625,17 +628,19 @@ const ChatAI: React.FC = () => {
                 <ChatInputControl
                   inputText={inputText}
                   isLoading={isLoading}
-                  supportsFileUpload={supportsFileUpload && !isAgentMode}
+                  supportsFileUpload={supportsFileUpload && (selectedModel?.supportsProviderFiles || !(isAgentMode && selectedModel?.supportsTools !== false))}
                   imageOnlyUpload={supportsImageUnderstanding}
-                  supportsThinking={modelSupportsThinking && !isAgentMode}
+                      imageAccept={selectedModel?.imageAccept}
+                  supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                   isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}
                   isUploadingFile={isUploadingFile}
                   onUploadFile={onUploadFile}
                   onRemoveUploadedFile={onRemoveUploadedFile}
                   onToggleThinking={onToggleThinking}
-                  isAgentMode={isAgentMode}
-                  onToggleAgentMode={() => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                  isAgentMode={isAgentMode && selectedModel?.supportsTools !== false}
+                      onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
+                  onToggleAgentMode={isImageModel || selectedModel?.supportsTools === false ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}

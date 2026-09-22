@@ -57,3 +57,5 @@
 .artifact-sheet-pages { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; }
 .artifact-sheet-pages button { padding: 4px 10px; }
 .artifact-preview.is-fullscreen .artifact-preview-body--html { padding: 0; }
+
+.artifact-generated-image { display: block; width: 100%; height: auto; object-fit: contain; margin: auto; }

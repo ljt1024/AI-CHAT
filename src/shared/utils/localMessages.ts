@@ -5,6 +5,7 @@ import { mergeArrays } from '@/shared/utils'
 // 类型定义
 export interface MessageAttachment {
     fileId?: string;
+    providerFileId?: string;
     url?: string;
     name: string;
     mimeType?: string;
@@ -22,6 +23,9 @@ export interface Message {
     role: 'user' | 'assistant';
     timestamp?: string;
     reasoning_content?: string;
+    reasoningPending?: boolean;
+    reasoningDurationMs?: number;
+    reasoningInterrupted?: boolean;
     isBot?: boolean;
     isError?: boolean;
     isLoading?: boolean;

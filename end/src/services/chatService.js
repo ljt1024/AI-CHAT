@@ -1,7 +1,8 @@
 const { t } = require('../i18n');
+const { resolveDeepseekFiles } = require('./deepseekFileService');
 const axios = require('axios');
 const { env } = require('../config/env');
-const { MODEL_CATALOG, MODEL_INDEX, PROVIDER_CONFIG } = require('../config/models');
+const { MODEL_CATALOG, MODEL_INDEX, getProvider } = require('../config/models');
 const { createHttpError, getHttpStatusCode, sendChatError, sendJsonError } = require('../utils/http');
 const { logError, logInfo, safeSerialize } = require('../utils/logger');
 const { extractAssistantText, generateDocumentFile } = require('./documentService');
@@ -207,6 +208,14 @@ async function processMessagesWithFiles(body, modelConfig) {
     throw createHttpError(400, t('error.uploadUnsupported', { p0: modelConfig.id }));
   }
 
+  if (modelConfig.supportsProviderFiles && hasFileIds && fileIds.length) {
+    const parts = resolveDeepseekFiles(fileIds, modelConfig);
+    const messages = body.messages.map(message => ({ ...message }));
+    const index = messages.findLastIndex(message => message.role === 'user');
+    if (index < 0) throw createHttpError(400, t('error.messagesRequired'));
+    messages[index].content = [...normalizeMessageContentParts(messages[index].content), ...parts];
+    return { messages, consumedFileIds: [] };
+  }
   const normalizedFiles = [];
   const consumedFileIds = [];
 
@@ -255,7 +264,7 @@ async function processMessagesWithFiles(body, modelConfig) {
 
 function buildChatPayload(body, modelConfig, stream, messages) {
   const payload = {
-    model: modelConfig.id,
+    model: modelConfig.modelId || modelConfig.id,
     messages,
     temperature: typeof body.temperature === 'number' ? body.temperature : 0.7,
     stream,
@@ -325,7 +334,8 @@ async function proxyChatCompletions(req, res, forceModel) {
     });
   }
 
-  const provider = PROVIDER_CONFIG[modelConfig.provider];
+  if (modelConfig.supportsImageGeneration) return res.status(400).json({ code: 400, msg: t('error.imageNotChat') });
+  const provider = getProvider(modelConfig);
   if (!provider || !provider.apiKey) {
     return res.status(500).json({
       code: 500,
@@ -340,7 +350,7 @@ async function proxyChatCompletions(req, res, forceModel) {
     logInfo('chat.proxy.request', {
       requestId: req.requestId,
       provider: modelConfig.provider,
-      model: modelConfig.id,
+      model: modelConfig.modelId || modelConfig.id,
       stream,
       messageCount: Array.isArray(messages) ? messages.length : 0,
       fileCount: (Array.isArray(requestBody.files) ? requestBody.files.length : 0)
@@ -368,7 +378,7 @@ async function proxyChatCompletions(req, res, forceModel) {
       logInfo('chat.proxy.upstream_connected', {
         requestId: req.requestId,
         provider: modelConfig.provider,
-        model: modelConfig.id,
+        model: modelConfig.modelId || modelConfig.id,
         upstreamStatus: response.status,
       });
       let streamFinished = false;
@@ -378,7 +388,7 @@ async function proxyChatCompletions(req, res, forceModel) {
           logError('chat.proxy.cleanup_failed', {
             requestId: req.requestId,
             provider: modelConfig.provider,
-            model: modelConfig.id,
+            model: modelConfig.modelId || modelConfig.id,
             fileIds: consumedFileIds,
             message: cleanupError.message,
           });
@@ -415,7 +425,7 @@ async function proxyChatCompletions(req, res, forceModel) {
     logInfo('chat.proxy.success', {
       requestId: req.requestId,
       provider: modelConfig.provider,
-      model: modelConfig.id,
+      model: modelConfig.modelId || modelConfig.id,
       upstreamStatus: response.status,
       generatedDocument: Boolean(responseData.generatedDocument),
     });
@@ -424,7 +434,7 @@ async function proxyChatCompletions(req, res, forceModel) {
     logError('chat.proxy.error', {
       requestId: req.requestId,
       provider: modelConfig.provider,
-      model: modelConfig.id,
+      model: modelConfig.modelId || modelConfig.id,
       stream,
       status: getHttpStatusCode(error),
       upstreamStatus: error.response?.status,

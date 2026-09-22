@@ -205,3 +205,8 @@
     width: min(220px, 100%);
   }
 }
+.reasoning-panel { margin-bottom: 16px; color: var(--text-muted-color); border: 1px solid var(--border-color); border-radius: 10px; }
+.reasoning-panel > summary { cursor: pointer; padding: 10px 14px; font-size: 13px; }
+.reasoning-panel > summary small { margin-left: 12px; font-variant-numeric: tabular-nums; }
+.reasoning-panel > summary:focus-visible { outline: 2px solid var(--secondary-color); outline-offset: 2px; }
+.reasoning-panel-content { padding: 0 14px 10px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }

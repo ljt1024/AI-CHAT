@@ -7,7 +7,9 @@ const { saveLocalFile, buildFileAccessPayload } = require('../services/fileServi
 const { generatePresentationFile, presentationSchema } = require('../services/presentationService');
 const { generateHtmlFile, htmlSchema } = require('../services/htmlService');
 
-function createArtifactTools({ saveFile = saveLocalFile } = {}) {
+const { generateImageFile, imageSchema } = require('../services/imageService');
+
+function createArtifactTools({ saveFile = saveLocalFile, generateImage = generateImageFile } = {}) {
   const exportFile = async (generate, args, config) => {
     config?.signal?.throwIfAborted();
     const file = await generate(args, { signal: config?.signal });
@@ -27,6 +29,9 @@ function createArtifactTools({ saveFile = saveLocalFile } = {}) {
     return JSON.stringify({ message: t('artifact.ready'), ...artifact });
   };
   return [
+    tool((args, config) => exportFile(generateImage, args, config), {
+      name: 'generate_image', description: t('tool.image'), schema: imageSchema,
+    }),
     tool((args, config) => exportFile(generateHtmlFile, args, config), {
       name: 'export_html',
       description: t('tool.html'),

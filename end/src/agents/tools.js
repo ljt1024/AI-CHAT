@@ -4,6 +4,7 @@ const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
 const { z } = require('zod');
 const { getAgent } = require('./registry');
 const { createArtifactTools } = require('./artifactTools');
+const { getWeather, weatherSchema } = require('../services/weatherService');
 
 function createAgentTools(model, agentIds) {
   return [
@@ -26,7 +27,10 @@ function createAgentTools(model, agentIds) {
     tool(() => new Date().toISOString(), {
       name: 'current_time', description: t('tool.time'), schema: z.object({}),
     }),
-    ...createArtifactTools(),
+    tool((args, config) => getWeather(args, config), {
+      name: 'get_weather', description: t('tool.weather'), schema: weatherSchema,
+    }),
+    ...createArtifactTools().filter(item => item.name !== 'generate_image'),
     ...agentIds.map((id) => {
       const agent = getAgent(id);
       return tool(async ({ task }, config) => {

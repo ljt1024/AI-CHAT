@@ -1,3 +1,6 @@
+const { resolveDeepseekFiles } = require('./deepseekFileService');
+const { MODEL_INDEX } = require('../config/models');
+const { runImageGeneration } = require('./imageRunService');
 const { t } = require('../i18n');
 const { randomUUID } = require('node:crypto');
 const { createGraph } = require('../agents/graph');
@@ -16,9 +19,10 @@ function validateRequest(body) {
   }
   if (body.model !== undefined && typeof body.model !== 'string') throw createHttpError(400, t('error.modelType'));
   if (body.turnId !== undefined && (typeof body.turnId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(body.turnId))) throw createHttpError(400, t('error.turnId'));
+  const fileParts = resolveDeepseekFiles(body.fileIds ?? [], MODEL_INDEX.get(body.model));
   const ids = body.agentIds === undefined ? ['planner', 'researcher', 'writer'] : body.agentIds;
   if (!Array.isArray(ids) || ids.length > 3 || ids.some((id) => typeof id !== 'string' || !getAgent(id))) throw createHttpError(400, t('error.agentIds'));
-  return { input: body.input.trim(), model: body.model || 'deepseek-chat', sessionId: body.sessionId, agentIds: [...new Set(ids)], turnId: body.turnId || randomUUID() };
+  return { input: body.input.trim(), inputContent: fileParts.length ? [{ type: 'text', text: body.input.trim() }, ...fileParts] : body.input.trim(), model: body.model || 'deepseek-chat', sessionId: body.sessionId, agentIds: [...new Set(ids)], turnId: body.turnId || randomUUID() };
 }
 
 function createAgentService({ checkpointer = createMemoryStore(), modelFactory = createChatModel, toolsFactory = createAgentTools, bootstrap = legacyHistory, memoryOptions } = {}) {
@@ -26,9 +30,11 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
   async function runAgents(body, { emit = () => {}, signal } = {}) {
     const request = validateRequest(body);
     if (active.has(request.sessionId)) throw createHttpError(409, t('error.concurrent'));
-    const model = modelFactory(request.model);
+    if (MODEL_INDEX.get(request.model)?.supportsTools === false && !MODEL_INDEX.get(request.model)?.supportsImageGeneration) throw createHttpError(400, t('error.modelTools'));
     active.add(request.sessionId);
     try {
+      if (MODEL_INDEX.get(request.model)?.supportsImageGeneration) return await runImageGeneration(request, { emit, signal });
+      const model = modelFactory(request.model);
       const tools = toolsFactory(model, request.agentIds);
       const graph = createGraph({ model, tools, checkpointer, emit, memoryOptions });
       const config = { configurable: { thread_id: request.sessionId }, signal, recursionLimit: 32 };
@@ -36,7 +42,7 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
       const history = previous.values.history ?? bootstrap(request.sessionId);
       let workingHistory = history;
       if (history.some((message) => message.id === request.turnId)) {
-        if (previous.values.lastTurnId !== request.turnId || history.at(-2)?.content !== request.input) {
+        if (previous.values.lastTurnId !== request.turnId || JSON.stringify(history.at(-2)?.content) !== JSON.stringify(request.inputContent)) {
           throw createHttpError(409, t('error.regenerate'));
         }
         workingHistory = history.slice(0, -2);
@@ -44,7 +50,7 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
       signal?.throwIfAborted();
       emit({ type: 'start', sessionId: request.sessionId, memoryMessages: workingHistory.length });
       const result = await graph.invoke({
-        input: request.input, history, workingHistory, turnId: request.turnId,
+        input: request.input, inputContent: request.inputContent, history, workingHistory, turnId: request.turnId,
         summary: previous.values.summary || '', summarizedMessages: previous.values.summarizedMessages || 0,
         steps: [], output: '', iteration: 0, artifacts: [],
       }, config);

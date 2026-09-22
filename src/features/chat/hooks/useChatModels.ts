@@ -18,6 +18,8 @@ export const useChatModels = ({
   isLoading,
   defaultDescription
 }: UseChatModelsOptions) => {
+  const [revision, setRevision] = useState(0);
+  useEffect(() => { const refresh = () => setRevision(value => value + 1); window.addEventListener('models-changed', refresh); return () => window.removeEventListener('models-changed', refresh); }, []);
   const [models, setModels] = useState<ModelOption[]>([])
   const [isModelsLoading, setIsModelsLoading] = useState(false)
   const [thinkingPreference, setThinkingPreference] = useState(true)
@@ -80,7 +82,7 @@ export const useChatModels = ({
 
     void fetchModels()
     return () => controller.abort();
-  }, [chatApiUrl, defaultDescription])
+  }, [chatApiUrl, defaultDescription, revision])
 
   useEffect(() => {
     if (!selectedConversation?.modelId || selectedConversation.modelId === selectedModelId) return

@@ -26,6 +26,7 @@ export async function downloadAgentArtifact(fileId: string, signal?: AbortSignal
 }
 
 export interface AgentRequest {
+  fileIds?: string[];
   input: string;
   sessionId: string;
   agentIds?: string[];

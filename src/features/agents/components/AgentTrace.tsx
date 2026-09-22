@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLanguage } from '@/app/providers/LanguageContext';
 import type { AgentStep } from '../types';
 import './AgentTrace.css';
+import { ToolStepDetail } from './ToolStepDetail';
 
 export function AgentTrace({ steps, status, memoryMessages = 0, summarizedMessages = 0 }: {
   steps: AgentStep[];
@@ -20,7 +21,7 @@ export function AgentTrace({ steps, status, memoryMessages = 0, summarizedMessag
     {summarizedMessages > 0 && <p className="agent-trace-note">{t('agent.summary', { count: summarizedMessages, recent: memoryMessages - summarizedMessages })}</p>}
     <ol>{steps.map((step) => <li key={step.id} data-step-id={step.id} data-phase={step.phase} data-status={step.status} aria-busy={step.status === 'running'}>
       <div><b>{phases[step.phase]}</b>{step.agentId && <code>{step.agentId}</code>}<small>{step.status === 'running' ? (step.stage === 'preparing' ? t('agent.preparing') : t('agent.running')) : step.status === 'failed' ? t('agent.failed') : step.status === 'cancelled' ? t('agent.cancelled') : '✓'}</small></div>
-      <pre>{step.outputTranslation && i18n.exists(step.outputTranslation.key) ? String(i18n.t(step.outputTranslation.key, step.outputTranslation.params)) : step.output}</pre>
+      {step.phase !== 'thought' && step.agentId ? <ToolStepDetail step={step} action={steps.find(item => item.phase === 'action' && Boolean(step.toolCallId) && item.toolCallId === step.toolCallId)} /> : <pre>{step.outputTranslation && i18n.exists(step.outputTranslation.key) ? String(i18n.t(step.outputTranslation.key, step.outputTranslation.params)) : step.output}</pre>}
     </li>)}</ol>
   </details>;
 }

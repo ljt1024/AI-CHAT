@@ -1,12 +1,19 @@
 export interface ModelOption {
+  custom?: boolean;
+  modelId?: string;
+  baseUrl?: string;
+  supportsTools?: boolean;
   id: string;
   name: string;
   provider: string;
   description?: string;
   supportsStream?: boolean;
+  supportsImageGeneration?: boolean;
   supportsFileUpload?: boolean;
   supportsThinking?: boolean;
   supportsVision?: boolean;
+  supportsProviderFiles?: boolean;
+  imageAccept?: string;
   supportsImageUnderstanding?: boolean;
   supportsImageUrl?: boolean;
   modalities?: string[];

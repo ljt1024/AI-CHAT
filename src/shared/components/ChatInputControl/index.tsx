@@ -6,6 +6,7 @@ import './index.css';
 export interface UploadedFileItem {
   fileId: string;
   serverFileId?: string;
+    providerFileId?: string;
   url?: string;
   name: string;
   mimeType?: string;
@@ -20,6 +21,7 @@ interface ChatInputControlProps {
   onStopSSE: () => void;
   supportsFileUpload?: boolean;
   imageOnlyUpload?: boolean;
+  imageAccept?: string;
   supportsThinking?: boolean;
   isThinkingEnabled?: boolean;
   uploadedFiles?: UploadedFileItem[];
@@ -29,6 +31,7 @@ interface ChatInputControlProps {
   onToggleThinking?: () => void;
   isAgentMode?: boolean;
   onToggleAgentMode?: () => void;
+  onCreateImage?: () => void;
   variant?: 'bottom' | 'welcome';
 }
 
@@ -40,6 +43,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onStopSSE,
   supportsFileUpload = false,
   imageOnlyUpload = false,
+  imageAccept,
   supportsThinking = false,
   isThinkingEnabled = false,
   uploadedFiles = [],
@@ -47,7 +51,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
   onUploadFile,
   onRemoveUploadedFile,
   onToggleThinking,
-  variant = 'bottom', isAgentMode = false, onToggleAgentMode
+  variant = 'bottom', isAgentMode = false, onToggleAgentMode, onCreateImage
 }) => {
   const hasInput = inputText.trim().length > 0
   const formRef = useRef<HTMLFormElement>(null)
@@ -154,7 +158,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                   ref={fileInputRef}
                   type="file"
                   className="file-input-hidden"
-                  accept={imageOnlyUpload ? 'image/*' : undefined}
+                  accept={imageOnlyUpload ? imageAccept || 'image/*' : undefined}
                   onChange={onFileChange}
                 />
               </>
@@ -178,8 +182,9 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                 <span className="input-thinking-label">{t('input.thinkingLabel')}</span>
               </button>
             )}
+            {onCreateImage && <button type="button" className="input-thinking input-image-action is-inactive" aria-label={t('input.imageGeneration')} onClick={onCreateImage} disabled={isLoading} title={t('input.imageHint')}><span className="input-thinking-label">{t('input.imageGeneration')}</span></button>}
             {onToggleAgentMode && (
-              <button type="button" className={`input-thinking ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={t('input.agentHint')}>
+              <button type="button" className={`input-thinking input-agent-action ${isAgentMode ? 'is-active' : 'is-inactive'}`} onClick={onToggleAgentMode} disabled={isLoading} aria-pressed={isAgentMode} title={t('input.agentHint')}>
                 <span className="input-thinking-label">{t('input.agentMode')}</span>
               </button>
             )}
@@ -190,7 +195,7 @@ const ChatInputControl: React.FC<ChatInputControlProps> = ({
                 <button
                   type="submit"
                   aria-label={t('input.send')}
-                  disabled={!hasInput}
+                  disabled={!hasInput || isUploadingFile}
                   className={`input-send ${hasInput ? 'input-send--active' : 'input-send--idle'}`.trim()}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

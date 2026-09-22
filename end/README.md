@@ -399,3 +399,42 @@ LangChain 工具 `export_pptx` 使用 PptxGenJS 生成可编辑 PowerPoint，并
 通过 `Accept-Language: en-US` 或 `zh-CN` 选择语言，默认中文。后端 i18next 资源位于 `src/i18n/locales`，`src/i18n/index.js` 使用 AsyncLocalStorage 隔离并发请求的语言，不修改全局当前语言。响应设置 `Content-Language` 和 `Vary: Accept-Language`。
 
 错误、模型目录、智能体系统说明和工具提示、文件默认标签均使用请求语言。SSE `step.outputTranslation` 提供 `{key, params}`，供前端在切换界面语言时重绘系统进度；模型输出开始后删除该字段，保证实际生成内容不被翻译替换。旧客户端仍可以使用 `step.output`。
+
+### Qwen-Image-2.0 文生图
+
+模型目录通过 `supportsImageGeneration` 标记能力，仅 `qwen-image-2.0` 开启。选中图像模型后，`/api/agents/run` 直接运行专用 LangGraph 工作流，调用 LangChain `generate_image` 工具和阿里原生接口，使用 ToolMessage 与现有 SSE 返回执行状态、PNG 文件卡片及预览。无需额外聊天模型推理，普通聊天模型不绑定此工具，聊天补全接口明确拒绝图像模型。图像模型为单轮生成，不提供聊天记忆；图片保留在前端会话历史。每次工具调用生成一张图片，不自动重试计费请求。
+
+- 凭据：`DASHSCOPE_API_KEY`（兼容 `QWEN_API_KEY`），需开通 `qwen-image-2.0` 权限并有可用额度。
+- 默认地址：`https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation`（北京）。可用 `QWEN_IMAGE_ENDPOINT` 配置对应地域或业务空间的官方接口，API Key 必须与地域一致。
+- 参数：`title`、`prompt`、可选 `negativePrompt`；`size` 支持 `1024*1024`、`1536*1024`、`1024*1536`、`2048*2048`。
+- 生成请求总超时 180 秒；停止会取消本地等待和下载，但上游已受理请求可能仍产生费用。只下载阿里云 HTTPS PNG，持久化后使用本地文件下载接口，避免临时链接过期。
+- 官方接口不流式输出图片像素；页面流式展示工具参数和执行状态，完成后显示图片。支持下载、全屏、刷新后从历史记录重新预览。
+- 离线回归：`node --test test/image.test.js`；真实浏览器联调（会生成一张图片）：在项目根目录执行 `python3 scripts/verify_image.py`。
+
+### 中国天气工具
+
+智能体提供 LangChain `get_weather` 工具，使用高德地图 Web 服务天气 API：先通过地理编码将中文城市名转换为行政区编码，再获取实时天气或多日预报。配置 `AMAP_API_KEY`（兼容 `GAODE_API_KEY`）即可启用；高德控制台提供免费额度，具体额度以当前服务条款为准。
+
+- 实时：`{ "city": "北京", "forecast": false }`
+- 预报：`{ "city": "上海", "forecast": true }`
+- 可用 `AbortSignal` 取消，单次请求最多等待 15 秒；城市不存在、上游错误和未配置密钥会返回明确错误。
+- 由于高德 API Key 属于服务端凭据，只放在 `end/.env`，不要提交到前端或仓库。
+
+### 自定义模型
+
+在「切换模型 → 模型配置」中新增、编辑或删除 OpenAI 兼容的**流式 Chat Completions** 模型。填写显示名称、上游模型 ID、Base URL（例如 `https://api.example.com/v1`）、API Key，并按供应商支持情况勾选图片理解、工具调用。自定义图片生成协议暂不支持。
+
+管理操作需要后端环境变量 `MODEL_CONFIG_TOKEN` 对应的口令，未配置时管理接口禁用。浏览器仅在本次表单内存中保留口令和待提交密钥；模型目录不返回 API Key。编辑时密钥留空表示保留。配置以权限 `0600` 保存到 `end/local_storage/custom-models.json`，备份时需按密钥文件保护。模型配置由服务器共享，并非用户私有账户配置。管理界面应通过 HTTPS 或本机访问。
+
+模型目录按文本、多模态（图片理解）、文生图、自定义筛选；是否支持图片输入与是否支持生成图片是独立能力。工具调用未开启的模型仅用于普通聊天。
+
+### DeepSeek 图片理解与 Files API
+
+根据官方 [Files API](https://api-docs.deepseek.com/zh-cn/guides/files_api) 与[图像理解](https://api-docs.deepseek.com/zh-cn/guides/vision)文档，新增 `deepseek-flash` 多模态模型，使用现有 `DEEPSEEK_API_KEY`。不将旧 `deepseek-chat` / `deepseek-reasoner` 自动标记为图片模型。
+
+- 前端上传时通过 `x-model-id: deepseek-flash` 选择专用上传路径。后端向 `https://api.deepseek.com/files` 发送 multipart `file` 和 `purpose=user_data`，不依赖 OSS。
+- 后端按文件头校验 JPEG、PNG、GIF、WebP；当前项目默认限制 20 MB，DeepSeek Files API 官方单文件上限为 64 MiB，实际取两者较小值。此接口不支持 PDF、Word 等文档。
+- 本地保留图片、文件索引和上游文件 ID，普通聊天使用官方 `{type: 'file', file_id: 'file-api-...'}` 内容块。智能体接收本地 `fileIds`，后端解析为同样的内容块，由 LangChain 调用并通过 LangGraph SQLite checkpoint 保存，以支持重试和后续追问。
+- 不在一轮完成后删除这些图片引用。上传未设置 `expires_after`，按官方默认永久存储；移除输入框附件不等于删除 DeepSeek 云端文件，长期使用需在账户侧管理文件额度。
+- 超时、上游权限错误会明确返回；上传中不能发送，切换模型会取消前端上传，防止旧模型上传结果覆盖新会话。
+- 验证：`node --test test/deepseekFiles.test.js`。真实浏览器联调（产生模型调用费用）：项目根目录运行 `python3 scripts/verify_deepseek_vision.py`。
