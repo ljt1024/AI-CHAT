@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { CustomModelForm } from './CustomModelForm';
 import ArrowDownIcon from '@/shared/assets/arrowDown.svg?react';
 import Popover from "../Popover";
 import LanguageSwitcher from "../LanguageSwitcher";
@@ -19,17 +20,23 @@ interface ChatHeaderOperateProps {
 const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
     const { t } = useLanguage()
     const { isShowShare, onCancelShare, models, selectedModelId, isModelLoading = false, onSelectModel } = props
+    const [category, setCategory] = useState('all');
+    const [configuring, setConfiguring] = useState(false);
+    const filtered = models.filter(model => category === 'all' || (category === 'custom' ? model.custom : category === 'image' ? model.supportsImageGeneration : category === 'vision' ? supportsImageUnderstanding(model) : !model.supportsImageGeneration && !supportsImageUnderstanding(model)));
     const selectedModel = models.find((model) => model.id === selectedModelId)
     const selectedModelName = selectedModel?.name || selectedModelId || t('header.placeholder')
 
     const modelContent = (
-        <div className="modelPopover">
+        <div className="modelPopover" onClick={event => { if (!(event.target as HTMLElement).closest('.modelCard')) event.stopPropagation(); }}>
             <div className="modelPopoverTitle">{t('header.selectModelTitle')}</div>
+            <button type="button" disabled={isModelLoading} className="model-config-open" onClick={() => setConfiguring(value => !value)}>{t('modelConfig.manage')}</button>
+            {configuring ? <CustomModelForm models={models} onClose={() => setConfiguring(false)} /> : <>
+            <div className="model-categories" role="group" aria-label={t('modelConfig.categories')}>{(['all', 'text', 'vision', 'image', 'custom'] as const).map(value => <button type="button" key={value} aria-pressed={category === value} onClick={() => setCategory(value)}>{t(`modelConfig.category.${value}`)}</button>)}</div>
             <div className="modelPopoverList">
                 {models.length === 0 && (
                     <div className="modelPopoverEmpty">{isModelLoading ? t('header.modelsLoading') : t('header.noModels')}</div>
                 )}
-                {models.map((model) => {
+                {filtered.map((model) => {
                     const isChecked = model.id === selectedModelId
                     const isDisabled = !model.enabled || isModelLoading
                     const isVisionModel = supportsImageUnderstanding(model)
@@ -58,7 +65,8 @@ const ChatHeaderOperate: React.FC<ChatHeaderOperateProps> = (props) => {
                         </button>
                     )
                 })}
-            </div>
+                {models.length > 0 && filtered.length === 0 && <p>{t('header.noModels')}</p>}
+            </div></>}
         </div>
     )
 

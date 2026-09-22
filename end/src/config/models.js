@@ -1,3 +1,4 @@
+const { customModels } = require('./customModels');
 const { t } = require('../i18n');
 const { env } = require('./env');
 
@@ -60,7 +61,8 @@ const MODEL_CATALOG = [
   },
 ];
 
-const MODEL_INDEX = new Map(MODEL_CATALOG.map((item) => [item.id, item]));
+const MODEL_INDEX = { get: id => MODEL_CATALOG.find(item => item.id === id) || customModels.all().find(item => item.id === id) };
+function getProvider(model) { return model.custom ? customModels.provider(model.id) : PROVIDER_CONFIG[model.provider]; }
 
 const PROVIDER_CONFIG = {
   deepseek: {
@@ -74,14 +76,16 @@ const PROVIDER_CONFIG = {
 };
 
 function getEnabledModels() {
-  return MODEL_CATALOG.map((item) => ({
+  return [...MODEL_CATALOG.map((item) => ({
+    supportsTools: !item.supportsImageGeneration,
     supportsImageGeneration: false,
     ...item,
     enabled: Boolean(PROVIDER_CONFIG[item.provider] && PROVIDER_CONFIG[item.provider].apiKey),
-  }));
+  })), ...customModels.all()];
 }
 
 module.exports = {
+  getProvider,
   MODEL_CATALOG,
   MODEL_INDEX,
   PROVIDER_CONFIG,

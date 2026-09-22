@@ -501,7 +501,7 @@ const ChatAI: React.FC = () => {
     localStorage.setItem('isNewCov', 'false')
     setInputText('');
 
-    if (isImageModel || isAgentMode) {
+    if (isImageModel || (isAgentMode && selectedModel?.supportsTools !== false)) {
       await requestAgentReply(newMessage, true)
       return
     }
@@ -577,18 +577,18 @@ const ChatAI: React.FC = () => {
                       variant="welcome"
                       inputText={inputText}
                       isLoading={isLoading}
-                      supportsFileUpload={supportsFileUpload && !isAgentMode}
+                      supportsFileUpload={supportsFileUpload && !(isAgentMode && selectedModel?.supportsTools !== false)}
                       imageOnlyUpload={supportsImageUnderstanding}
-                      supportsThinking={modelSupportsThinking && !isAgentMode}
+                      supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                       isThinkingEnabled={isThinkingEnabled}
                       uploadedFiles={uploadedFiles}
                       isUploadingFile={isUploadingFile}
                       onUploadFile={onUploadFile}
                       onRemoveUploadedFile={onRemoveUploadedFile}
                       onToggleThinking={onToggleThinking}
-                      isAgentMode={isAgentMode}
+                      isAgentMode={isAgentMode && selectedModel?.supportsTools !== false}
                       onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
-                      onToggleAgentMode={isImageModel ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                      onToggleAgentMode={isImageModel || selectedModel?.supportsTools === false ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                       onInputChange={handleInputChange}
                       onSubmit={handleSubmit}
                       onStopSSE={onStopSSE}
@@ -628,18 +628,18 @@ const ChatAI: React.FC = () => {
                 <ChatInputControl
                   inputText={inputText}
                   isLoading={isLoading}
-                  supportsFileUpload={supportsFileUpload && !isAgentMode}
+                  supportsFileUpload={supportsFileUpload && !(isAgentMode && selectedModel?.supportsTools !== false)}
                   imageOnlyUpload={supportsImageUnderstanding}
-                  supportsThinking={modelSupportsThinking && !isAgentMode}
+                  supportsThinking={modelSupportsThinking && !(isAgentMode && selectedModel?.supportsTools !== false)}
                   isThinkingEnabled={isThinkingEnabled}
                   uploadedFiles={uploadedFiles}
                   isUploadingFile={isUploadingFile}
                   onUploadFile={onUploadFile}
                   onRemoveUploadedFile={onRemoveUploadedFile}
                   onToggleThinking={onToggleThinking}
-                  isAgentMode={isAgentMode}
+                  isAgentMode={isAgentMode && selectedModel?.supportsTools !== false}
                       onCreateImage={isImageModel ? () => { setUploadedFiles([]); if (!inputText.trim()) setInputText(t('input.imagePrompt')); } : undefined}
-                  onToggleAgentMode={isImageModel ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
+                  onToggleAgentMode={isImageModel || selectedModel?.supportsTools === false ? undefined : () => { const next = !isAgentMode; setIsAgentMode(next); localStorage.setItem('chat.agentMode', String(next)); setUploadedFiles([]); }}
                   onInputChange={handleInputChange}
                   onSubmit={handleSubmit}
                   onStopSSE={onStopSSE}

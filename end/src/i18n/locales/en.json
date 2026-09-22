@@ -132,5 +132,9 @@
   "error.weatherKey": "Weather requires AMAP_API_KEY (or GAODE_API_KEY).",
   "error.weatherCity": "Could not find the city “{p0}”. Please provide a Chinese city or district.",
   "error.weatherProvider": "AMap weather service failed: {p0}",
-  "error.weatherTimeout": "Weather request timed out. Please try again."
+  "error.weatherTimeout": "Weather request timed out. Please try again.",
+  "error.modelTools": "Tool calling is disabled for this model. Use normal chat.",
+  "error.modelConfigDisabled": "Configure MODEL_CONFIG_TOKEN on the server first.",
+  "error.modelConfigAuth": "Invalid management token.",
+  "error.modelConfigInvalid": "Invalid model configuration. Check the name, model ID and endpoint."
 }

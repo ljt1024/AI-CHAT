@@ -132,5 +132,9 @@
   "error.weatherKey": "天气工具需要配置 AMAP_API_KEY（或 GAODE_API_KEY）。",
   "error.weatherCity": "未找到城市“{p0}”，请提供中国城市或区县名称。",
   "error.weatherProvider": "高德天气服务失败：{p0}",
-  "error.weatherTimeout": "天气服务请求超时，请稍后重试。"
+  "error.weatherTimeout": "天气服务请求超时，请稍后重试。",
+  "error.modelTools": "此模型未启用工具调用能力，请使用普通对话。",
+  "error.modelConfigDisabled": "请先在后端配置 MODEL_CONFIG_TOKEN 管理口令。",
+  "error.modelConfigAuth": "管理口令不正确。",
+  "error.modelConfigInvalid": "模型配置参数无效，请检查名称、模型 ID 和接口地址。"
 }

@@ -40,6 +40,13 @@ const Popover: React.FC<PopoverProps> = ({
 
   }, [visible, onVisibleChange]);
 
+  useEffect(() => {
+    if (!visible) return;
+    const update = () => calculatePosition();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [visible]);
+
   // 点击外部区域关闭popover
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

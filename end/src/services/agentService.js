@@ -28,6 +28,7 @@ function createAgentService({ checkpointer = createMemoryStore(), modelFactory =
   async function runAgents(body, { emit = () => {}, signal } = {}) {
     const request = validateRequest(body);
     if (active.has(request.sessionId)) throw createHttpError(409, t('error.concurrent'));
+    if (MODEL_INDEX.get(request.model)?.supportsTools === false && !MODEL_INDEX.get(request.model)?.supportsImageGeneration) throw createHttpError(400, t('error.modelTools'));
     active.add(request.sessionId);
     try {
       if (MODEL_INDEX.get(request.model)?.supportsImageGeneration) return await runImageGeneration(request, { emit, signal });

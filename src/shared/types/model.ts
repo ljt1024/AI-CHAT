@@ -1,4 +1,8 @@
 export interface ModelOption {
+  custom?: boolean;
+  modelId?: string;
+  baseUrl?: string;
+  supportsTools?: boolean;
   id: string;
   name: string;
   provider: string;
