@@ -12,6 +12,7 @@ import { useMessagePop } from '../MessagePop';
 import { Message as MessageType } from '@/shared/utils/localMessages';
 
 import './index.css'
+import { ReasoningPanel } from './ReasoningPanel';
 import type { AgentArtifact } from '@/features/agents/types';
 
 interface MessageItemProps {
@@ -43,7 +44,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
   const messagePop = useMessagePop()
 
   useEffect(() => {
-    const wasLoading = prevLoadingRef.current
     prevLoadingRef.current = msg.isLoading
 
     if (!msg.isBot || msg.isLoading) {
@@ -52,14 +52,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
       return
     }
 
-    const justFinishedStreaming = Boolean(wasLoading && !msg.isLoading)
 
     const frameId = requestAnimationFrame(() => {
       const bubbleElement = shareRef.current
       if (!bubbleElement) return
-      const shouldCollapse = !msg.agentStatus && bubbleElement.scrollHeight > 200
+      const shouldCollapse = !msg.agentStatus && !msg.reasoning_content && bubbleElement.scrollHeight > 200
       setCanCollapse(shouldCollapse)
-      setIsCollapsed(justFinishedStreaming ? false : shouldCollapse)
+      setIsCollapsed(false)
     })
 
     return () => {
@@ -118,9 +117,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
               msg.isBot ? <>
                 {msg.agentStatus && <AgentTrace steps={msg.agentSteps || []} status={msg.agentStatus} memoryMessages={msg.memoryMessages} summarizedMessages={msg.summarizedMessages} />}
                 {
-                  msg.reasoning_content && <blockquote>
-                    <MarkdownContent msg={msg.reasoning_content || ''} />
-                  </blockquote>
+                  (msg.reasoning_content || (msg.isLoading && msg.reasoningPending)) && <ReasoningPanel content={msg.reasoning_content || ''} loading={Boolean(msg.isLoading && (msg.reasoningPending ?? !msg.content))} durationMs={msg.reasoningDurationMs} interrupted={msg.reasoningInterrupted} />
                 }
                 <MarkdownContent msg={msg.content || ''} />
                 <AgentArtifacts artifacts={msg.artifacts || []} onPreview={onPreviewArtifact} />

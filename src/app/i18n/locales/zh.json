@@ -265,5 +265,9 @@
   "modelConfig.category.text": "文本",
   "modelConfig.category.vision": "多模态",
   "modelConfig.category.image": "文生图",
-  "modelConfig.category.custom": "自定义"
+  "modelConfig.category.custom": "自定义",
+  "reasoning.generating": "思考中…",
+  "reasoning.complete": "思考完成",
+  "reasoning.interrupted": "思考已中断",
+  "reasoning.duration": "用时 {seconds} 秒"
 }

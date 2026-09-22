@@ -167,8 +167,9 @@ const ChatAI: React.FC = () => {
 
 
   const getLoadingMessage = (): Message => ({
-    content: t('chat.loading'),
+    content: isThinkingEnabled ? '' : t('chat.loading'),
     reasoning_content: '',
+    reasoningPending: isThinkingEnabled,
     isBot: true,
     timestamp: new Date().toISOString(),
     isLoading: true,
@@ -200,6 +201,14 @@ const ChatAI: React.FC = () => {
     }
 
     setIsLoading(true);
+    let reasoningStarted: number | undefined;
+    const finishReasoning = () => {
+      assistantMessage.reasoningPending = false;
+      if (reasoningStarted !== undefined) {
+        assistantMessage.reasoningDurationMs = (assistantMessage.reasoningDurationMs || 0) + Math.max(0, performance.now() - reasoningStarted);
+        reasoningStarted = undefined;
+      }
+    };
     const requestController = new AbortController();
     controllerRef.current = requestController;
 
@@ -263,6 +272,7 @@ const ChatAI: React.FC = () => {
       assistantMessage = {
         content: '',
         reasoning_content: '',
+    reasoningPending: isThinkingEnabled,
         isBot: true,
         timestamp: new Date().toISOString(),
         usage: undefined,
@@ -270,7 +280,6 @@ const ChatAI: React.FC = () => {
         role: 'assistant'
       }
 
-      let flag = false
       let streamBuffer = ''
       const scheduleAssistantRender = () => {
         streamPendingMessageRef.current = assistantMessage
@@ -290,6 +299,7 @@ const ChatAI: React.FC = () => {
         try {
           // sse最终以'data: [DONE]'结束
           if (lines === '[DONE]') {
+            finishReasoning();
             assistantMessage.isLoading = false
             flushAssistantRender()
             return
@@ -299,20 +309,16 @@ const ChatAI: React.FC = () => {
             assistantMessage.usage = data.usage
           }
 
-          // 正式回复内容
-          if (data.choices[0].delta.content !== null && data.choices[0].delta.content !== undefined) {
-            if (flag) {
-              assistantMessage.content += '\n\n'
-            }
-            assistantMessage.content += data.choices[0].delta.content || ''
-            scheduleAssistantRender()
-            flag = false
-            // 思考内容
-          } else {
-            flag = true
-            assistantMessage.reasoning_content += data.choices[0].delta.reasoning_content || ''
-            scheduleAssistantRender()
+          const delta = data.choices?.[0]?.delta;
+          if (delta?.reasoning_content) {
+            reasoningStarted ??= performance.now();
+            assistantMessage.reasoning_content += delta.reasoning_content;
           }
+          if (delta?.content) {
+            finishReasoning();
+            assistantMessage.content += delta.content;
+          }
+          scheduleAssistantRender();
         } catch (error) {
           console.log(error)
         }
@@ -338,32 +344,24 @@ const ChatAI: React.FC = () => {
       if (streamBuffer.trim()) {
         parseSSEEvent(streamBuffer)
       }
+      finishReasoning();
       assistantMessage.isLoading = false
       flushAssistantRender()
       reader.releaseLock();
       storageMessages(cloneMessage(assistantMessage), currentConversationModel)
     } catch (error: any) {
       console.log(error)
-      if (error.name === "AbortError") {
-        if (streamPendingMessageRef.current) {
-          assistantMessage.isLoading = false
-          flushStreamRender()
-        } else {
-          cancelStreamRender()
-        }
-        console.log('请求被中断')
-      } else {
-        cancelStreamRender()
-        streamPendingMessageRef.current = null
-        dispatch({
-          type: 'addMessages',
-          messages: {
-            content: `${t('chat.serverBusy')}\n\n${error instanceof Error ? error.message : t('error.request')}`,
-            isBot: true,
-            isError: true
-          }
-        } as any)
+      finishReasoning();
+      assistantMessage.isLoading = false;
+      assistantMessage.reasoningInterrupted = true;
+      if (error.name !== 'AbortError') {
+        assistantMessage.isError = true;
+        assistantMessage.content += `\n\n${error instanceof Error ? error.message : t('error.request')}`;
       }
+      cancelStreamRender();
+      streamPendingMessageRef.current = null;
+      dispatch({ type: 'addMessages', messages: cloneMessage(assistantMessage) });
+      storageMessages(cloneMessage(assistantMessage), currentConversationModel);
     } finally {
       scrollToBottom()
       setIsLoading(false);

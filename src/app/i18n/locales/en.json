@@ -265,5 +265,9 @@
   "modelConfig.category.text": "Text",
   "modelConfig.category.vision": "Multimodal",
   "modelConfig.category.image": "Images",
-  "modelConfig.category.custom": "Custom"
+  "modelConfig.category.custom": "Custom",
+  "reasoning.generating": "Thinking…",
+  "reasoning.complete": "Reasoning complete",
+  "reasoning.interrupted": "Reasoning interrupted",
+  "reasoning.duration": "{seconds} s"
 }
