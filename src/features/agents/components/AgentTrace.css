@@ -13,3 +13,9 @@
 .agent-trace li[data-status="running"] { border-color: var(--secondary-color); }
 .agent-trace li[data-status="failed"] { border-color: #cc573f; }
 .send-button-left { flex-wrap: wrap; min-width: 0; }
+.agent-tool-detail { margin-top: 8px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.agent-tool-headline { margin: 0 0 4px; font-weight: 600; }
+.agent-tool-detail > ul { padding: 0; margin: 0; list-style: none; }
+.agent-trace .agent-tool-detail > ul > li { border: 0; padding: 2px 0; color: var(--text-muted-color); }
+.agent-trace .agent-tool-raw { margin-top: 6px; }
+.agent-trace .agent-tool-raw > summary { display: list-item; min-height: 32px; padding: 5px 0; font-size: 12px; color: var(--text-muted-color); }
