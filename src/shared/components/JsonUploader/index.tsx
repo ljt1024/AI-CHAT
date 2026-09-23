@@ -101,7 +101,14 @@ const JsonUploader = ({ onJsonUpload, maxFileSize = 1024 * 1024 }: JsonUploaderP
           <div className="upload-status">{t('json.processing')}</div>
         ) : (
           <>
-            <div className="upload-icon">📄</div>
+            <div className="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" role="presentation">
+                <path d="M12 4h17l9 9v31H12z" />
+                <path d="M29 4v10h9" />
+                <path className="upload-icon-mark" d="M17 25h14M17 31h14M17 37h9" />
+              </svg>
+              <span>JSON</span>
+            </div>
             <div className="upload-text">
               <p>{t('json.dropHint')}</p>
               <p className="upload-hint">{t('json.fileSizeHint', { size: maxFileSize / 1024 })}</p>

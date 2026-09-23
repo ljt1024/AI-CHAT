@@ -269,5 +269,16 @@
   "reasoning.generating": "思考中…",
   "reasoning.complete": "思考完成",
   "reasoning.interrupted": "思考已中断",
-  "reasoning.duration": "用时 {seconds} 秒"
+  "reasoning.duration": "用时 {seconds} 秒",
+  "record.eyebrow": "管理你的对话",
+  "record.subtitle": "导出备份，或从 JSON 文件恢复历史记录",
+  "record.conversationUnit": "个会话",
+  "record.messagesUnit": "条消息",
+  "record.emptyTitle": "还没有对话记录",
+  "record.emptyHint": "开始一段新对话后，记录会显示在这里",
+  "record.importConfirm": "导入会话",
+  "record.importHeading": "选择会话备份",
+  "record.importHint": "支持 JSON 格式，导入后会与现有记录合并",
+  "record.importReady": "已读取 {count} 个会话",
+  "record.importMergeHint": "确认后将合并到当前浏览器中的记录"
 }

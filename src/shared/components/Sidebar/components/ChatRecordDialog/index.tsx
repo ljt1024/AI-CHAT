@@ -1,317 +1,39 @@
 import { useMemo, useState } from 'react'
 import Dialog from '@/shared/components/Dialog'
-import Table from '@/shared/components/Table'
-import { useChat, useChatDispatch } from "@/app/providers/ChatContext"
-import { useLanguage } from "@/app/providers/LanguageContext"
-import DeleteIcon from "@/shared/assets/icons/delete.svg?react"
-import RenameIcon from "@/shared/assets/icons/rename.svg?react"
-import Icon from "@/shared/components/Icon"
+import { useChat, useChatDispatch } from '@/app/providers/ChatContext'
+import { useLanguage } from '@/app/providers/LanguageContext'
 import JsonUploader from '@/shared/components/JsonUploader'
-import { exportJson } from "@/shared/utils"
-import { getLoclMessages, getCovIdList, CovIdListItem, Conversation } from "@/shared/utils/localMessages"
-import EditTitDialog from "../EditTitDialog"
+import { exportJson } from '@/shared/utils'
+import { getLoclMessages, getCovIdList, type CovIdListItem, type Conversation } from '@/shared/utils/localMessages'
+import EditTitDialog from '../EditTitDialog'
 import DeleteDialog from '../DeleteDialog'
-
 import './index.css'
 
-interface ChatRecordDialogProps {
-    isShowRecordDialog: boolean;
-    setIsShowRecordDialog: (show: boolean) => void;
+interface Props { isShowRecordDialog: boolean; setIsShowRecordDialog: (show: boolean) => void }
+const dateValue = (value: string | undefined, locale: string) => { if (!value) return '—'; const date = new Date(value); return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) }
+
+function RecordRow({ item, locale, onEdit, onDelete, onPin, t }: { item: CovIdListItem; locale: string; onEdit: () => void; onDelete: () => void; onPin: () => void; t: (key: any) => string }) {
+  return <article className="record-card"><div className="record-card-main"><div className="record-card-title-row"><h3 title={item.title || t('sidebar.untitled')}>{item.title || t('sidebar.untitled')}</h3>{item.isTop && <span className="record-pin">{t('record.top')}</span>}</div><p className="record-card-id">{item.id}</p><div className="record-card-meta"><span>{t('record.column.latestTime')} · {dateValue(item.latestTime, locale)}</span><span>{item.messageLen} {t('record.messagesUnit')}</span></div></div><div className="record-card-actions"><button type="button" className={item.isTop ? 'record-pinned' : ''} onClick={onPin}>{item.isTop ? '★' : '☆'} {item.isTop ? t('sidebar.unpin') : t('sidebar.pin')}</button><button type="button" onClick={onEdit}>{t('sidebar.rename')}</button><button type="button" className="record-danger" onClick={onDelete}>{t('sidebar.delete')}</button></div></article>
 }
 
-const ChatRecordDialog: React.FC<ChatRecordDialogProps> = ({ isShowRecordDialog, setIsShowRecordDialog }) => {
-    const { t, dateLocale } = useLanguage()
-    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
-    const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
-    const [isShowUploader, setIsShowUploader] = useState(false)
-    const [covItem, setCovItem] = useState<CovIdListItem | null>(null)
-    const [importData, setImportData] = useState<CovIdListItem[]>([])
-    const [importChat, setImportChat] = useState<Conversation[]>([])
-    const [delType, setDelType] = useState(0) // 0 删除单个, 1全部删除
-    const { covList } = useChat()
-    const dispatch = useChatDispatch()
-
-    const sortedCovList = useMemo(() => {
-        const getTimeValue = (time?: string) => {
-            if (!time) return 0
-            const timestamp = new Date(time).getTime()
-            return Number.isNaN(timestamp) ? 0 : timestamp
-        }
-
-        return [...covList].sort((a, b) => {
-            // 第一优先级：置顶会话永远在上面
-            if (a.isTop !== b.isTop) {
-                return a.isTop ? -1 : 1
-            }
-
-            // 第二优先级：最新会话时间倒序（最近在最上）
-            const latestDiff = getTimeValue(b.latestTime) - getTimeValue(a.latestTime)
-            if (latestDiff !== 0) {
-                return latestDiff
-            }
-
-            // 兜底：创建时间倒序，避免同时间出现不稳定顺序
-            return getTimeValue(b.createTime) - getTimeValue(a.createTime)
-        })
-    }, [covList])
-
-    const handleRecordConfirm = () => {
-        setIsShowRecordDialog(false)
-    }
-
-    const handleImportConfirm = ()=> {
-        dispatch({
-            type: 'importChat',
-            data: importChat
-        })
-        dispatch({
-            type: 'getCovList'
-        })
-       onCloseUploader()
-    }
-
-    const handleEdit = (item: CovIdListItem) => {
-        setIsConfirmDialogOpen(true)
-        setCovItem(item)
-    }
-
-    const handleDelete = (item: CovIdListItem) => {
-        setIsShowDeleteDialog(true)
-        setCovItem(item)
-        setDelType(0)
-    }
-
-    const handleDeleteAll = ()=> {
-        setIsShowDeleteDialog(true)
-        setDelType(1)
-    }
-
-    const exportChat = () => {
-        const data = getLoclMessages()
-        const fileName = new Date().toLocaleString(dateLocale).replace(/\//g, '-').replace(/:/g, '.')
-        exportJson(data, `chat_storage_data_${fileName}.json`).finally(() => {
-            console.log('导出结束')
-        })
-    }
-
-    const handleJsonUpload = (jsonData: Conversation[], filename: string) => {
-        console.log('上传的JSON数据:', jsonData);
-        console.log('文件名:', filename);
-        const initCovList = getCovIdList(jsonData)
-        setImportData(initCovList)
-        setImportChat(jsonData)
-    };
-
-    // 清空导入的数据
-    const onClearImport = () => {
-        setImportData([])
-    }
-
-    const onCloseUploader = ()=> {
-        onClearImport()
-        setImportChat([])
-        setIsShowUploader(false)
-    }
-
-    // 列定义
-    const columns = [
-        {
-            key: 'id',
-            title: 'ID',
-            width: '240px',
-            render: (_: any, row: CovIdListItem) => (
-                <div className='idWrap'>
-                    <div>{row.id}</div>
-                    {
-                        row.isTop &&
-                        <div className="topTag">{t('record.top')}</div>
-                    }
-                </div>
-            )
-        },
-        {
-            key: 'title',
-            title: t('record.column.name'),
-        },
-        {
-            key: 'createTime',
-            title: t('record.column.createTime'),
-            width: '180px',
-            render: (value: any) => (
-                <span>{new Date(value).toLocaleString(dateLocale)}</span>
-            )
-        },
-        {
-            key: 'latestTime',
-            title: t('record.column.latestTime'),
-            width: '180px',
-            render: (value: any) => (
-                <span>{new Date(value).toLocaleString(dateLocale)}</span>
-            )
-        },
-        {
-            key: 'messageLen',
-            title: t('record.column.count'),
-            width: '100px',
-        },
-        {
-            key: 'operate',
-            title: t('record.column.actions'),
-            width: '80px',
-            render: (_: any, column: CovIdListItem) => (
-                <div>
-                    <Icon
-                        sourceType="svg"
-                        source={RenameIcon}
-                        size={16}
-                        color="var(--icon-color)"
-                        onClick={() => { handleEdit(column) }}
-                    />
-                    <Icon
-                        sourceType="svg"
-                        source={DeleteIcon}
-                        size={16}
-                        style={{ marginLeft: '6px' }}
-                        color="var(--danger-color)"
-                        onClick={() => { handleDelete(column) }}
-                    />
-                </div>
-            )
-        }
-    ];
-
-    const importColums = [
-        {
-            key: 'id',
-            title: 'ID',
-            width: '240px',
-        },
-        {
-            key: 'title',
-            title: t('record.column.name'),
-        },
-        {
-            key: 'createTime',
-            title: t('record.column.createTime'),
-            render: (value: any) => (
-                <span>{new Date(value).toLocaleString(dateLocale)}</span>
-            )
-        },
-        {
-            key: 'latestTime',
-            title: t('record.column.latestTime'),
-            render: (value: any) => (
-                <span>{new Date(value).toLocaleString(dateLocale)}</span>
-            )
-        },
-        {
-            key: 'messageLen',
-            title: t('record.column.count'),
-        },
-        // {
-        //     key: 'operate',
-        //     title: '操作',
-        //     render: () => (
-        //         <div>
-        //             <Icon
-        //                 sourceType="svg"
-        //                 source={RenameIcon}
-        //                 size={16}
-        //                 color="var(--text-color)"
-        //             />
-        //             <Icon
-        //                 sourceType="svg"
-        //                 source={DeleteIcon}
-        //                 size={16}
-        //                 style={{ marginLeft: '6px' }}
-        //                 color="var(--danger-color)"
-        //             />
-        //         </div>
-        //     )
-        // }
-    ]
-
-    return (
-        <>
-            <Dialog
-                isOpen={isShowRecordDialog}
-                onClose={() => setIsShowRecordDialog(false)}
-                title={t('record.title')}
-                type="confirm"
-                size="large"
-                className='reacordDialog'
-                onConfirm={handleRecordConfirm}
-            >
-                <div className='globalHandle'>
-                    <button onClick={() => { exportChat() }}>{t('record.export')}</button>
-                    <button onClick={() => { setIsShowUploader(true) }}>{t('record.import')}</button>
-                    <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={()=> { handleDeleteAll()}}>{t('record.deleteAll')}</button>
-                </div>
-                <Table
-                    columns={columns}
-                    data={sortedCovList}
-                    defaultPageSize={1000}
-                    striped={true}
-                    hover={true}
-                    bordered={false}
-                    showPagination={false}
-                />
-            </Dialog>
-
-            <Dialog
-                isOpen={isShowUploader}
-                onClose={onCloseUploader}
-                title={t('record.importTitle')}
-                type="confirm"
-                size="small"
-                className='reacordDialog'
-                onConfirm={handleImportConfirm}
-                isDisabledConfirm={importData.length === 0}
-            >
-                {
-                    importData.length === 0 &&
-                    <JsonUploader
-                        onJsonUpload={handleJsonUpload}
-                        maxFileSize={2 * 1024 * 1024} // 2MB
-                    />
-                }
-                {
-                    importData.length > 0 &&
-                    <>
-                        <div className='globalHandle'>
-                            <button style={{ backgroundColor: 'var(--danger-color)' }} onClick={() => { onClearImport() }}>{t('record.clearData')}</button>
-                        </div>
-                        <Table
-                            columns={importColums}
-                            data={importData}
-                            defaultPageSize={1000}
-                            striped={true}
-                            hover={true}
-                            bordered={false}
-                            showPagination={false}
-                        />
-                    </>
-
-                }
-            </Dialog>
-            {
-                isConfirmDialogOpen && covItem && <EditTitDialog
-                    isConfirmDialogOpen={isConfirmDialogOpen}
-                    setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-                    covItem={covItem}
-                />
-            }
-            {
-                isShowDeleteDialog && <DeleteDialog
-                    isShowDeleteDialog={isShowDeleteDialog}
-                    setIsShowDeleteDialog={setIsShowDeleteDialog}
-                    covItem={covItem}
-                    type={delType}
-                />
-            }
-        </>
-    )
+const ChatRecordDialog = ({ isShowRecordDialog, setIsShowRecordDialog }: Props) => {
+  const { t, dateLocale } = useLanguage(); const { covList } = useChat(); const dispatch = useChatDispatch()
+  const [importOpen, setImportOpen] = useState(false); const [importData, setImportData] = useState<CovIdListItem[]>([]); const [importChat, setImportChat] = useState<Conversation[]>([])
+  const [editing, setEditing] = useState<CovIdListItem | null>(null); const [deleting, setDeleting] = useState<CovIdListItem | null>(null); const [deleteAll, setDeleteAll] = useState(false)
+  const sorted = useMemo(() => [...covList].sort((a, b) => Number(b.isTop) - Number(a.isTop) || (Date.parse(b.latestTime || '') || 0) - (Date.parse(a.latestTime || '') || 0)), [covList])
+  const closeImport = () => { setImportOpen(false); setImportData([]); setImportChat([]) }
+  const confirmImport = () => { dispatch({ type: 'importChat', data: importChat }); dispatch({ type: 'getCovList' }); closeImport() }
+  const exportChat = () => { const stamp = new Date().toISOString().replace(/[.:]/g, '-'); void exportJson(getLoclMessages(), `ai-chat-conversations-${stamp}.json`) }
+  return <>
+    <Dialog isOpen={isShowRecordDialog} onClose={() => setIsShowRecordDialog(false)} title={t('record.title')} type="confirm" size="large" className="record-dialog" onConfirm={() => setIsShowRecordDialog(false)}>
+      <div className="record-intro"><div><p className="record-eyebrow">{t('record.eyebrow')}</p><p>{t('record.subtitle')}</p></div><strong>{covList.length}<small>{t('record.conversationUnit')}</small></strong></div>
+      <div className="record-toolbar"><div className="record-toolbar-group"><button type="button" className="record-primary" onClick={exportChat}>↓ <span>{t('record.export')}</span></button><button type="button" onClick={() => setImportOpen(true)}>↑ <span>{t('record.import')}</span></button></div><button type="button" className="record-delete-all" disabled={!covList.length} onClick={() => setDeleteAll(true)}>{t('record.deleteAll')}</button></div>
+      <div className="record-list" aria-label={t('record.title')}>{sorted.length ? sorted.map(item => <RecordRow key={item.id} item={item} locale={dateLocale} t={t} onEdit={() => setEditing(item)} onDelete={() => setDeleting(item)} onPin={() => dispatch({ type: 'top', id: item.id })} />) : <div className="record-empty"><span>✦</span><h3>{t('record.emptyTitle')}</h3><p>{t('record.emptyHint')}</p></div>}</div>
+    </Dialog>
+    <Dialog isOpen={importOpen} onClose={closeImport} title={t('record.importTitle')} type="confirm" size="medium" className="import-dialog" onConfirm={confirmImport} isDisabledConfirm={!importData.length} confirmText={t('record.importConfirm')}>
+      {!importData.length ? <><div className="import-heading"><span className="import-icon">JSON</span><div><h3>{t('record.importHeading')}</h3><p>{t('record.importHint')}</p></div></div><JsonUploader onJsonUpload={(data: Conversation[]) => { setImportChat(data); setImportData(getCovIdList(data)) }} maxFileSize={2 * 1024 * 1024} /></> : <><div className="import-ready"><span>✓</span><div><strong>{t('record.importReady', { count: importData.length })}</strong><p>{t('record.importMergeHint')}</p></div><button type="button" onClick={() => { setImportData([]); setImportChat([]) }}>{t('record.clearData')}</button></div><div className="import-preview">{importData.map(item => <div className="import-item" key={item.id}><span>{item.title || t('sidebar.untitled')}</span><small>{item.messageLen} {t('record.messagesUnit')} · {dateValue(item.latestTime, dateLocale)}</small></div>)}</div></>}
+    </Dialog>
+    {editing && <EditTitDialog isConfirmDialogOpen setIsConfirmDialogOpen={open => { if (!open) setEditing(null) }} covItem={editing} />}{deleting && <DeleteDialog isShowDeleteDialog setIsShowDeleteDialog={open => { if (!open) setDeleting(null) }} covItem={deleting} />}{deleteAll && <DeleteDialog isShowDeleteDialog setIsShowDeleteDialog={open => setDeleteAll(open)} covItem={null} type={1} />}
+  </>
 }
-
-
 export default ChatRecordDialog

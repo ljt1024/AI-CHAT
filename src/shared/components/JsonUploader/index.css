@@ -39,8 +39,40 @@
 }
 
 .upload-icon {
-  font-size: 48px;
+  position: relative;
+  width: 58px;
+  height: 62px;
   margin-bottom: 16px;
+  color: var(--primary-color);
+}
+
+.upload-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.upload-icon .upload-icon-mark {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.upload-icon span {
+  position: absolute;
+  right: -7px;
+  bottom: 2px;
+  padding: 3px 4px;
+  border: 2px solid var(--surface-elevated);
+  border-radius: 4px;
+  background: var(--primary-color);
+  color: var(--user-bubble-text);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .04em;
 }
 
 .upload-text {
