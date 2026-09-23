@@ -269,5 +269,16 @@
   "reasoning.generating": "Thinking…",
   "reasoning.complete": "Reasoning complete",
   "reasoning.interrupted": "Reasoning interrupted",
-  "reasoning.duration": "{seconds} s"
+  "reasoning.duration": "{seconds} s",
+  "record.eyebrow": "Manage your conversations",
+  "record.subtitle": "Export a backup or restore your history from a JSON file",
+  "record.conversationUnit": "conversations",
+  "record.messagesUnit": "messages",
+  "record.emptyTitle": "No conversations yet",
+  "record.emptyHint": "Start a new chat and it will appear here",
+  "record.importConfirm": "Import conversations",
+  "record.importHeading": "Choose a conversation backup",
+  "record.importHint": "JSON files are supported and will be merged with your existing records",
+  "record.importReady": "{count} conversations ready",
+  "record.importMergeHint": "Confirm to merge them into this browser's records"
 }
